@@ -1,38 +1,51 @@
 <?php
 
 return [
-
-    /*
-    |--------------------------------------------------------------------------
-    | Third Party Services
-    |--------------------------------------------------------------------------
-    |
-    | This file is for storing the credentials for third party services such
-    | as Mailgun, Postmark, AWS and more. This file provides the de facto
-    | location for this type of information, allowing packages to have
-    | a conventional file to locate the various service credentials.
-    |
-    */
-
-    'postmark' => [
-        'key' => env('POSTMARK_API_KEY'),
+    'anthropic' => [
+        'api_key' => env('ANTHROPIC_API_KEY'),
+        'model' => env('AI_DEFAULT_MODEL', 'claude-sonnet-4-6'),
     ],
 
-    'resend' => [
-        'key' => env('RESEND_API_KEY'),
+    'stripe' => [
+        'key' => env('STRIPE_KEY'),
+        'secret' => env('STRIPE_SECRET'),
+        'webhook_secret' => env('STRIPE_WEBHOOK_SECRET'),
+        'connect_client_id' => env('STRIPE_CONNECT_CLIENT_ID'),
     ],
 
-    'ses' => [
-        'key' => env('AWS_ACCESS_KEY_ID'),
-        'secret' => env('AWS_SECRET_ACCESS_KEY'),
-        'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
+    'paypal' => [
+        'client_id' => env('PAYPAL_CLIENT_ID'),
+        'client_secret' => env('PAYPAL_CLIENT_SECRET'),
+        'mode' => env('PAYPAL_MODE', 'sandbox'),
+        'webhook_id' => env('PAYPAL_WEBHOOK_ID'),
     ],
 
-    'slack' => [
-        'notifications' => [
-            'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),
-            'channel' => env('SLACK_BOT_USER_DEFAULT_CHANNEL'),
-        ],
+    'orange_money' => [
+        'api_key' => env('ORANGE_MONEY_API_KEY'),
+        'api_secret' => env('ORANGE_MONEY_API_SECRET'),
+        'merchant_id' => env('ORANGE_MONEY_MERCHANT_ID'),
+        'webhook_secret' => env('ORANGE_MONEY_WEBHOOK_SECRET'),
+        'base_url' => env('ORANGE_MONEY_BASE_URL'),
     ],
 
+    'mpesa' => [
+        'api_key' => env('MPESA_CONSUMER_KEY'),
+        'api_secret' => env('MPESA_CONSUMER_SECRET'),
+        'shortcode' => env('MPESA_SHORTCODE'),
+        'webhook_secret' => env('MPESA_WEBHOOK_SECRET'),
+        'base_url' => env('MPESA_BASE_URL'),
+    ],
+
+    'airtel_money' => [
+        'api_key' => env('AIRTEL_MONEY_CLIENT_ID'),
+        'api_secret' => env('AIRTEL_MONEY_CLIENT_SECRET'),
+        'webhook_secret' => env('AIRTEL_MONEY_WEBHOOK_SECRET'),
+        'base_url' => env('AIRTEL_MONEY_BASE_URL'),
+    ],
+
+    'aggregator' => [
+        'api_key' => env('AGGREGATOR_API_KEY'),
+        'webhook_secret' => env('AGGREGATOR_WEBHOOK_SECRET'),
+        'base_url' => env('AGGREGATOR_BASE_URL'),
+    ],
 ];

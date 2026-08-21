@@ -3,56 +3,43 @@
 namespace App\Http\Controllers\Settings;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Settings\ProfileDeleteRequest;
-use App\Http\Requests\Settings\ProfileUpdateRequest;
-use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class ProfileController extends Controller
 {
-    /**
-     * Show the user's profile settings page.
-     */
     public function edit(Request $request): Response
     {
-        return Inertia::render('settings/profile', [
-            'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
-            'status' => $request->session()->get('status'),
+        return Inertia::render('Settings/Profile', [
+            'user' => $request->user()->only([
+                'id', 'name', 'email', 'phone', 'city', 'country_code',
+                'locale', 'timezone', 'website', 'social_links',
+                'show_email', 'show_phone', 'show_website', 'show_socials', 'show_address',
+                'email_verified_at',
+            ]),
         ]);
     }
 
     /**
-     * Update the user's profile information.
+     * Deleting the account is a sensitive operation — the frontend routes
+     * it through ConfirmPasswordModal first (spec §89), and this action
+     * still re-validates the password itself rather than trusting that
+     * the modal ran (spec §100 — frontend never makes authorization
+     * decisions on the backend's behalf).
      */
-    public function update(ProfileUpdateRequest $request): RedirectResponse
+    public function destroy(Request $request): RedirectResponse
     {
-        $request->user()->fill($request->validated());
+        $request->validateWithBag('userDeletion', [
+            'password' => ['required', 'current_password:web'],
+        ]);
 
-        if ($request->user()->isDirty('email')) {
-            $request->user()->email_verified_at = null;
-        }
-
-        $request->user()->save();
-
-        Inertia::flash('toast', ['type' => 'success', 'message' => __('Profile updated.')]);
-
-        return to_route('profile.edit');
-    }
-
-    /**
-     * Delete the user's profile.
-     */
-    public function destroy(ProfileDeleteRequest $request): RedirectResponse
-    {
         $user = $request->user();
 
-        Auth::logout();
+        auth()->guard('web')->logout();
 
-        $user->delete();
+        $user->delete(); // soft delete — spec keeps an audit trail (§49)
 
         $request->session()->invalidate();
         $request->session()->regenerateToken();

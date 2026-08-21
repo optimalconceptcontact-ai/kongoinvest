@@ -2,99 +2,72 @@
 
 namespace App\Providers;
 
-use App\Actions\Fortify\CreateNewUser;
-use App\Actions\Fortify\ResetUserPassword;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
-use Illuminate\Support\Str;
-use Illuminate\Validation\Rules\Password;
-use Inertia\Inertia;
-use Laravel\Fortify\Features;
+use Laravel\Fortify\Contracts\LoginResponse;
+use Laravel\Fortify\Contracts\LogoutResponse;
+use Laravel\Fortify\Contracts\RegisterResponse;
+use Laravel\Fortify\Contracts\TwoFactorLoginResponse;
 use Laravel\Fortify\Fortify;
 
 class FortifyServiceProvider extends ServiceProvider
 {
-    /**
-     * Register any application services.
-     */
     public function register(): void
     {
         //
     }
 
     /**
-     * Bootstrap any application services.
+     * Auth is presented as React modals over the current page (spec §6),
+     * never as dedicated Fortify Blade views. So instead of registering
+     * loginView()/registerView()/etc., we bind Fortify's *response*
+     * contracts to redirect back to wherever the user was, with the
+     * originally-intended action preserved in the session (spec §7 —
+     * "Protected Action Auth Flow"). Inertia turns session `errors` into
+     * page props automatically, so a failed login/register just
+     * re-renders the current page with the modal open and errors shown.
      */
     public function boot(): void
     {
-        $this->configureActions();
-        $this->configureViews();
-        $this->configureRateLimiting();
-    }
+        $this->bindResponse(LoginResponse::class, fn () => redirect()->intended(route('dashboard', absolute: false)));
+        $this->bindResponse(RegisterResponse::class, fn () => redirect()->intended(route('dashboard', absolute: false)));
+        $this->bindResponse(TwoFactorLoginResponse::class, fn () => redirect()->intended(route('dashboard', absolute: false)));
+        $this->bindResponse(LogoutResponse::class, fn () => redirect('/'));
 
-    /**
-     * Configure Fortify actions.
-     */
-    private function configureActions(): void
-    {
-        Fortify::resetUserPasswordsUsing(ResetUserPassword::class);
-        Fortify::createUsersUsing(CreateNewUser::class);
-    }
-
-    /**
-     * Configure Fortify views.
-     */
-    private function configureViews(): void
-    {
-        Fortify::loginView(fn (Request $request) => Inertia::render('auth/login', [
-            'canResetPassword' => Features::enabled(Features::resetPasswords()),
-            'status' => $request->session()->get('status'),
-        ]));
-
-        Fortify::resetPasswordView(fn (Request $request) => Inertia::render('auth/reset-password', [
-            'email' => $request->email,
-            'token' => $request->route('token'),
-            'passwordRules' => Password::defaults()->toPasswordRulesString(),
-        ]));
-
-        Fortify::requestPasswordResetLinkView(fn (Request $request) => Inertia::render('auth/forgot-password', [
-            'status' => $request->session()->get('status'),
-        ]));
-
-        Fortify::verifyEmailView(fn (Request $request) => Inertia::render('auth/verify-email', [
-            'status' => $request->session()->get('status'),
-        ]));
-
-        Fortify::registerView(fn () => Inertia::render('auth/register', [
-            'passwordRules' => Password::defaults()->toPasswordRulesString(),
-        ]));
-
-        Fortify::twoFactorChallengeView(fn () => Inertia::render('auth/two-factor-challenge'));
-
-        Fortify::confirmPasswordView(fn () => Inertia::render('auth/confirm-password'));
-    }
-
-    /**
-     * Configure rate limiting.
-     */
-    private function configureRateLimiting(): void
-    {
-        RateLimiter::for('two-factor', function (Request $request) {
-            return Limit::perMinute(5)->by($request->session()->get('login.id'));
-        });
+        Fortify::createUsersUsing(\App\Actions\Fortify\CreateNewUser::class);
+        Fortify::updateUserProfileInformationUsing(\App\Actions\Fortify\UpdateUserProfileInformation::class);
+        Fortify::updateUserPasswordsUsing(\App\Actions\Fortify\UpdateUserPassword::class);
+        Fortify::resetUserPasswordsUsing(\App\Actions\Fortify\ResetUserPassword::class);
 
         RateLimiter::for('login', function (Request $request) {
-            $throttleKey = Str::transliterate(Str::lower($request->input(Fortify::username())).'|'.$request->ip());
+            $throttleKey = strtolower($request->input(Fortify::username())).'|'.$request->ip();
 
             return Limit::perMinute(5)->by($throttleKey);
         });
 
-        RateLimiter::for('passkeys', function (Request $request) {
-            return Limit::perMinute(10)->by(
-                ($request->input('credential.id') ?: $request->session()->getId()).'|'.$request->ip(),
-            );
+        RateLimiter::for('two-factor', function (Request $request) {
+            return Limit::perMinute(5)->by($request->session()->get('login.id'));
+        });
+    }
+
+    /**
+     * Bind a Fortify response contract to a plain closure-based response.
+     */
+    protected function bindResponse(string $contract, \Closure $handler): void
+    {
+        $this->app->singleton($contract, fn () => new class($handler) implements
+            LoginResponse,
+            LogoutResponse,
+            RegisterResponse,
+            TwoFactorLoginResponse {
+            public function __construct(private \Closure $handler) {}
+
+            public function toResponse($request)
+            {
+                return call_user_func($this->handler);
+            }
         });
     }
 }

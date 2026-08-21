@@ -2,49 +2,111 @@
 
 namespace App\Providers;
 
-use Carbon\CarbonImmutable;
-use Illuminate\Support\Facades\Date;
-use Illuminate\Support\Facades\DB;
+use App\Contracts\AiConversationProviderInterface;
+use App\Contracts\ContractDraftProviderInterface;
+use App\Contracts\ProjectAnalysisProviderInterface;
+use App\Events\ConnectionAccepted;
+use App\Events\ConnectionRequested;
+use App\Events\ContractAccepted;
+use App\Events\EscrowDisputed;
+use App\Events\EscrowFunded;
+use App\Events\EscrowRefunded;
+use App\Events\EscrowReleased;
+use App\Events\KycApproved;
+use App\Events\KycRejected;
+use App\Events\MatchCreated;
+use App\Events\PaymentSucceeded;
+use App\Listeners\ActivateSubscriptionOnPayment;
+use App\Listeners\FundEscrowOnPaymentSucceeded;
+use App\Listeners\LogAuthenticationEvents;
+use App\Listeners\SendConnectionAcceptedNotification;
+use App\Listeners\SendConnectionRequestNotification;
+use App\Listeners\SendContractNotification;
+use App\Listeners\SendEscrowNotification;
+use App\Listeners\SendKycNotification;
+use App\Listeners\SendMatchNotification;
+use App\Listeners\SendPaymentNotification;
+use Illuminate\Auth\Events\Login;
+use Illuminate\Auth\Events\Logout;
+use App\Services\Ai\Providers\AnthropicConversationProvider;
+use App\Services\Ai\Providers\AnthropicContractDraftProvider;
+use App\Services\Ai\Providers\AnthropicProjectAnalysisProvider;
+use App\Services\Ai\Providers\NullAiConversationProvider;
+use App\Services\Ai\Providers\NullContractDraftProvider;
+use App\Services\Ai\Providers\NullProjectAnalysisProvider;
+use App\Services\Matching\AiSemanticAnalyzer;
+use App\Services\Matching\AnthropicSemanticAnalyzer;
+use App\Services\Matching\NullSemanticAnalyzer;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
-use Illuminate\Validation\Rules\Password;
 
 class AppServiceProvider extends ServiceProvider
 {
-    /**
-     * Register any application services.
-     */
     public function register(): void
     {
-        //
+        // The one place that decides which AiSemanticAnalyzer
+        // implementation the rest of the app gets — MatchScoringService
+        // depends on the interface only, so flipping MATCHING_AI_ENABLED
+        // never requires touching matching logic.
+        $this->app->bind(AiSemanticAnalyzer::class, function () {
+            return config('matching.ai_enabled')
+                ? $this->app->make(AnthropicSemanticAnalyzer::class)
+                : $this->app->make(NullSemanticAnalyzer::class);
+        });
+
+        // Same pattern, separate toggle (AI_FEATURES_ENABLED): a
+        // deployment might want matching AI off while project
+        // analysis/coach/advisor are on, or vice versa — these are
+        // product decisions, not one on/off switch for "AI" as a whole.
+        $this->app->bind(ProjectAnalysisProviderInterface::class, function () {
+            return config('ai.enabled')
+                ? $this->app->make(AnthropicProjectAnalysisProvider::class)
+                : $this->app->make(NullProjectAnalysisProvider::class);
+        });
+
+        $this->app->bind(AiConversationProviderInterface::class, function () {
+            return config('ai.enabled')
+                ? $this->app->make(AnthropicConversationProvider::class)
+                : $this->app->make(NullAiConversationProvider::class);
+        });
+
+        $this->app->bind(ContractDraftProviderInterface::class, function () {
+            return config('ai.enabled')
+                ? $this->app->make(AnthropicContractDraftProvider::class)
+                : $this->app->make(NullContractDraftProvider::class);
+        });
     }
 
-    /**
-     * Bootstrap any application services.
-     */
     public function boot(): void
     {
-        $this->configureDefaults();
-    }
+        // Payment
+        Event::listen(PaymentSucceeded::class, ActivateSubscriptionOnPayment::class);
+        Event::listen(PaymentSucceeded::class, FundEscrowOnPaymentSucceeded::class);
+        Event::listen(PaymentSucceeded::class, SendPaymentNotification::class);
 
-    /**
-     * Configure default behaviors for production-ready applications.
-     */
-    protected function configureDefaults(): void
-    {
-        Date::use(CarbonImmutable::class);
+        // Matching & Connections — every one of these events has existed
+        // since Phase 5/8 with a comment promising "Phase 13 attaches a
+        // notification here" (spec §116). This is that phase.
+        Event::listen(MatchCreated::class, SendMatchNotification::class);
+        Event::listen(ConnectionRequested::class, SendConnectionRequestNotification::class);
+        Event::listen(ConnectionAccepted::class, SendConnectionAcceptedNotification::class);
 
-        DB::prohibitDestructiveCommands(
-            app()->isProduction(),
-        );
+        // KYC
+        Event::listen(KycApproved::class, [SendKycNotification::class, 'handleApproved']);
+        Event::listen(KycRejected::class, [SendKycNotification::class, 'handleRejected']);
 
-        Password::defaults(fn (): ?Password => app()->isProduction()
-            ? Password::min(12)
-                ->mixedCase()
-                ->letters()
-                ->numbers()
-                ->symbols()
-                ->uncompromised()
-            : null,
-        );
+        // Contracts
+        Event::listen(ContractAccepted::class, SendContractNotification::class);
+
+        // Escrow
+        Event::listen(EscrowFunded::class, [SendEscrowNotification::class, 'handleFunded']);
+        Event::listen(EscrowReleased::class, [SendEscrowNotification::class, 'handleReleased']);
+        Event::listen(EscrowRefunded::class, [SendEscrowNotification::class, 'handleRefunded']);
+        Event::listen(EscrowDisputed::class, [SendEscrowNotification::class, 'handleDisputed']);
+
+        // Authentication audit trail (spec §49) — Fortify fires these
+        // standard Laravel events on every login/logout; we only listen.
+        Event::listen(Login::class, [LogAuthenticationEvents::class, 'handleLogin']);
+        Event::listen(Logout::class, [LogAuthenticationEvents::class, 'handleLogout']);
     }
 }

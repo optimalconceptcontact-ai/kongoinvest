@@ -1,40 +1,40 @@
+import '../css/app.css';
+
 import { createInertiaApp } from '@inertiajs/react';
-import { Toaster } from '@/components/ui/sonner';
-import { TooltipProvider } from '@/components/ui/tooltip';
-import { initializeTheme } from '@/hooks/use-appearance';
-import AppLayout from '@/layouts/app-layout';
-import AuthLayout from '@/layouts/auth-layout';
-import SettingsLayout from '@/layouts/settings/layout';
+import type { ResolvedComponent } from '@inertiajs/react';
+import { configureEcho } from '@laravel/echo-react';
+import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
+import { createRoot } from 'react-dom/client';
+import RootLayout from '@/layouts/root-layout';
 
-const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
-
-createInertiaApp({
-    title: (title) => (title ? `${title} - ${appName}` : appName),
-    layout: (name) => {
-        switch (true) {
-            case name === 'welcome':
-                return null;
-            case name.startsWith('auth/'):
-                return AuthLayout;
-            case name.startsWith('settings/'):
-                return [AppLayout, SettingsLayout];
-            default:
-                return AppLayout;
-        }
-    },
-    strictMode: true,
-    withApp(app) {
-        return (
-            <TooltipProvider delayDuration={0}>
-                {app}
-                <Toaster />
-            </TooltipProvider>
-        );
-    },
-    progress: {
-        color: '#4B5563',
-    },
+configureEcho({
+    broadcaster: 'reverb',
 });
 
-// This will set light / dark mode on load...
-initializeTheme();
+const appName = import.meta.env.VITE_APP_NAME || 'Kanda';
+
+function resolve(name: string) {
+    const pages = import.meta.glob('./pages/**/*.tsx') as Record<
+        string,
+        () => Promise<{ default: ResolvedComponent }>
+    >;
+
+    return resolvePageComponent(
+        `./pages/${name}.tsx`,
+        pages,
+    ) as unknown as Promise<ResolvedComponent>;
+}
+
+createInertiaApp({
+    title: (title) => (title ? `${title} — ${appName}` : appName),
+    layout: () => RootLayout,
+    resolve,
+    setup({ el, App, props }) {
+        const root = createRoot(el);
+
+        root.render(<App {...props} />);
+    },
+    progress: {
+        color: '#3B82F6',
+    },
+});
