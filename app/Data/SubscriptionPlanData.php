@@ -13,6 +13,7 @@ class SubscriptionPlanData extends Data
         public string $name,
         public ?string $roleScope,
         public int $priceMinor,
+        public ?int $annualPriceMinor,
         public string $currency,
         public string $billingPeriod,
         /** @var array<string, int> */
@@ -31,6 +32,7 @@ class SubscriptionPlanData extends Data
             name: $plan->name,
             roleScope: $plan->role_scope?->value,
             priceMinor: $plan->price_minor,
+            annualPriceMinor: $plan->annual_price_minor,
             currency: $plan->currency,
             billingPeriod: $plan->billing_period,
             limits: $plan->limits ?? [],

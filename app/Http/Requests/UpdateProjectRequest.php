@@ -37,7 +37,16 @@ class UpdateProjectRequest extends FormRequest
             'business_model' => ['nullable', 'string', 'max:3000'],
             'market' => ['nullable', 'string', 'max:3000'],
             'competitive_advantage' => ['nullable', 'string', 'max:3000'],
-            'team' => ['nullable', 'string', 'max:3000'],
+
+            // Structured members, not a free-text bio — LinkedIn is the
+            // only genuinely optional field per member.
+            'team' => ['nullable', 'array'],
+            'team.*.full_name' => ['required', 'string', 'max:150'],
+            'team.*.role' => ['required', 'string', 'max:150'],
+            'team.*.linkedin' => ['nullable', 'url', 'max:255'],
+            'team.*.email' => ['required', 'email', 'max:255'],
+            'team.*.phone' => ['required', 'string', 'max:30'],
+
             'traction' => ['nullable', 'string', 'max:3000'],
             'financial_information' => ['nullable', 'string', 'max:3000'],
             'impact' => ['nullable', 'string', 'max:3000'],

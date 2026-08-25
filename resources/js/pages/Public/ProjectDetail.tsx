@@ -1,5 +1,5 @@
 import { router, usePage } from '@inertiajs/react';
-import { RiArrowLeftSLine, RiArrowRightSLine, RiCloseLine, RiMapPinLine, RiPulseLine, RiSparklingLine } from '@remixicon/react';
+import { RiArrowLeftSLine, RiArrowRightSLine, RiCloseLine, RiLinkedinBoxLine, RiMailLine, RiMapPinLine, RiPhoneLine, RiPulseLine, RiSparklingLine } from '@remixicon/react';
 import { FormEvent, useEffect, useState } from 'react';
 import { AIAnalysisSheet, type AiAnalysisData } from '@/components/AI/AIAnalysisSheet';
 import { InvestorAdvisorPanel, type AiConversationData } from '@/components/AI/InvestorAdvisorPanel';
@@ -29,7 +29,7 @@ type ProjectDetailData = {
     businessModel: string | null;
     market: string | null;
     competitiveAdvantage: string | null;
-    team: string | null;
+    team: TeamMember[];
     traction: string | null;
     impact: string | null;
     risks: string | null;
@@ -78,7 +78,7 @@ function ImageLightbox({
                 type="button"
                 onClick={onClose}
                 aria-label="Fermer"
-                className="absolute top-4 right-4 text-white hover:text-slate-300"
+                className="absolute top-4 right-4 text-white hover:text-slate-400"
             >
                 <RiCloseLine size={28} />
             </button>
@@ -88,7 +88,7 @@ function ImageLightbox({
                     type="button"
                     onClick={prev}
                     aria-label="Photo précédente"
-                    className="absolute left-2 text-white hover:text-slate-300 sm:left-4"
+                    className="absolute left-2 text-white hover:text-slate-400 sm:left-4"
                 >
                     <RiArrowLeftSLine size={36} />
                 </button>
@@ -101,7 +101,7 @@ function ImageLightbox({
                     type="button"
                     onClick={next}
                     aria-label="Photo suivante"
-                    className="absolute right-2 text-white hover:text-slate-300 sm:right-4"
+                    className="absolute right-2 text-white hover:text-slate-400 sm:right-4"
                 >
                     <RiArrowRightSLine size={36} />
                 </button>
@@ -116,12 +116,49 @@ function ImageLightbox({
     );
 }
 
+type TeamMember = { full_name: string; role: string; linkedin: string; email: string; phone: string };
+
 function Section({ title, body }: { title: string; body: string | null }) {
     if (!body) return null;
     return (
-        <div className="border-t border-slate-200 py-6">
+        <div className="border-t border-slate-300 py-6">
             <h2 className="mb-3 text-section-label">{title}</h2>
-            <p className="whitespace-pre-line text-sm leading-relaxed text-slate-600">{body}</p>
+            <p className="whitespace-pre-line text-lg leading-relaxed text-slate-700">{body}</p>
+        </div>
+    );
+}
+
+function TeamSection({ members }: { members: TeamMember[] }) {
+    if (members.length === 0) return null;
+
+    return (
+        <div className="border-t border-slate-300 py-6">
+            <h2 className="mb-3 text-section-label">Équipe</h2>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                {members.map((m, i) => (
+                    <div key={i} className="border border-slate-300 p-4">
+                        <div className="text-item-title">{m.full_name}</div>
+                        {m.role && <div className="mb-2 text-caption">{m.role}</div>}
+                        <div className="flex items-center gap-3 text-slate-400">
+                            {m.linkedin && (
+                                <a href={m.linkedin} target="_blank" rel="noopener noreferrer" aria-label="LinkedIn" className="hover:text-blue-600">
+                                    <RiLinkedinBoxLine size={18} />
+                                </a>
+                            )}
+                            {m.email && (
+                                <a href={`mailto:${m.email}`} aria-label="Email" className="hover:text-blue-600">
+                                    <RiMailLine size={18} />
+                                </a>
+                            )}
+                            {m.phone && (
+                                <a href={`tel:${m.phone}`} aria-label="Téléphone" className="hover:text-blue-600">
+                                    <RiPhoneLine size={18} />
+                                </a>
+                            )}
+                        </div>
+                    </div>
+                ))}
+            </div>
         </div>
     );
 }
@@ -138,9 +175,10 @@ type Props = {
     aiAnalysis: AiAnalysisData | null;
     hasAdvisorFeature: boolean;
     advisorConversation: AiConversationData | null;
+    isSaved: boolean;
 };
 
-export default function ProjectDetail({ project, imageUrls, connection, aiAnalysis, hasAdvisorFeature, advisorConversation }: Props) {
+export default function ProjectDetail({ project, imageUrls, connection, aiAnalysis, hasAdvisorFeature, advisorConversation, isSaved }: Props) {
     const [sheetOpen, setSheetOpen] = useState(false);
     const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
     const { props } = usePage<SharedAuth>();
@@ -148,6 +186,17 @@ export default function ProjectDetail({ project, imageUrls, connection, aiAnalys
     const [showConnectForm, setShowConnectForm] = useState(false);
     const [message, setMessage] = useState('');
     const [sending, setSending] = useState(false);
+    const [savePending, setSavePending] = useState(false);
+
+    function toggleSave() {
+        setSavePending(true);
+        const options = { preserveScroll: true, onFinish: () => setSavePending(false) };
+        if (isSaved) {
+            router.delete(`/investor/projects/${project.id}/save`, options);
+        } else {
+            router.post(`/investor/projects/${project.id}/save`, {}, options);
+        }
+    }
     const target = formatAmount(project.fundingTargetMinor, project.fundingCurrency);
     const raised = formatAmount(project.fundingRaisedMinor, project.fundingCurrency);
     const progress =
@@ -234,8 +283,15 @@ export default function ProjectDetail({ project, imageUrls, connection, aiAnalys
                     <Button type="button" onClick={() => setShowConnectForm(true)} className="w-full px-4 py-3">
                         Se connecter
                     </Button>
-                    <button disabled className="w-full border border-slate-300 px-4 py-3 text-btn text-slate-400">
-                        Sauvegarder (Phase 8+)
+                    <button
+                        type="button"
+                        onClick={toggleSave}
+                        disabled={savePending}
+                        className={`w-full border px-4 py-3 text-btn disabled:opacity-50 ${
+                            isSaved ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-400 text-slate-900 hover:border-slate-900'
+                        }`}
+                    >
+                        {isSaved ? 'Sauvegardé ✓' : 'Sauvegarder'}
                     </button>
                 </div>
             );
@@ -299,13 +355,13 @@ export default function ProjectDetail({ project, imageUrls, connection, aiAnalys
                     <Section title="Modèle économique" body={project.businessModel} />
                     <Section title="Marché" body={project.market} />
                     <Section title="Avantage concurrentiel" body={project.competitiveAdvantage} />
-                    <Section title="Équipe" body={project.team} />
+                    <TeamSection members={project.team} />
                     <Section title="Traction" body={project.traction} />
                     <Section title="Impact" body={project.impact} />
                     <Section title="Risques" body={project.risks} />
                 </div>
 
-                <aside className="h-max border border-slate-200 p-5">
+                <aside className="h-max border border-slate-300 p-5">
                     {target && (
                         <div className="mb-5">
                             <div className="mb-1 flex items-baseline justify-between">

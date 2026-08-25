@@ -8,6 +8,7 @@ import { Input } from '@/components/Ui/Input';
 import { Label } from '@/components/Ui/Label';
 
 type EscrowSummary = { id: number; amount_minor: number; currency: string };
+type FeeBreakdown = { rate: number; feeMinor: number; totalMinor: number };
 
 const providers = [
     { value: 'stripe', label: 'Carte bancaire' },
@@ -19,7 +20,11 @@ const providers = [
 
 const mobileMoneyValues = ['orange_money', 'mpesa', 'airtel_money'];
 
-export default function Checkout({ escrow }: { escrow: EscrowSummary }) {
+function formatMinor(amountMinor: number) {
+    return (amountMinor / 100).toLocaleString('fr-FR');
+}
+
+export default function Checkout({ escrow, fee }: { escrow: EscrowSummary; fee: FeeBreakdown }) {
     const [provider, setProvider] = useState<string>('stripe');
     const [paid, setPaid] = useState(false);
     const { data, setData, post, processing, errors } = useForm({ provider: 'paypal', phone_number: '' });
@@ -56,12 +61,33 @@ export default function Checkout({ escrow }: { escrow: EscrowSummary }) {
             <Head title="Financer le séquestre" />
             <p className="text-eyebrow">Séquestre (Escrow)</p>
             <h1 className="mt-2 mb-1 text-page-title">Financer le séquestre</h1>
-            <p className="mb-2 font-mono text-lg font-bold text-slate-900">
-                {(escrow.amount_minor / 100).toLocaleString('fr-FR')} {escrow.currency}
-            </p>
+
+            <div className="mb-6 border border-slate-200 bg-slate-50 px-4 py-3 text-sm">
+                <div className="flex items-center justify-between text-slate-700">
+                    <span>Montant investissement</span>
+                    <span className="font-mono">
+                        {formatMinor(escrow.amount_minor)} {escrow.currency}
+                    </span>
+                </div>
+                <div className="mt-1 flex items-center justify-between text-slate-700">
+                    <span>Frais d'accompagnement Coaching ({(fee.rate * 100).toLocaleString('fr-FR')}%)</span>
+                    <span className="font-mono">
+                        {formatMinor(fee.feeMinor)} {escrow.currency}
+                    </span>
+                </div>
+                <div className="mt-2 flex items-center justify-between border-t border-slate-300 pt-2 font-bold text-slate-900">
+                    <span>Total à payer</span>
+                    <span className="font-mono">
+                        {formatMinor(fee.totalMinor)} {escrow.currency}
+                    </span>
+                </div>
+            </div>
+
             <p className="mb-8 text-body">
                 Les fonds sont retenus par le fournisseur de paiement jusqu'à ce que vous confirmiez leur
-                libération, ou jusqu'à un remboursement (spec §33-35).
+                libération, ou jusqu'à un remboursement (spec §33-35). KongoInvestment gère l'accompagnement de
+                la relation investisseur/entrepreneur jusqu'à la conclusion de l'investissement (plan Coaching)
+                — les frais ci-dessus couvrent ce service.
             </p>
 
             {errors.provider && (
@@ -76,7 +102,7 @@ export default function Checkout({ escrow }: { escrow: EscrowSummary }) {
                             type="button"
                             key={p.value}
                             onClick={() => selectProvider(p.value)}
-                            className={`border px-3 py-2.5 text-xs font-medium ${provider === p.value ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-300 text-slate-700 hover:border-slate-900'}`}
+                            className={`border px-3 py-2.5 text-xs font-medium ${provider === p.value ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-400 text-slate-700 hover:border-slate-900'}`}
                         >
                             {p.label}
                         </button>
@@ -90,10 +116,10 @@ export default function Checkout({ escrow }: { escrow: EscrowSummary }) {
 
             {provider === 'paypal' && (
                 <form onSubmit={submitRedirectFlow} className="flex flex-col gap-4">
-                    <div className="flex items-start gap-2 border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-600">
+                    <div className="flex items-start gap-2 border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-700">
                         <RiExternalLinkLine size={16} className="mt-0.5 flex-shrink-0 text-slate-400" />
                         Vous allez être redirigé vers PayPal pour vous connecter et confirmer le paiement en toute
-                        sécurité. Vous reviendrez sur Kanda une fois le paiement terminé.
+                        sécurité. Vous reviendrez sur KongoInvestment une fois le paiement terminé.
                     </div>
                     <Button type="submit" variant="cta" disabled={processing} className="px-6 py-3">
                         {processing ? 'Redirection...' : 'Continuer avec PayPal'}
@@ -121,7 +147,7 @@ export default function Checkout({ escrow }: { escrow: EscrowSummary }) {
             )}
 
             <p className="mt-6 text-center text-caption">
-                Le paiement est traité par le fournisseur choisi. Kanda ne stocke jamais vos coordonnées
+                Le paiement est traité par le fournisseur choisi. KongoInvestment ne stocke jamais vos coordonnées
                 bancaires.
             </p>
         </div>

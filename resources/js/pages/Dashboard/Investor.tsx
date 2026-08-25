@@ -23,21 +23,21 @@ export default function InvestorDashboard({ matchCount, pendingMatchCount, topMa
             )}
 
             <div className="mb-6 grid grid-cols-1 gap-6 sm:grid-cols-3">
-                <div className="border border-slate-200 p-6">
+                <div className="border border-slate-300 p-6">
                     <div className="text-stat">{matchCount}</div>
                     <div className="mt-1 text-caption">Matches au total</div>
                 </div>
-                <div className="border border-slate-200 p-6">
+                <div className="border border-slate-300 p-6">
                     <div className="font-mono text-2xl font-bold text-orange-600">{pendingMatchCount}</div>
                     <div className="mt-1 text-caption">Nouveaux matches</div>
                 </div>
-                <div className="border border-slate-200 p-6">
+                <div className="border border-slate-300 p-6">
                     <div className="text-stat">{publishedProjectCount}</div>
                     <div className="mt-1 text-caption">Projets publiés sur la plateforme</div>
                 </div>
             </div>
 
-            <div className="border border-slate-200 p-6">
+            <div className="border border-slate-300 p-6">
                 <div className="mb-4 flex items-center justify-between">
                     <h2 className="text-section-label">Meilleurs matches</h2>
                     <Link href="/investor/matches" className="font-mono text-xs text-blue-600 hover:text-blue-700">Voir tout →</Link>
@@ -56,7 +56,7 @@ export default function InvestorDashboard({ matchCount, pendingMatchCount, topMa
                 )}
             </div>
 
-            <div className="mt-6 border border-slate-200 p-6">
+            <div className="mt-6 border border-slate-300 p-6">
                 <div className="font-mono text-[11px] uppercase text-slate-500">Plan actuel</div>
                 <div className="mt-1 text-item-title-lg">{currentPlan.name}</div>
                 <Link href="/settings/subscription" className="mt-3 inline-block font-mono text-xs text-blue-600 hover:text-blue-700">

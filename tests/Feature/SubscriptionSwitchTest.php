@@ -37,17 +37,22 @@ it('never lets an entrepreneur switch to the Investor plan, even via a direct re
     expect(app(SubscriptionService::class)->currentPlanFor($entrepreneur)->key)->toBe('free');
 });
 
-it('lets an entrepreneur switch to the Entrepreneur plan and it actually changes their effective limits', function () {
+it('redirects to checkout instead of switching instantly when choosing a paid plan (Entrepreneur is billed via Cashier)', function () {
     $entrepreneur = User::factory()->entrepreneur()->create();
     app(SubscriptionService::class)->assignFreePlan($entrepreneur);
 
     $limits = app(ProjectLimitService::class);
     expect($limits->limitFor($entrepreneur))->toBe(1); // Free
 
-    $this->actingAs($entrepreneur)->put('/settings/subscription', ['plan' => 'entrepreneur'])
-        ->assertSessionDoesntHaveErrors();
+    $entrepreneurPlan = SubscriptionPlan::where('key', 'entrepreneur')->firstOrFail();
 
-    expect($limits->limitFor($entrepreneur->fresh()))->toBe(3); // Entrepreneur plan's max_active_projects
+    $this->actingAs($entrepreneur)->put('/settings/subscription', ['plan' => 'entrepreneur'])
+        ->assertRedirect(route('settings.billing.checkout', $entrepreneurPlan))
+        ->assertStatus(303);
+
+    // Nothing switches until checkout actually completes (see
+    // CashierSubscriptionActivationTest for the real paid-plan flow).
+    expect($limits->limitFor($entrepreneur->fresh()))->toBe(1); // still Free
 });
 
 it('cancels the previous subscription row instead of deleting it when switching plans', function () {
@@ -58,5 +63,5 @@ it('cancels the previous subscription row instead of deleting it when switching 
     app(SubscriptionService::class)->switchPlan($entrepreneur, $entrepreneurPlan);
 
     expect($free->fresh()->status->value)->toBe('canceled');
-    expect($entrepreneur->subscriptions()->count())->toBe(2); // history preserved, not overwritten
+    expect($entrepreneur->planSubscriptions()->count())->toBe(2); // history preserved, not overwritten
 });

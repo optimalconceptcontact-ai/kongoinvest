@@ -79,7 +79,7 @@ export default function EntrepreneurProfile({ profile }: Props) {
                     <div className="grid grid-cols-2 gap-4">
                         <div>
                             <Label>Pays</Label>
-                            <Input disabled value="République Démocratique du Congo" className="border-slate-200 bg-slate-50 text-slate-500" />
+                            <Input disabled value="République Démocratique du Congo" className="border-slate-300 bg-slate-50 text-slate-500" />
                         </div>
                         <div>
                             <Label>Province</Label>
@@ -113,7 +113,7 @@ export default function EntrepreneurProfile({ profile }: Props) {
                         <Textarea rows={4} value={data.bio} onChange={(e) => setData('bio', e.target.value)} />
                     </div>
 
-                    <fieldset className="border border-slate-200 p-4">
+                    <fieldset className="border border-slate-300 p-4">
                         <legend className="px-1 font-mono text-xs uppercase text-slate-500">Société (optionnel)</legend>
                         <div className="flex flex-col gap-3">
                             <Input

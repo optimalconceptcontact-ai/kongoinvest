@@ -1,5 +1,5 @@
 import { Head, router, useForm } from '@inertiajs/react';
-import { RiCloseLine, RiDeleteBinLine, RiDownloadLine, RiFileTextLine, RiFileUploadLine, RiImageAddLine } from '@remixicon/react';
+import { RiCloseLine, RiDeleteBinLine, RiDownloadLine, RiFileTextLine, RiFileUploadLine, RiImageAddLine, RiUserAddLine } from '@remixicon/react';
 import { FormEvent, useRef, useState } from 'react';
 import { CoachPanel } from '@/components/AI/CoachPanel';
 import type { AiConversationData } from '@/components/AI/InvestorAdvisorPanel';
@@ -9,10 +9,14 @@ import { Input } from '@/components/Ui/Input';
 import { Label } from '@/components/Ui/Label';
 import { Select } from '@/components/Ui/Select';
 import { Textarea } from '@/components/Ui/Textarea';
+import { useConfirm } from '@/hooks/useConfirm';
 import { DRC_PROVINCES, DRC_PROVINCE_CITIES } from '@/lib/drcProvinces';
 import { FUNDING_TYPES } from '@/lib/fundingTypes';
 
 type Taxonomy = { id: number; name?: string; key?: string }[];
+
+type TeamMember = { full_name: string; role: string; linkedin: string; email: string; phone: string };
+const EMPTY_TEAM_MEMBER: TeamMember = { full_name: '', role: '', linkedin: '', email: '', phone: '' };
 
 type ProjectImage = { id: number; url: string; thumbUrl: string; name: string };
 type ProjectDocument = { id: number; name: string; size: number; downloadUrl: string };
@@ -32,6 +36,7 @@ function formatFileSize(bytes: number) {
 function useMediaUpload(projectSlug: string, collection: 'project-images' | 'project-documents') {
     const [uploading, setUploading] = useState(false);
     const inputRef = useRef<HTMLInputElement>(null);
+    const { confirm, ConfirmDialog } = useConfirm();
 
     function upload(files: FileList | null) {
         if (!files || files.length === 0) return;
@@ -51,12 +56,12 @@ function useMediaUpload(projectSlug: string, collection: 'project-images' | 'pro
         });
     }
 
-    function remove(mediaId: number) {
-        if (!confirm('Supprimer ce fichier ?')) return;
+    async function remove(mediaId: number) {
+        if (!(await confirm({ description: 'Supprimer ce fichier ?', danger: true, confirmLabel: 'Supprimer' }))) return;
         router.delete(`/entrepreneur/projects/${projectSlug}/media/${mediaId}`, { preserveScroll: true });
     }
 
-    return { inputRef, uploading, upload, remove };
+    return { inputRef, uploading, upload, remove, ConfirmDialog };
 }
 
 type ProjectFormData = {
@@ -70,7 +75,7 @@ type ProjectFormData = {
     businessModel: string | null;
     market: string | null;
     competitiveAdvantage: string | null;
-    team: string | null;
+    team: TeamMember[];
     traction: string | null;
     financialInformation: string | null;
     impact: string | null;
@@ -119,7 +124,7 @@ export default function Form({ project, sectors, stages, hasCoachFeature, coachC
         business_model: project?.businessModel ?? '',
         market: project?.market ?? '',
         competitive_advantage: project?.competitiveAdvantage ?? '',
-        team: project?.team ?? '',
+        team: project?.team ?? ([] as TeamMember[]),
         traction: project?.traction ?? '',
         financial_information: project?.financialInformation ?? '',
         impact: project?.impact ?? '',
@@ -202,6 +207,18 @@ export default function Form({ project, sectors, stages, hasCoachFeature, coachC
         }));
     }
 
+    function addTeamMember() {
+        setData('team', [...data.team, { ...EMPTY_TEAM_MEMBER }]);
+    }
+
+    function updateTeamMember(index: number, field: keyof TeamMember, value: string) {
+        setData('team', data.team.map((m, i) => (i === index ? { ...m, [field]: value } : m)));
+    }
+
+    function removeTeamMember(index: number) {
+        setData('team', data.team.filter((_, i) => i !== index));
+    }
+
     function toggleCity(city: string) {
         if (data.cities.includes(city)) {
             setData('cities', data.cities.filter((x) => x !== city));
@@ -248,17 +265,17 @@ export default function Form({ project, sectors, stages, hasCoachFeature, coachC
                     <FieldError>{errors.description}</FieldError>
 
                     <div>
-                        <label className="mb-2 block text-sm font-medium text-slate-700">Secteurs (jusqu'à 5)</label>
+                        <Label>Secteurs (jusqu'à 5)</Label>
                         <div className="flex flex-wrap gap-2">
                             {sectors.map((s) => (
                                 <button
                                     type="button"
                                     key={s.id}
                                     onClick={() => toggleSector(s.id)}
-                                    className={`border px-3 py-1.5 text-xs font-medium ${
+                                    className={`border px-3 py-1.5 text-base font-semibold ${
                                         data.sectors.includes(s.id)
                                             ? 'border-slate-900 bg-slate-900 text-white'
-                                            : 'border-slate-300 text-slate-700 hover:border-slate-900'
+                                            : 'border-slate-400 text-slate-700 hover:border-slate-900'
                                     }`}
                                 >
                                     {s.name}
@@ -269,17 +286,17 @@ export default function Form({ project, sectors, stages, hasCoachFeature, coachC
                     </div>
 
                     <div>
-                        <label className="mb-2 block text-sm font-medium text-slate-700">Stade</label>
+                        <Label>Stades</Label>
                         <div className="flex flex-wrap gap-2">
                             {stages.map((s) => (
                                 <button
                                     type="button"
                                     key={s.id}
                                     onClick={() => selectStage(s.id)}
-                                    className={`border px-3 py-1.5 text-xs font-medium ${
+                                    className={`border px-3 py-1.5 text-base font-semibold ${
                                         data.stages.includes(s.id)
                                             ? 'border-slate-900 bg-slate-900 text-white'
-                                            : 'border-slate-300 text-slate-700 hover:border-slate-900'
+                                            : 'border-slate-400 text-slate-700 hover:border-slate-900'
                                     }`}
                                 >
                                     {s.name}
@@ -299,10 +316,10 @@ export default function Form({ project, sectors, stages, hasCoachFeature, coachC
                                             type="button"
                                             key={value}
                                             onClick={() => toggleProvince(value)}
-                                            className={`border px-3 py-1.5 text-xs font-medium ${
+                                            className={`border px-3 py-1.5 text-base font-semibold ${
                                                 data.provinces.includes(value)
                                                     ? 'border-slate-900 bg-slate-900 text-white'
-                                                    : 'border-slate-300 text-slate-700 hover:border-slate-900'
+                                                    : 'border-slate-400 text-slate-700 hover:border-slate-900'
                                             }`}
                                         >
                                             {label}
@@ -311,7 +328,7 @@ export default function Form({ project, sectors, stages, hasCoachFeature, coachC
                                 </div>
                             ) : (
                                 <Select value={data.provinces[0] ?? ''} onChange={(e) => selectProvince(e.target.value)}>
-                                    <option value="">—</option>
+                                    <option value="">— Selectionner province</option>
                                     {DRC_PROVINCES.map(([value, label]) => (
                                         <option key={value} value={value}>{label}</option>
                                     ))}
@@ -328,10 +345,10 @@ export default function Form({ project, sectors, stages, hasCoachFeature, coachC
                                             type="button"
                                             key={c}
                                             onClick={() => toggleCity(c)}
-                                            className={`border px-3 py-1.5 text-xs font-medium ${
+                                            className={`border px-3 py-1.5 text-lg font-semibold ${
                                                 data.cities.includes(c)
                                                     ? 'border-slate-900 bg-slate-900 text-white'
-                                                    : 'border-slate-300 text-slate-700 hover:border-slate-900'
+                                                    : 'border-slate-400 text-slate-700 hover:border-slate-900'
                                             }`}
                                         >
                                             {c}
@@ -374,17 +391,17 @@ export default function Form({ project, sectors, stages, hasCoachFeature, coachC
                     </div>
 
                     <div>
-                        <label className="mb-2 block text-sm font-medium text-slate-700">Types de financement acceptés (exactement 3)</label>
+                        <Label>Types de financement acceptés (exactement 3)</Label>
                         <div className="flex flex-wrap gap-2">
                             {FUNDING_TYPES.map(([value, label]) => (
                                 <button
                                     type="button"
                                     key={value}
                                     onClick={() => toggleInvestmentType(value)}
-                                    className={`border px-3 py-1.5 text-xs font-medium ${
+                                    className={`border px-3 py-1.5 text-base font-semibold ${
                                         data.investment_types.includes(value)
                                             ? 'border-slate-900 bg-slate-900 text-white'
-                                            : 'border-slate-300 text-slate-700 hover:border-slate-900'
+                                            : 'border-slate-400 text-slate-700 hover:border-slate-900'
                                     }`}
                                 >
                                     {label}
@@ -403,7 +420,83 @@ export default function Form({ project, sectors, stages, hasCoachFeature, coachC
                     <TextArea label="Modèle économique" value={data.business_model} onChange={(v) => setData('business_model', v)} />
                     <TextArea label="Marché" value={data.market} onChange={(v) => setData('market', v)} />
                     <TextArea label="Avantage concurrentiel" value={data.competitive_advantage} onChange={(v) => setData('competitive_advantage', v)} />
-                    <TextArea label="Équipe" value={data.team} onChange={(v) => setData('team', v)} />
+                    <div>
+                        <Label>Équipe</Label>
+                        <div className="flex flex-col gap-4">
+                            {data.team.map((member, i) => (
+                                <div key={i} className="border border-slate-200 p-4">
+                                    <div className="mb-3 flex items-center justify-between">
+                                        <span className="text-caption">Membre {i + 1}</span>
+                                        <button
+                                            type="button"
+                                            onClick={() => removeTeamMember(i)}
+                                            aria-label="Retirer ce membre"
+                                            className="text-slate-400 hover:text-orange-600"
+                                        >
+                                            <RiDeleteBinLine size={16} />
+                                        </button>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div>
+                                            <Label>Nom complet</Label>
+                                            <Input
+                                                value={member.full_name}
+                                                onChange={(e) => updateTeamMember(i, 'full_name', e.target.value)}
+                                                error={!!errors[`team.${i}.full_name`]}
+                                            />
+                                            <FieldError>{errors[`team.${i}.full_name`]}</FieldError>
+                                        </div>
+                                        <div>
+                                            <Label>Fonction</Label>
+                                            <Input
+                                                value={member.role}
+                                                onChange={(e) => updateTeamMember(i, 'role', e.target.value)}
+                                                placeholder="Ex : Co-fondatrice, CTO..."
+                                                error={!!errors[`team.${i}.role`]}
+                                            />
+                                            <FieldError>{errors[`team.${i}.role`]}</FieldError>
+                                        </div>
+                                        <div>
+                                            <Label>Email</Label>
+                                            <Input
+                                                type="email"
+                                                value={member.email}
+                                                onChange={(e) => updateTeamMember(i, 'email', e.target.value)}
+                                                error={!!errors[`team.${i}.email`]}
+                                            />
+                                            <FieldError>{errors[`team.${i}.email`]}</FieldError>
+                                        </div>
+                                        <div>
+                                            <Label>Téléphone</Label>
+                                            <Input
+                                                value={member.phone}
+                                                onChange={(e) => updateTeamMember(i, 'phone', e.target.value)}
+                                                placeholder="+243..."
+                                                error={!!errors[`team.${i}.phone`]}
+                                            />
+                                            <FieldError>{errors[`team.${i}.phone`]}</FieldError>
+                                        </div>
+                                        <div className="col-span-2">
+                                            <Label>LinkedIn (si disponible)</Label>
+                                            <Input
+                                                value={member.linkedin}
+                                                onChange={(e) => updateTeamMember(i, 'linkedin', e.target.value)}
+                                                placeholder="https://linkedin.com/in/..."
+                                                error={!!errors[`team.${i}.linkedin`]}
+                                            />
+                                            <FieldError>{errors[`team.${i}.linkedin`]}</FieldError>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                        {data.team.length === 0 && (
+                            <p className="mb-3 text-caption">Aucun membre ajouté pour l'instant.</p>
+                        )}
+                        <Button type="button" variant="outline" size="sm" onClick={addTeamMember} className="mt-3 flex items-center gap-1.5">
+                            <RiUserAddLine size={14} /> Ajouter un membre
+                        </Button>
+                    </div>
                     <TextArea label="Traction" value={data.traction} onChange={(v) => setData('traction', v)} />
                     <TextArea label="Informations financières" value={data.financial_information} onChange={(v) => setData('financial_information', v)} />
                     <TextArea label="Impact" value={data.impact} onChange={(v) => setData('impact', v)} />
@@ -431,7 +524,7 @@ export default function Form({ project, sectors, stages, hasCoachFeature, coachC
                                         type="button"
                                         onClick={() => imageUpload.inputRef.current?.click()}
                                         disabled={imageUpload.uploading}
-                                        className="flex h-24 w-24 flex-col items-center justify-center gap-1 border border-dashed border-slate-300 text-slate-500 hover:border-slate-900 hover:text-slate-900 disabled:opacity-50"
+                                        className="flex h-24 w-24 flex-col items-center justify-center gap-1 border border-dashed border-slate-400 text-slate-500 hover:border-slate-900 hover:text-slate-900 disabled:opacity-50"
                                     >
                                         <RiImageAddLine size={20} />
                                         <span className="text-caption">{imageUpload.uploading ? 'Envoi...' : 'Ajouter'}</span>
@@ -520,6 +613,8 @@ export default function Form({ project, sectors, stages, hasCoachFeature, coachC
                     </div>
                 )}
             </div>
+            {imageUpload.ConfirmDialog}
+            {documentUpload.ConfirmDialog}
         </>
     );
 }

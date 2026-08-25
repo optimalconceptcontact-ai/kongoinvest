@@ -21,7 +21,7 @@ export function ConfirmPasswordModal({ open, onClose }: { open: boolean; onClose
             onSuccess: () => {
                 onClose();
                 const intent = consumeIntent();
-                if (intent) window.dispatchEvent(new CustomEvent('kanda:resume-intent', { detail: intent }));
+                if (intent) window.dispatchEvent(new CustomEvent('kongoinvestment:resume-intent', { detail: intent }));
             },
         });
     }

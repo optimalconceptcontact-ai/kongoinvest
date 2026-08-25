@@ -10,7 +10,7 @@ type Stats = {
 
 function StatCard({ label, value }: { label: string; value: number | string }) {
     return (
-        <div className="border border-slate-200 p-5">
+        <div className="border border-slate-300 p-5">
             <div className="text-stat">{value}</div>
             <div className="mt-1 text-caption">{label}</div>
         </div>
@@ -22,7 +22,7 @@ export default function AdminDashboard({ stats }: { stats: Stats }) {
         <AdminLayout title="Dashboard">
             <Head title="Admin — Dashboard" />
 
-            <div className="mb-8 border border-slate-200 bg-slate-50 px-4 py-3 text-caption">
+            <div className="mb-8 border border-slate-300 bg-slate-50 px-4 py-3 text-caption">
                 Les revenus, paiements, fonds libérés et litiges apparaîtront ici une fois les Phases 10-11
                 (paiements, Escrow) construites — cette page n'affiche que des données réelles.
             </div>

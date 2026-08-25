@@ -7,6 +7,7 @@ use App\Enums\PaymentProviderName;
 use App\Enums\PaymentPurpose;
 use App\Http\Controllers\Controller;
 use App\Models\SubscriptionPlan;
+use App\Services\SubscriptionService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -14,6 +15,7 @@ use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
+use Laravel\Cashier\Exceptions\IncompletePayment;
 
 class BillingController extends Controller
 {
@@ -26,19 +28,19 @@ class BillingController extends Controller
         }
 
         return Inertia::render('Settings/Billing/Checkout', [
-            'plan' => $plan->only(['id', 'key', 'name', 'price_minor', 'currency']),
+            'plan' => $plan->only(['id', 'key', 'name', 'price_minor', 'annual_price_minor', 'currency']),
         ]);
     }
 
     /**
-     * Card rail only. Returns a real Stripe PaymentIntent client secret
-     * as JSON — the frontend mounts Stripe Elements against it and
-     * collects card details itself, through Stripe's own hosted iframe
-     * fields. The raw card number/expiry/CVC never touch this endpoint,
-     * this controller, or our database at any point (PCI scope stays
-     * entirely with Stripe, by construction — not just by policy).
+     * Card rail — goes through Cashier now. Returns a SetupIntent client
+     * secret, not a PaymentIntent: a subscription needs a reusable saved
+     * payment method, not a one-off charge. The frontend mounts Stripe
+     * Elements against it and collects card details itself through
+     * Stripe's own hosted iframe fields — raw card data never touches
+     * this endpoint (PCI scope stays with Stripe).
      */
-    public function intent(Request $request, SubscriptionPlan $plan, CreatePayment $action): JsonResponse
+    public function intent(Request $request, SubscriptionPlan $plan): JsonResponse
     {
         abort_if($plan->price_minor === 0, 404);
 
@@ -47,57 +49,105 @@ class BillingController extends Controller
         }
 
         try {
-            [, $intent] = $action->handle(
-                payer: $request->user(),
-                purpose: PaymentPurpose::Subscription,
-                provider: PaymentProviderName::Stripe,
-                amountMinor: $plan->price_minor,
-                currency: $plan->currency,
-                payable: $plan,
-                idempotencyKey: "sub-{$request->user()->id}-{$plan->id}-".now()->format('YmdHisv'),
-            );
-        } catch (\RuntimeException $e) {
+            $setupIntent = $request->user()->createSetupIntent();
+        } catch (\Exception $e) {
             return response()->json(['message' => "Le paiement par carte n'est pas disponible pour le moment."], 503);
         }
 
-        return response()->json(['clientSecret' => $intent->clientSecret]);
+        return response()->json(['clientSecret' => $setupIntent->client_secret]);
     }
 
     /**
-     * PayPal and Mobile Money only now — both are redirect/async flows
-     * with nothing to collect on our own page, unlike Stripe. See
-     * intent() above for the card rail.
+     * Creates the actual Cashier subscription once the SetupIntent above
+     * confirmed and yielded a reusable payment method. Mirrors the result
+     * into the app's own plan_subscriptions table immediately (rather than
+     * waiting for the customer.subscription.created webhook round-trip)
+     * so the user isn't stuck seeing their old plan for a few seconds —
+     * SyncPlanSubscriptionFromCashier keeps it correct after this for
+     * renewals/changes made outside this one request.
+     */
+    public function subscribe(Request $request, SubscriptionPlan $plan, SubscriptionService $subscriptions): JsonResponse
+    {
+        abort_if($plan->price_minor === 0, 404);
+
+        if (! $plan->isRoleAgnostic() && ! $request->user()->hasRole($plan->role_scope->value)) {
+            abort(403);
+        }
+
+        $data = $request->validate([
+            'payment_method' => ['required', 'string'],
+            'billing_period' => ['required', Rule::in(['monthly', 'annual'])],
+        ]);
+
+        $stripePriceId = $plan->stripePriceIdFor($data['billing_period']);
+
+        abort_if(! $stripePriceId, 503, "Ce plan n'est pas encore configuré pour la facturation.");
+
+        try {
+            $request->user()
+                ->newSubscription('default', $stripePriceId)
+                ->create($data['payment_method']);
+        } catch (IncompletePayment $e) {
+            return response()->json(['requiresAction' => true, 'paymentId' => $e->payment->id]);
+        }
+
+        $subscriptions->syncPlanFromCashierSubscription(
+            $request->user(),
+            $plan,
+            $request->user()->subscription('default')->stripe_id,
+            $data['billing_period'],
+        );
+
+        return response()->json(['status' => 'active']);
+    }
+
+    /**
+     * PayPal and Mobile Money — these can't go through Cashier (Stripe
+     * only), so they stay on the app's own one-off CreatePayment flow,
+     * same as before Cashier. This is a one-time charge, not a recurring
+     * subscription: nothing here auto-renews next month, unlike the card
+     * rail. ActivateSubscriptionOnPayment switches the plan once the
+     * provider's webhook confirms the payment succeeded.
      */
     public function pay(Request $request, SubscriptionPlan $plan, CreatePayment $action): RedirectResponse
     {
         abort_if($plan->price_minor === 0, 404);
 
+        if (! $plan->isRoleAgnostic() && ! $request->user()->hasRole($plan->role_scope->value)) {
+            abort(403);
+        }
+
         $data = $request->validate([
             'provider' => ['required', Rule::in(['paypal', 'orange_money', 'mpesa', 'airtel_money'])],
             'phone_number' => ['required_if:provider,orange_money,mpesa,airtel_money', 'nullable', 'string'],
+            'billing_period' => ['required', Rule::in(['monthly', 'annual'])],
         ]);
 
         $provider = PaymentProviderName::from($data['provider']);
+        $amountMinor = $plan->priceMinorFor($data['billing_period']);
+
+        abort_if(! $amountMinor, 503, "Ce plan n'est pas encore configuré pour la facturation annuelle.");
 
         try {
             [, $intent] = $action->handle(
                 payer: $request->user(),
                 purpose: PaymentPurpose::Subscription,
                 provider: $provider,
-                amountMinor: $plan->price_minor,
+                amountMinor: $amountMinor,
                 currency: $plan->currency,
                 payable: $plan,
-                metadata: array_filter(['phone_number' => $data['phone_number'] ?? null]),
+                // PayPal/Mobile Money never renew automatically (see class
+                // docblock) — billing_period here is only recorded so
+                // ActivateSubscriptionOnPayment stamps the right period on
+                // the resulting plan_subscriptions row, not because this
+                // charge repeats.
+                metadata: array_filter(['phone_number' => $data['phone_number'] ?? null, 'billing_period' => $data['billing_period']]),
                 // One idempotency key per (user, plan) pair per request —
                 // a double-click on "Pay" reuses the same Payment instead
                 // of charging twice (spec §41).
                 idempotencyKey: "sub-{$request->user()->id}-{$plan->id}-".now()->format('YmdHis'),
             );
         } catch (\RuntimeException $e) {
-            // A provider that isn't configured (no API key set) fails
-            // loudly in development rather than silently pretending to
-            // work — but the person checking out just sees a clean
-            // error, not a stack trace (spec §137).
             throw ValidationException::withMessages(['provider' => "Ce moyen de paiement n'est pas disponible pour le moment."]);
         }
 

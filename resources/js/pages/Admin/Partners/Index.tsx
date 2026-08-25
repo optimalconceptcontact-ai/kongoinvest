@@ -7,6 +7,7 @@ import { Checkbox } from '@/components/Ui/Checkbox';
 import { FieldError } from '@/components/Ui/FieldError';
 import { Input } from '@/components/Ui/Input';
 import { Label } from '@/components/Ui/Label';
+import { useConfirm } from '@/hooks/useConfirm';
 
 type Partner = { id: number; name: string; category: string | null; website: string | null; is_published: boolean; order: number };
 
@@ -29,7 +30,7 @@ function PartnerForm({ partner, onDone }: { partner?: Partner; onDone: () => voi
     }
 
     return (
-        <form onSubmit={submit} className="flex flex-wrap items-end gap-3 border border-slate-200 bg-slate-50 p-4">
+        <form onSubmit={submit} className="flex flex-wrap items-end gap-3 border border-slate-300 bg-slate-50 p-4">
             <div>
                 <Label className="text-xs">Nom</Label>
                 <Input size="sm" className="w-48" value={data.name} onChange={(e) => setData('name', e.target.value)} />
@@ -58,29 +59,32 @@ function PartnerForm({ partner, onDone }: { partner?: Partner; onDone: () => voi
 
 export default function Index({ partners }: { partners: Partner[] }) {
     const [editing, setEditing] = useState<number | null>(null);
+    const { confirm, ConfirmDialog } = useConfirm();
 
-    function destroy(id: number) {
-        if (confirm('Supprimer ce partenaire ?')) router.delete(`/admin/partners/${id}`);
+    async function destroy(partner: Partner) {
+        if (await confirm({ description: `Supprimer le partenaire « ${partner.name} » ?`, danger: true, confirmLabel: 'Supprimer' })) {
+            router.delete(`/admin/partners/${partner.id}`);
+        }
     }
 
     return (
         <AdminLayout title="Partenaires">
             <Head title="Admin — Partenaires" />
-            <p className="mb-6 border border-blue-200 bg-blue-50 px-4 py-3 text-xs text-blue-700">
+            <p className="mb-6 border border-slate-300 bg-slate-50 px-4 py-3 text-caption">
                 Un partenaire n'apparaît sur la page d'accueil qu'une fois « Publié » coché — n'y entrez que des
                 partenariats réels (spec §65).
             </p>
 
             <div className="mb-6"><PartnerForm onDone={() => {}} /></div>
 
-            <div className="border border-slate-200">
+            <div className="border border-slate-300">
                 {partners.map((partner) =>
                     editing === partner.id ? (
-                        <div key={partner.id} className="border-b border-slate-200 last:border-b-0">
+                        <div key={partner.id} className="border-b border-slate-300 last:border-b-0">
                             <PartnerForm partner={partner} onDone={() => setEditing(null)} />
                         </div>
                     ) : (
-                        <div key={partner.id} className="flex items-center justify-between border-b border-slate-200 p-4 last:border-b-0">
+                        <div key={partner.id} className="flex items-center justify-between border-b border-slate-300 p-4 last:border-b-0">
                             <div>
                                 <div className="flex items-center gap-2">
                                     <span className="text-item-title">{partner.name}</span>
@@ -91,13 +95,14 @@ export default function Index({ partners }: { partners: Partner[] }) {
                                 <div className="text-caption">{partner.category}</div>
                             </div>
                             <div className="flex gap-2">
-                                <button onClick={() => setEditing(partner.id)} className="border border-slate-300 p-2 hover:border-slate-900"><RiPencilLine size={14} /></button>
-                                <button onClick={() => destroy(partner.id)} className="border border-slate-300 p-2 text-orange-600 hover:border-orange-600"><RiDeleteBinLine size={14} /></button>
+                                <button onClick={() => setEditing(partner.id)} className="border border-slate-400 p-2 hover:border-slate-900"><RiPencilLine size={14} /></button>
+                                <button onClick={() => destroy(partner)} className="border border-slate-400 p-2 text-orange-600 hover:border-orange-600"><RiDeleteBinLine size={14} /></button>
                             </div>
                         </div>
                     ),
                 )}
             </div>
+            {ConfirmDialog}
         </AdminLayout>
     );
 }

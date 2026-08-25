@@ -21,6 +21,8 @@ Homestead.json
 Homestead.yaml
 npm-debug.log
 yarn-error.log
+vite_stdout.log
+/storage/framework/newdebugbar
 /auth.json
 /.fleet
 /.idea

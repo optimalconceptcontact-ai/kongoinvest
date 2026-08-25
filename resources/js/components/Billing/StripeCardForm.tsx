@@ -2,6 +2,7 @@ import { Elements, PaymentElement, useElements, useStripe } from '@stripe/react-
 import { useEffect, useState } from 'react';
 import { useStripePromise } from '@/hooks/useStripe';
 import { Button } from '@/components/Ui/Button';
+import { stripeAppearance, stripePaymentElementOptions } from '@/lib/stripeAppearance';
 
 /**
  * The actual card number / expiry / CVC fields the checkout page was
@@ -56,14 +57,14 @@ export function StripeCardForm({
 
     if (!stripePromise) {
         return (
-            <div className="border border-orange-200 bg-orange-50 px-4 py-3 text-xs text-orange-700">
+            <div className="border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
                 Le paiement par carte n'est pas configuré sur cet environnement (clé publique Stripe manquante).
             </div>
         );
     }
 
     if (loadError) {
-        return <div className="border border-orange-200 bg-orange-50 px-4 py-3 text-xs text-orange-700">{loadError}</div>;
+        return <div className="border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{loadError}</div>;
     }
 
     if (!clientSecret) {
@@ -71,7 +72,7 @@ export function StripeCardForm({
     }
 
     return (
-        <Elements stripe={stripePromise} options={{ clientSecret, appearance: { theme: 'flat', variables: { borderRadius: '0px', colorPrimary: '#0f172a' } } }}>
+        <Elements stripe={stripePromise} options={{ clientSecret, appearance: stripeAppearance }}>
             <InnerForm onSuccess={onSuccess} />
         </Elements>
     );
@@ -115,9 +116,9 @@ function InnerForm({ onSuccess }: { onSuccess: () => void }) {
 
     return (
         <form onSubmit={submit} className="flex flex-col gap-4">
-            <PaymentElement options={{ layout: 'tabs' }} />
+            <PaymentElement options={stripePaymentElementOptions} />
 
-            {error && <div className="border border-orange-200 bg-orange-50 px-3 py-2 text-xs text-orange-700">{error}</div>}
+            {error && <div className="border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>}
 
             <Button type="submit" variant="cta" disabled={!stripe || submitting} className="px-6 py-3">
                 {submitting ? 'Traitement...' : 'Payer'}

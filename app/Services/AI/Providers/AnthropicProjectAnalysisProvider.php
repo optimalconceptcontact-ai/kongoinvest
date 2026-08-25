@@ -101,7 +101,10 @@ class AnthropicProjectAnalysisProvider implements ProjectAnalysisProviderInterfa
             'Modèle économique' => $project->business_model,
             'Marché' => $project->market,
             'Avantage concurrentiel' => $project->competitive_advantage,
-            'Équipe' => $project->team,
+            'Équipe' => collect($project->team ?? [])
+                ->map(fn (array $m) => trim(($m['full_name'] ?? '').(filled($m['role'] ?? null) ? ' ('.$m['role'].')' : '')))
+                ->filter()
+                ->implode(', ') ?: null,
             'Traction' => $project->traction,
             'Informations financières' => $project->financial_information,
             'Objectif de financement' => $project->funding_target_minor

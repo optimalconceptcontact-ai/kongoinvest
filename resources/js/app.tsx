@@ -11,7 +11,7 @@ configureEcho({
     broadcaster: 'reverb',
 });
 
-const appName = import.meta.env.VITE_APP_NAME || 'Kanda';
+const appName = import.meta.env.VITE_APP_NAME || 'KongoInvestment';
 
 function resolve(name: string) {
     const pages = import.meta.glob('./pages/**/*.tsx') as Record<

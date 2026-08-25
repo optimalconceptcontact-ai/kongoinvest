@@ -14,7 +14,7 @@ export default function Index({ matches }: { matches: MatchCardData[] }) {
                 </p>
 
                 {matches.length === 0 ? (
-                    <div className="border border-dashed border-slate-300 py-16 text-center text-sm text-slate-500">
+                    <div className="border border-dashed border-slate-400 py-16 text-center text-sm text-slate-500">
                         Aucun investisseur matché pour l'instant. Publiez votre projet pour déclencher le calcul
                         des matches.
                     </div>

@@ -15,7 +15,11 @@ enum SubscriptionPlanKey: string
             self::Free => 'Free',
             self::Entrepreneur => 'Entrepreneur',
             self::Investor => 'Investor',
-            self::Professional => 'Professional',
+            // Displayed as "Coaching" — the app itself now manages the
+            // investor/entrepreneur relationship through to closing under
+            // this plan. The enum case/value stay 'professional' so
+            // existing DB rows, tests, and role-scope checks are untouched.
+            self::Professional => 'Coaching',
         };
     }
 }

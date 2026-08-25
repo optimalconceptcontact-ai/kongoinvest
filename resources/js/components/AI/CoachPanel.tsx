@@ -33,7 +33,7 @@ export function CoachPanel({ projectId, conversation }: { projectId: number; con
             {conversation && conversation.messages.length > 0 && (
                 <div className="mb-4 flex max-h-72 flex-col gap-3 overflow-y-auto border-t border-slate-200 pt-4">
                     {conversation.messages.map((m) => (
-                        <div key={m.id} className={`text-sm ${m.role === 'user' ? 'font-medium text-slate-700' : 'border-l-2 border-orange-400 pl-3 text-slate-600'}`}>
+                        <div key={m.id} className={`text-sm ${m.role === 'user' ? 'font-medium text-slate-700' : 'border-l-2 border-orange-400 pl-3 text-slate-700'}`}>
                             {m.content}
                         </div>
                     ))}

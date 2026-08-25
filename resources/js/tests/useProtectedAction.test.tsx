@@ -68,10 +68,10 @@ describe('useProtectedAction (spec §7 + §136)', () => {
         render(<TestHarness openRegisterSpy={vi.fn()} run={run} />);
 
         act(() => {
-            window.dispatchEvent(new CustomEvent('kanda:resume-intent', { detail: { action: 'contact_investor' } }));
+            window.dispatchEvent(new CustomEvent('kongoinvestment:resume-intent', { detail: { action: 'contact_investor' } }));
         });
         act(() => {
-            window.dispatchEvent(new CustomEvent('kanda:resume-intent', { detail: { action: 'save_project' } })); // a different action — must be ignored
+            window.dispatchEvent(new CustomEvent('kongoinvestment:resume-intent', { detail: { action: 'save_project' } })); // a different action — must be ignored
         });
 
         expect(run).toHaveBeenCalledTimes(1);

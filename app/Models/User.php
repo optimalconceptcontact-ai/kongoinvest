@@ -9,13 +9,14 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Laravel\Cashier\Billable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, HasRoles, Notifiable, SoftDeletes, TwoFactorAuthenticatable;
+    use Billable, HasFactory, HasRoles, Notifiable, SoftDeletes, TwoFactorAuthenticatable;
 
     protected $fillable = [
         'name', 'email', 'password', 'phone', 'country_code', 'city',
@@ -66,7 +67,12 @@ class User extends Authenticatable
         return $this->hasMany(\App\Models\Project::class);
     }
 
-    public function subscriptions(): HasMany
+    // Named planSubscriptions(), not subscriptions() — Laravel\Cashier\Billable
+    // (below) defines its own subscriptions() relation to the Stripe-backed
+    // Laravel\Cashier\Subscription model, and a class's own method silently
+    // wins over a trait method of the same name. Keeping this distinct
+    // avoids Cashier's internals silently calling the wrong relation.
+    public function planSubscriptions(): HasMany
     {
         return $this->hasMany(\App\Models\Subscription::class);
     }
@@ -74,6 +80,11 @@ class User extends Authenticatable
     public function kycProfile(): HasOne
     {
         return $this->hasOne(\App\Models\KycProfile::class);
+    }
+
+    public function savedProjects(): HasMany
+    {
+        return $this->hasMany(\App\Models\SavedProject::class, 'investor_user_id');
     }
 
     public function isEntrepreneur(): bool

@@ -6,7 +6,15 @@ import { useInitials } from '@/hooks/use-initials';
 
 type User = { name: string; email: string };
 
-export function UserMenu({ user }: { user: User }) {
+export function UserMenu({
+    user,
+    align = 'right',
+    direction = 'down',
+}: {
+    user: User;
+    align?: 'left' | 'right';
+    direction?: 'up' | 'down';
+}) {
     const [open, setOpen] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
     const getInitials = useInitials();
@@ -43,7 +51,11 @@ export function UserMenu({ user }: { user: User }) {
             </button>
 
             {open && (
-                <div className="absolute right-0 z-50 mt-2 w-56 border border-slate-200 bg-white shadow-sm">
+                <div
+                    className={`absolute z-50 w-56 max-w-[calc(100vw-2rem)] border border-slate-200 bg-white shadow-sm ${
+                        direction === 'up' ? 'bottom-full mb-2' : 'mt-2'
+                    } ${align === 'left' ? 'left-0' : 'right-0'}`}
+                >
                     <div className="border-b border-slate-200 px-4 py-3">
                         <div className="text-menu-title">{user.name}</div>
                         <div className="text-menu-subtitle">{user.email}</div>

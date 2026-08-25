@@ -26,7 +26,7 @@ class SubscriptionService
 
     public function activeSubscriptionFor(User $user): ?Subscription
     {
-        return $user->subscriptions()
+        return $user->planSubscriptions()
             ->whereIn('status', [SubscriptionStatus::Active->value, SubscriptionStatus::Trialing->value])
             ->where(fn ($q) => $q->whereNull('ends_at')->orWhere('ends_at', '>', now()))
             ->latest('starts_at')
@@ -51,7 +51,7 @@ class SubscriptionService
     {
         $free = SubscriptionPlan::where('key', SubscriptionPlanKey::Free->value)->firstOrFail();
 
-        return $user->subscriptions()->create([
+        return $user->planSubscriptions()->create([
             'subscription_plan_id' => $free->id,
             'status' => SubscriptionStatus::Active->value,
             'starts_at' => now(),
@@ -64,7 +64,7 @@ class SubscriptionService
      * once billing exists, it gains a "charge first, then call this" step
      * without anything else in the app needing to change.
      */
-    public function switchPlan(User $user, SubscriptionPlan $plan): Subscription
+    public function switchPlan(User $user, SubscriptionPlan $plan, string $billingPeriod = 'monthly'): Subscription
     {
         // isRoleAgnostic() (Free) plans skip this — anyone may hold Free.
         // Anything else must match the user's actual Spatie role, checked
@@ -76,7 +76,7 @@ class SubscriptionService
             ]);
         }
 
-        return DB::transaction(function () use ($user, $plan) {
+        return DB::transaction(function () use ($user, $plan, $billingPeriod) {
             $current = $this->activeSubscriptionFor($user);
 
             if ($current && $current->plan->id === $plan->id) {
@@ -89,10 +89,46 @@ class SubscriptionService
                 'canceled_at' => now(),
             ]);
 
-            return $user->subscriptions()->create([
+            return $user->planSubscriptions()->create([
                 'subscription_plan_id' => $plan->id,
+                'billing_period' => $billingPeriod,
                 'status' => SubscriptionStatus::Active->value,
                 'starts_at' => now(),
+            ]);
+        });
+    }
+
+    /**
+     * Called by SyncPlanSubscriptionFromCashier (webhook-driven) and by
+     * BillingController::subscribe() right after a Cashier subscription is
+     * created — not by user-facing request code, which is why this skips
+     * switchPlan()'s hasRole() check (there's no request-scoped user role
+     * to check inside a webhook). Reuses the same cancel-then-create
+     * pattern so the single-active-row invariant every caller of
+     * activeSubscriptionFor() relies on still holds.
+     */
+    public function syncPlanFromCashierSubscription(User $user, SubscriptionPlan $plan, string $stripeSubscriptionId, string $billingPeriod = 'monthly'): Subscription
+    {
+        return DB::transaction(function () use ($user, $plan, $stripeSubscriptionId, $billingPeriod) {
+            $current = $this->activeSubscriptionFor($user);
+
+            if ($current && $current->plan->id === $plan->id) {
+                return $current;
+            }
+
+            $current?->update([
+                'status' => SubscriptionStatus::Canceled->value,
+                'ends_at' => now(),
+                'canceled_at' => now(),
+            ]);
+
+            return $user->planSubscriptions()->create([
+                'subscription_plan_id' => $plan->id,
+                'billing_period' => $billingPeriod,
+                'status' => SubscriptionStatus::Active->value,
+                'starts_at' => now(),
+                'payment_provider' => 'stripe',
+                'provider_subscription_id' => $stripeSubscriptionId,
             ]);
         });
     }

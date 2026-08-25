@@ -31,7 +31,7 @@ describe('PublicLayout', () => {
             </PublicLayout>,
         );
 
-        expect(screen.getAllByText('Kanda').length).toBeGreaterThan(0); // logo appears in both navbar and footer
+        expect(screen.getAllByText('KongoInvestment').length).toBeGreaterThan(0); // logo appears in both navbar and footer
         expect(screen.getByText('Contenu de la page')).toBeInTheDocument();
         expect(screen.getByText(/Tous droits réservés/)).toBeInTheDocument(); // footer
     });

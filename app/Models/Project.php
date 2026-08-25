@@ -47,6 +47,9 @@ class Project extends Model implements HasMedia
             // open to — the investor later narrows to one when
             // requesting AI contract generation (see ContractDraftService).
             'investment_types' => 'array',
+            // List of {full_name, role, linkedin, email, phone} — see
+            // StoreProjectRequest for the shape validated on write.
+            'team' => 'array',
             'status' => ProjectStatus::class,
             'visibility' => ProjectVisibility::class,
             'social_links' => 'array',
@@ -91,6 +94,16 @@ class Project extends Model implements HasMedia
     public function aiAnalyses(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(AiAnalysis::class)->latest();
+    }
+
+    public function savedBy(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(SavedProject::class);
+    }
+
+    public function isSavedBy(User $user): bool
+    {
+        return $this->savedBy()->where('investor_user_id', $user->id)->exists();
     }
 
     public function registerMediaCollections(): void

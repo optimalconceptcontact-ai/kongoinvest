@@ -84,7 +84,7 @@ function DocumentsPanel({ dealRoomId, documents, viewerId }: { dealRoomId: numbe
     }
 
     return (
-        <div className="border border-slate-200 p-5">
+        <div className="border border-slate-300 p-5">
             <h2 className="mb-4 text-section-label">Documents</h2>
 
             {documents.length === 0 ? (
@@ -92,7 +92,7 @@ function DocumentsPanel({ dealRoomId, documents, viewerId }: { dealRoomId: numbe
             ) : (
                 <div className="mb-4 flex flex-col gap-2">
                     {documents.map((d) => (
-                        <div key={d.id} className="flex items-center justify-between border-b border-slate-100 py-2 text-sm last:border-b-0">
+                        <div key={d.id} className="flex items-center justify-between border-b border-slate-300 py-2 text-sm last:border-b-0">
                             <div className="flex items-center gap-2">
                                 <RiFileTextLine size={16} className="text-slate-400" />
                                 <span>{d.title}</span>
@@ -119,7 +119,7 @@ function DocumentsPanel({ dealRoomId, documents, viewerId }: { dealRoomId: numbe
                 </div>
             )}
 
-            <form onSubmit={submit} className="flex flex-wrap items-end gap-2 border-t border-slate-100 pt-4">
+            <form onSubmit={submit} className="flex flex-wrap items-end gap-2 border-t border-slate-300 pt-4">
                 <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Titre du document" size="sm" className="flex-1" />
                 <input type="file" onChange={(e) => setFile(e.target.files?.[0] ?? null)} className="text-xs" />
                 <Checkbox
@@ -127,7 +127,7 @@ function DocumentsPanel({ dealRoomId, documents, viewerId }: { dealRoomId: numbe
                     checked={shareNow}
                     onChange={(e) => setShareNow(e.target.checked)}
                     size="sm"
-                    className="gap-1 text-slate-600"
+                    className="gap-1 text-slate-700"
                 />
                 <Button type="submit" disabled={uploading || !file || !title} size="sm" className="flex items-center gap-1">
                     <RiUploadLine size={14} /> Ajouter
@@ -155,7 +155,7 @@ function ContractPanel({
     const canGenerate = !latest || latest.status === 'rejected';
 
     return (
-        <div className="border border-slate-200 p-5">
+        <div className="border border-slate-300 p-5">
             <h2 className="mb-4 text-section-label">Contrat</h2>
 
             {latest && latest.latestVersionContent && (
@@ -178,7 +178,7 @@ function ContractPanel({
                             <summary className="cursor-pointer font-mono text-[11px] uppercase text-blue-600 hover:text-blue-700">
                                 Voir les termes détaillés (généré par IA)
                             </summary>
-                            <pre className="mt-2 max-h-64 overflow-y-auto whitespace-pre-wrap border border-slate-100 bg-slate-50 p-3 text-xs text-slate-700">
+                            <pre className="mt-2 max-h-64 overflow-y-auto whitespace-pre-wrap border border-slate-300 bg-slate-50 p-3 text-xs text-slate-700">
                                 {latest.terms.conditions}
                             </pre>
                         </details>
@@ -192,7 +192,7 @@ function ContractPanel({
                             <Button variant="secondary" size="sm" onClick={() => router.post(`/contracts/${latest.id}/accept`, {}, { preserveScroll: true })}>
                                 Accepter
                             </Button>
-                            <button onClick={() => router.post(`/contracts/${latest.id}/reject`, {}, { preserveScroll: true })} className="border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-500 hover:border-orange-600 hover:text-orange-600">
+                            <button onClick={() => router.post(`/contracts/${latest.id}/reject`, {}, { preserveScroll: true })} className="border border-slate-400 px-3 py-1.5 text-xs font-semibold text-slate-500 hover:border-orange-600 hover:text-orange-600">
                                 Refuser
                             </button>
                         </div>
@@ -245,7 +245,7 @@ function GenerateContractAiForm({ dealRoomId, investmentTypes, onDone }: { dealR
     }
 
     return (
-        <form onSubmit={submit} className="flex flex-col gap-2 border-t border-slate-100 pt-4">
+        <form onSubmit={submit} className="flex flex-col gap-2 border-t border-slate-300 pt-4">
             <Select value={investmentType} onChange={(e) => setInvestmentType(e.target.value)} size="sm">
                 {investmentTypes.map((t) => (
                     <option key={t} value={t}>{fundingTypeLabel(t)}</option>
@@ -302,7 +302,7 @@ function EscrowPanel({ escrow, viewerRole }: { escrow: DealEscrow; viewerRole: '
     }
 
     return (
-        <div className="border border-slate-200 p-5">
+        <div className="border border-slate-300 p-5">
             <h2 className="mb-4 text-section-label">Séquestre (Escrow)</h2>
 
             <div className="mb-4 flex items-center justify-between">
@@ -314,7 +314,7 @@ function EscrowPanel({ escrow, viewerRole }: { escrow: DealEscrow; viewerRole: '
 
             {escrow.openDispute && (
                 <div className="mb-4 border border-orange-200 bg-orange-50 px-3 py-2 text-xs text-orange-700">
-                    Litige ouvert — en cours d'examen par l'équipe Kanda.
+                    Litige ouvert — en cours d'examen par l'équipe KongoInvestment.
                 </div>
             )}
 
@@ -332,11 +332,11 @@ function EscrowPanel({ escrow, viewerRole }: { escrow: DealEscrow; viewerRole: '
                     </Button>
                     <button
                         onClick={() => setConfirmingRefund(true)}
-                        className="border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-500 hover:border-orange-600 hover:text-orange-600"
+                        className="border border-slate-400 px-3 py-1.5 text-xs font-semibold text-slate-500 hover:border-orange-600 hover:text-orange-600"
                     >
                         Demander un remboursement
                     </button>
-                    <button onClick={() => setDisputing((v) => !v)} className="border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-500 hover:border-slate-900">
+                    <button onClick={() => setDisputing((v) => !v)} className="border border-slate-400 px-3 py-1.5 text-xs font-semibold text-slate-500 hover:border-slate-900">
                         Ouvrir un litige
                     </button>
                 </div>
@@ -364,13 +364,13 @@ function EscrowPanel({ escrow, viewerRole }: { escrow: DealEscrow; viewerRole: '
             )}
 
             {escrow.status === 'held' && viewerRole === 'entrepreneur' && (
-                <button onClick={() => setDisputing((v) => !v)} className="border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-500 hover:border-slate-900">
+                <button onClick={() => setDisputing((v) => !v)} className="border border-slate-400 px-3 py-1.5 text-xs font-semibold text-slate-500 hover:border-slate-900">
                     Ouvrir un litige
                 </button>
             )}
 
             {disputing && (
-                <form onSubmit={submitDispute} className="mt-3 flex flex-col gap-2 border-t border-slate-100 pt-3">
+                <form onSubmit={submitDispute} className="mt-3 flex flex-col gap-2 border-t border-slate-300 pt-3">
                     <Textarea
                         value={reason}
                         onChange={(e) => setReason(e.target.value)}
@@ -418,7 +418,7 @@ export default function Show({ dealRoom, viewerRole }: { dealRoom: DealRoomData;
                 ← Retour
             </InertiaLink>
 
-            <div className="mb-6 border-b border-slate-200 pb-6">
+            <div className="mb-6 border-b border-slate-300 pb-6">
                 <p className="text-eyebrow">Deal Room</p>
                 <h1 className="mt-1 mb-2 text-page-title">
                     <InertiaLink href={`/projects/${dealRoom.projectSlug}`} className="hover:text-blue-700">{dealRoom.projectTitle}</InertiaLink>
@@ -426,7 +426,7 @@ export default function Show({ dealRoom, viewerRole }: { dealRoom: DealRoomData;
                 <p className="text-body">{dealRoom.entrepreneurName} × {dealRoom.investorName}</p>
             </div>
 
-            <div className="mb-6 flex min-h-[240px] flex-col gap-3 border border-slate-200 p-5">
+            <div className="mb-6 flex min-h-[240px] flex-col gap-3 border border-slate-300 p-5">
                 {dealRoom.messages.length === 0 ? (
                     <p className="text-sm text-slate-400">Aucun message pour l'instant — lancez la conversation.</p>
                 ) : (
@@ -434,7 +434,7 @@ export default function Show({ dealRoom, viewerRole }: { dealRoom: DealRoomData;
                         const isMine = m.senderId === props.auth.user?.id;
                         return (
                             <div key={m.id} className={`flex flex-col ${isMine ? 'items-end' : 'items-start'}`}>
-                                <div className={`max-w-[75%] px-3 py-2 text-sm ${isMine ? 'bg-slate-900 text-white' : 'border border-slate-200 text-slate-700'}`}>
+                                <div className={`max-w-[75%] px-3 py-2 text-sm ${isMine ? 'bg-slate-900 text-white' : 'border border-slate-300 bg-slate-100 text-slate-800'}`}>
                                     {m.body}
                                 </div>
                                 <div className="mt-1 font-mono text-[10px] text-slate-400">

@@ -13,3 +13,6 @@ In @inertiajs/react v3.6.1 `transform` is a setter that returns void — call it
 
 ## Fortify /user/* routes: PUT only, not PATCH
 Fortify routes are method-specific and fail with 405 MethodNotAllowed on the wrong verb: /user/profile-information is PUT only, /user/password is PUT only, /user/confirm-password is POST. Submit profile updates with `put()`, never `patch()` (Settings/Profile.tsx).
+
+## Animations framer-motion : presets centralisés dans @/lib/animations
+Style maison « doux mais rapide » : durées 0.12–0.35s, easeOut/easeSoft, ressorts stiffness ~320 damping ~30 sans rebond, distances 6–10px. Toujours importer fadeIn/fadeUp/scaleIn/staggerContainer/staggerItem depuis '@/lib/animations' au lieu de redéfinir des variants. MotionConfig reducedMotion="user" est déjà dans root-layout — ne pas le doubler. N'animer que opacity/transform : pas de width/height (les tests lisent style.width statique, ex. barre ProjectCard animée en scaleX). Transitions de page : composant PageTransition dans chaque layout (Inertia remonte la page à chaque visite, pas besoin d'AnimatePresence).

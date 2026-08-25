@@ -1,5 +1,7 @@
 import { Head, router } from '@inertiajs/react';
 import { RiCheckLine } from '@remixicon/react';
+import { useConfirm } from '@/hooks/useConfirm';
+import { Link } from '@/components/Ui/Link';
 
 type Plan = {
     id: number;
@@ -7,6 +9,7 @@ type Plan = {
     name: string;
     roleScope: string | null;
     priceMinor: number;
+    annualPriceMinor: number | null;
     currency: string;
     billingPeriod: string;
     limits: Record<string, number>;
@@ -38,11 +41,18 @@ function formatPrice(priceMinor: number, currency: string) {
     return `${(priceMinor / 100).toLocaleString('fr-FR')} ${currency}/mois`;
 }
 
+function formatAnnualNote(annualPriceMinor: number | null, currency: string) {
+    if (!annualPriceMinor) return null;
+    return `ou ${(annualPriceMinor / 100).toLocaleString('fr-FR')} ${currency}/an (2 mois offerts)`;
+}
+
 export default function Subscription({ plans, currentPlanKey }: { plans: Plan[]; currentPlanKey: string }) {
-    function switchTo(key: string) {
-        if (key === currentPlanKey) return;
-        if (!confirm(`Passer au plan ${key} ?`)) return;
-        router.put('/settings/subscription', { plan: key });
+    const { confirm, ConfirmDialog } = useConfirm();
+
+    async function switchTo(plan: Plan) {
+        if (plan.key === currentPlanKey) return;
+        if (!(await confirm(`Passer au plan ${plan.name} ?`))) return;
+        router.put('/settings/subscription', { plan: plan.key });
     }
 
     return (
@@ -50,17 +60,20 @@ export default function Subscription({ plans, currentPlanKey }: { plans: Plan[];
             <Head title="Abonnement" />
             <div className="mx-auto max-w-5xl px-6 py-12">
                 <p className="text-eyebrow">Paramètres</p>
-                <h1 className="mt-2 mb-2 text-page-title">Abonnement</h1>
+                <div className="mt-2 mb-2 flex items-center justify-between">
+                    <h1 className="text-page-title">Abonnement</h1>
+                    <Link href="/settings/subscription/history">Historique des abonnements →</Link>
+                </div>
                 <p className="mb-10 text-body">
-                    Le paiement réel (Stripe, PayPal, Mobile Money) sera activé en Phase 10 — les changements de
-                    plan ci-dessous sont immédiats et gratuits pour l'instant.
+                    Le passage à un plan payant vous redirige vers une page de paiement (Stripe, PayPal, Mobile
+                    Money). Le plan Free reste immédiat et gratuit.
                 </p>
 
-                <div className="grid grid-cols-1 gap-0 border border-slate-200 md:grid-cols-4">
+                <div className="grid grid-cols-1 gap-0 border border-slate-300 sm:grid-cols-2 md:grid-cols-4">
                     {plans.map((plan) => (
                         <div
                             key={plan.id}
-                            className={`flex flex-col border-slate-200 p-6 md:border-r last:border-r-0 ${
+                            className={`flex flex-col border-slate-300 p-6 md:border-r last:border-r-0 ${
                                 plan.isCurrent ? 'bg-slate-900 text-white' : ''
                             }`}
                         >
@@ -68,11 +81,14 @@ export default function Subscription({ plans, currentPlanKey }: { plans: Plan[];
                                 {plan.isCurrent ? 'Plan actuel' : plan.roleScope ? `Pour les ${plan.roleScope}s` : 'Tous rôles'}
                             </div>
                             <div className="mt-2 mb-1 text-lg font-bold">{plan.name}</div>
-                            <div className={`mb-5 font-mono text-xl font-bold ${plan.isCurrent ? '' : 'text-slate-900'}`}>
+                            <div className={`mb-1 font-mono text-xl font-bold ${plan.isCurrent ? '' : 'text-slate-900'}`}>
                                 {formatPrice(plan.priceMinor, plan.currency)}
                             </div>
+                            <div className={`mb-5 text-xs ${plan.isCurrent ? 'text-slate-400' : 'text-slate-500'}`}>
+                                {formatAnnualNote(plan.annualPriceMinor, plan.currency)}
+                            </div>
 
-                            <ul className="mb-6 flex flex-1 flex-col gap-2 text-xs">
+                            <ul className="mb-6 flex flex-1 flex-col gap-2 text-sm font-medium">
                                 {Object.entries(plan.limits).map(([key, value]) => (
                                     <li key={key} className="flex items-center gap-2">
                                         <RiCheckLine size={14} className={plan.isCurrent ? 'text-orange-400' : 'text-blue-600'} />
@@ -89,13 +105,13 @@ export default function Subscription({ plans, currentPlanKey }: { plans: Plan[];
 
                             <button
                                 disabled={!plan.availableToViewer || plan.isCurrent}
-                                onClick={() => switchTo(plan.key)}
-                                className={`px-4 py-2.5 text-xs font-semibold ${
+                                onClick={() => switchTo(plan)}
+                                className={`px-4 py-2.5 text-sm font-semibold ${
                                     plan.isCurrent
                                         ? 'cursor-default bg-white/10 text-slate-300'
                                         : plan.availableToViewer
                                           ? 'bg-orange-500 text-white hover:bg-orange-600'
-                                          : 'cursor-not-allowed border border-slate-200 text-slate-300'
+                                          : 'cursor-not-allowed border border-slate-400 text-slate-500'
                                 }`}
                             >
                                 {plan.isCurrent ? 'Plan actuel' : plan.availableToViewer ? 'Choisir ce plan' : 'Non disponible pour votre rôle'}
@@ -104,6 +120,7 @@ export default function Subscription({ plans, currentPlanKey }: { plans: Plan[];
                     ))}
                 </div>
             </div>
+            {ConfirmDialog}
         </>
     );
 }

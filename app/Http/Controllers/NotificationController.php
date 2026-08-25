@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 
 class NotificationController extends Controller
 {
@@ -24,7 +24,13 @@ class NotificationController extends Controller
         ]);
     }
 
-    public function markRead(Request $request, string $notification): RedirectResponse
+    /**
+     * Must answer 204, never a redirect: these endpoints are called via
+     * router.post() right before router.visit() navigates elsewhere — if
+     * Inertia followed a redirect (back()), the user would be bounced off
+     * the notification's target page back to the previous one.
+     */
+    public function markRead(Request $request, string $notification): Response
     {
         // Scoped through the relationship (spec §12's principle applied
         // here too) — a user can only ever mark their own notifications,
@@ -32,13 +38,13 @@ class NotificationController extends Controller
         // else's.
         $request->user()->notifications()->where('id', $notification)->first()?->markAsRead();
 
-        return back();
+        return response()->noContent();
     }
 
-    public function markAllRead(Request $request): RedirectResponse
+    public function markAllRead(Request $request): Response
     {
         $request->user()->unreadNotifications->markAsRead();
 
-        return back();
+        return response()->noContent();
     }
 }

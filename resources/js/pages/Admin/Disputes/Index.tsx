@@ -31,7 +31,7 @@ function ResolveForm({ id, onDone }: { id: number; onDone: () => void }) {
                     <button
                         key={r}
                         onClick={() => setResolution(r)}
-                        className={`border px-3 py-1.5 text-xs font-medium ${resolution === r ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-300 text-slate-600'}`}
+                        className={`border px-3 py-1.5 text-base font-semibolds ${resolution === r ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-400 text-slate-700'}`}
                     >
                         {r === 'release' ? 'Libérer les fonds' : r === 'refund' ? "Rembourser l'investisseur" : 'Rejeter le litige'}
                     </button>
@@ -60,13 +60,13 @@ export default function Index({ disputes }: { disputes: DisputeRow[] }) {
             <Head title="Admin — Litiges" />
 
             {disputes.length === 0 ? (
-                <div className="border border-dashed border-slate-300 py-16 text-center text-body">
+                <div className="border border-dashed border-slate-400 py-16 text-center text-body">
                     Aucun litige ouvert.
                 </div>
             ) : (
-                <div className="border border-slate-200">
+                <div className="border border-slate-300">
                     {disputes.map((d) => (
-                        <div key={d.id} className="border-b border-slate-200 p-5 last:border-b-0">
+                        <div key={d.id} className="border-b border-slate-300 p-5 last:border-b-0">
                             <div className="mb-2 flex items-center justify-between">
                                 <div>
                                     <div className="text-item-title">{d.projectTitle}</div>
@@ -79,7 +79,7 @@ export default function Index({ disputes }: { disputes: DisputeRow[] }) {
                                     <div className="font-mono text-[11px] text-slate-400">{new Date(d.createdAt).toLocaleDateString('fr-FR')}</div>
                                 </div>
                             </div>
-                            <p className="mb-3 text-sm text-slate-600">{d.reason}</p>
+                            <p className="mb-3 text-sm text-slate-700">{d.reason}</p>
                             {resolving === d.id ? (
                                 <ResolveForm id={d.id} onDone={() => setResolving(null)} />
                             ) : (

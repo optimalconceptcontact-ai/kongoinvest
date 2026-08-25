@@ -29,13 +29,13 @@ export function LoginModal({ open, onClose }: { open: boolean; onClose: () => vo
                 // resumes exactly once here, never on the login attempt
                 // itself, so it can't double-fire (spec §7).
                 const intent = consumeIntent();
-                if (intent) window.dispatchEvent(new CustomEvent('kanda:resume-intent', { detail: intent }));
+                if (intent) window.dispatchEvent(new CustomEvent('kongoinvestment:resume-intent', { detail: intent }));
             },
         });
     }
 
     return (
-        <Modal open={open} onClose={onClose} title="Se connecter" maxWidth="sm">
+        <Modal open={open} onClose={onClose} title="Se connecter" maxWidth="md">
             <form onSubmit={submit} className="flex flex-col gap-4">
                 <div>
                     <Label>Email</Label>

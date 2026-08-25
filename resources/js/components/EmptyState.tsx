@@ -1,5 +1,7 @@
 import type { RemixiconComponentType } from '@remixicon/react';
+import { motion } from 'framer-motion';
 import type { ReactNode } from 'react';
+import { fadeUp } from '@/lib/animations';
 
 /**
  * Spec §139: a reusable EmptyState/ErrorState pattern. Many pages built
@@ -22,11 +24,18 @@ export function EmptyState({
     action?: ReactNode;
 }) {
     return (
-        <div className="flex flex-col items-center gap-3 border border-dashed border-slate-300 py-16 text-center">
-            {Icon && <Icon size={28} className="text-slate-300" />}
-            <p className="text-sm font-medium text-slate-600">{title}</p>
-            {description && <p className="max-w-sm text-caption">{description}</p>}
+        <motion.div
+            variants={fadeUp}
+            initial="initial"
+            animate="animate"
+            className="flex flex-col items-center gap-3 border border-dashed border-slate-300 py-16 text-center"
+        >
+            {Icon && <Icon size={28} className="text-slate-400" />}
+            <p className="text-sm font-medium text-slate-700">{title}</p>
+            {description && (
+                <p className="max-w-sm text-caption">{description}</p>
+            )}
             {action}
-        </div>
+        </motion.div>
     );
 }

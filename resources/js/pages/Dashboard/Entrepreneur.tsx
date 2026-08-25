@@ -16,7 +16,7 @@ export default function EntrepreneurDashboard({ activeProject, canCreateProject,
             <Head title="Dashboard" />
 
             {!activeProject ? (
-                <div className="border border-dashed border-slate-300 p-10 text-center">
+                <div className="border border-dashed border-slate-400 p-10 text-center">
                     <p className="mb-4 text-body">Vous n'avez pas encore de projet actif.</p>
                     {canCreateProject && (
                         <Link href="/entrepreneur/projects/create" className="inline-flex items-center gap-2 bg-orange-500 px-5 py-2.5 text-btn text-white hover:bg-orange-600">
@@ -26,7 +26,7 @@ export default function EntrepreneurDashboard({ activeProject, canCreateProject,
                 </div>
             ) : (
                 <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-                    <div className="border border-slate-200 p-6 lg:col-span-2">
+                    <div className="border border-slate-300 p-6 lg:col-span-2">
                         <div className="mb-1 font-mono text-[11px] uppercase text-orange-600">{activeProject.status}</div>
                         <h2 className="mb-4 text-item-title-lg">{activeProject.title}</h2>
                         {activeProject.fundingTargetMinor && (
@@ -46,7 +46,7 @@ export default function EntrepreneurDashboard({ activeProject, canCreateProject,
                             Gérer mon projet <RiArrowRightLine size={12} />
                         </Link>
                     </div>
-                    <div className="border border-slate-200 p-6">
+                    <div className="border border-slate-300 p-6">
                         <div className="font-mono text-[11px] uppercase text-slate-500">Plan actuel</div>
                         <div className="mt-1 text-item-title-lg">{currentPlan.name}</div>
                         <Link href="/settings/subscription" className="mt-3 inline-block font-mono text-xs text-blue-600 hover:text-blue-700">
@@ -57,7 +57,7 @@ export default function EntrepreneurDashboard({ activeProject, canCreateProject,
             )}
 
             {activeProject && (
-                <div className="mt-6 border border-slate-200 p-6">
+                <div className="mt-6 border border-slate-300 p-6">
                     <div className="mb-4 flex items-center justify-between">
                         <h2 className="text-section-label">Investisseurs matchés ({matchCount})</h2>
                         <Link href="/entrepreneur/matches" className="font-mono text-xs text-blue-600 hover:text-blue-700">Voir tout →</Link>

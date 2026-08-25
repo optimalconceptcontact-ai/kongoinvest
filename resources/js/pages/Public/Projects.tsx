@@ -40,7 +40,7 @@ export default function Projects({ projects, sectors, stages, filters }: Props) 
                 <p className="text-eyebrow">Découverte</p>
                 <h1 className="mt-2 mb-8 text-page-title-lg">Projets à financer en RDC</h1>
 
-                <div className="mb-8 flex flex-wrap items-center gap-3 border border-slate-200 p-4">
+                <div className="mb-8 flex flex-wrap items-center gap-3 border border-slate-300 p-4">
                     <form onSubmit={submitSearch} className="flex flex-1 min-w-[220px]">
                         <Input
                             value={q}
@@ -86,11 +86,11 @@ export default function Projects({ projects, sectors, stages, filters }: Props) 
                 </div>
 
                 {projects.data.length === 0 ? (
-                    <div className="border border-dashed border-slate-300 py-16 text-center text-body">
+                    <div className="border border-dashed border-slate-400 py-16 text-center text-body">
                         Aucun projet ne correspond à ces critères.
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
                         {projects.data.map((project) => (
                             <ProjectCard key={project.slug} project={project} />
                         ))}
@@ -107,7 +107,7 @@ export default function Projects({ projects, sectors, stages, filters }: Props) 
                                 className={`min-w-[36px] border px-3 py-2 font-mono text-xs ${
                                     link.active
                                         ? 'border-slate-900 bg-slate-900 text-white'
-                                        : 'border-slate-300 text-slate-600 hover:border-slate-900 disabled:opacity-30'
+                                        : 'border-slate-400 text-slate-700 hover:border-slate-900 disabled:opacity-30'
                                 }`}
                                 dangerouslySetInnerHTML={{ __html: link.label }}
                             />

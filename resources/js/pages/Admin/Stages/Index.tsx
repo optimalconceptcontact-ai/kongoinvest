@@ -7,6 +7,7 @@ import { Checkbox } from '@/components/Ui/Checkbox';
 import { FieldError } from '@/components/Ui/FieldError';
 import { Input } from '@/components/Ui/Input';
 import { Label } from '@/components/Ui/Label';
+import { useConfirm } from '@/hooks/useConfirm';
 
 type Stage = { id: number; key: string; name: string; description: string | null; is_active: boolean; order: number; projects_count: number };
 
@@ -29,7 +30,7 @@ function StageForm({ stage, onDone }: { stage?: Stage; onDone: () => void }) {
     }
 
     return (
-        <form onSubmit={submit} className="flex flex-wrap items-end gap-3 border border-slate-200 bg-slate-50 p-4">
+        <form onSubmit={submit} className="flex flex-wrap items-end gap-3 border border-slate-300 bg-slate-50 p-4">
             {!stage && (
                 <div>
                     <Label className="text-xs">Clé</Label>
@@ -63,10 +64,15 @@ function StageForm({ stage, onDone }: { stage?: Stage; onDone: () => void }) {
 
 export default function Index({ stages }: { stages: Stage[] }) {
     const [editing, setEditing] = useState<number | null>(null);
+    const { confirm, ConfirmDialog } = useConfirm();
 
-    function destroy(id: number) {
-        if (confirm('Supprimer ce stade ?')) {
-            router.delete(`/admin/stages/${id}`);
+    async function destroy(stage: Stage) {
+        const description = stage.projects_count > 0
+            ? `Supprimer ce stade ? ${stage.projects_count} projet(s) l'utilisent actuellement.`
+            : 'Supprimer ce stade ?';
+
+        if (await confirm({ description, danger: true, confirmLabel: 'Supprimer' })) {
+            router.delete(`/admin/stages/${stage.id}`);
         }
     }
 
@@ -78,14 +84,14 @@ export default function Index({ stages }: { stages: Stage[] }) {
                 <StageForm onDone={() => {}} />
             </div>
 
-            <div className="border border-slate-200">
+            <div className="border border-slate-300">
                 {stages.map((stage) =>
                     editing === stage.id ? (
-                        <div key={stage.id} className="border-b border-slate-200 last:border-b-0">
+                        <div key={stage.id} className="border-b border-slate-300 last:border-b-0">
                             <StageForm stage={stage} onDone={() => setEditing(null)} />
                         </div>
                     ) : (
-                        <div key={stage.id} className="flex items-center justify-between border-b border-slate-200 p-4 last:border-b-0">
+                        <div key={stage.id} className="flex items-center justify-between border-b border-slate-300 p-4 last:border-b-0">
                             <div>
                                 <div className="flex items-center gap-2">
                                     <span className="text-item-title">{stage.name}</span>
@@ -95,10 +101,10 @@ export default function Index({ stages }: { stages: Stage[] }) {
                                 <div className="text-caption">{stage.projects_count} projet(s) · {stage.description}</div>
                             </div>
                             <div className="flex gap-2">
-                                <button onClick={() => setEditing(stage.id)} className="border border-slate-300 p-2 hover:border-slate-900">
+                                <button onClick={() => setEditing(stage.id)} className="border border-slate-400 p-2 hover:border-slate-900">
                                     <RiPencilLine size={14} />
                                 </button>
-                                <button onClick={() => destroy(stage.id)} className="border border-slate-300 p-2 text-orange-600 hover:border-orange-600">
+                                <button onClick={() => destroy(stage)} className="border border-slate-400 p-2 text-orange-600 hover:border-orange-600">
                                     <RiDeleteBinLine size={14} />
                                 </button>
                             </div>
@@ -106,6 +112,7 @@ export default function Index({ stages }: { stages: Stage[] }) {
                     ),
                 )}
             </div>
+            {ConfirmDialog}
         </AdminLayout>
     );
 }

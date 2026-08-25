@@ -29,7 +29,8 @@ class SubscriptionPlansSeeder extends Seeder
                 'key' => SubscriptionPlanKey::Entrepreneur->value,
                 'name' => 'Entrepreneur',
                 'role_scope' => UserRole::Entrepreneur->value, // spec §30
-                'price_minor' => 2900, // $29.00
+                'price_minor' => 2000, // $20.00/mo
+                'annual_price_minor' => 20000, // $200.00/yr — 10x monthly, i.e. 2 months free
                 'limits' => [
                     'max_active_projects' => 3,
                     'ai_monthly_token_quota' => 200000,
@@ -47,7 +48,8 @@ class SubscriptionPlansSeeder extends Seeder
                 'key' => SubscriptionPlanKey::Investor->value,
                 'name' => 'Investor',
                 'role_scope' => UserRole::Investor->value, // spec §31
-                'price_minor' => 4900, // $49.00
+                'price_minor' => 3500, // $35.00/mo
+                'annual_price_minor' => 35000, // $350.00/yr — 10x monthly, i.e. 2 months free
                 'limits' => [
                     'ai_monthly_token_quota' => 200000,
                 ],
@@ -62,21 +64,29 @@ class SubscriptionPlansSeeder extends Seeder
             ],
             [
                 'key' => SubscriptionPlanKey::Professional->value,
-                'name' => 'Professional',
-                // Role-agnostic, same as Free — corrected. "Professional"
-                // is a plan tier for accompaniment/advisory features
-                // (Escrow, KYC, contracts, Deal Room), not a fourth user
-                // role. An entrepreneur AND an investor may both
-                // subscribe to it; an earlier version of this seeder
+                'name' => 'Coaching',
+                // Role-agnostic, same as Free — corrected. This plan
+                // ("Coaching") is a tier for accompaniment/advisory
+                // features (Escrow, KYC, contracts, Deal Room), not a
+                // fourth user role: the app itself manages the
+                // investor/entrepreneur relationship through to the
+                // investment's conclusion. A flat monthly/annual
+                // membership fee (below) on top of the tiered
+                // per-investment accompaniment fee taken at escrow
+                // (see AccompanimentFeeCalculator) — the two aren't
+                // mutually exclusive. An entrepreneur AND an investor may
+                // both subscribe to it; an earlier version of this seeder
                 // wrongly scoped it to a non-existent
                 // UserRole::Professional, which would have made the plan
                 // unreachable by anyone (spec §32 never actually
                 // describes Professional as its own persona — §130's
-                // "Professional" role refers to accompanying experts,
-                // a separate concept this scaffold doesn't model as a
-                // registrable account type).
+                // "Professional" role refers to accompanying experts, a
+                // separate concept this scaffold doesn't model as a
+                // registrable account type). The internal key stays
+                // 'professional' — only the user-facing name changed.
                 'role_scope' => null,
-                'price_minor' => 0, // "Sur devis" — no fixed self-service price
+                'price_minor' => 7000, // $70.00/mo
+                'annual_price_minor' => 70000, // $700.00/yr — 10x monthly, i.e. 2 months free
                 'limits' => [],
                 'features' => [
                     F::EscrowAccess->value,

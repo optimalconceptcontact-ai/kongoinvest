@@ -12,13 +12,12 @@ return new class extends Migration
             $table->id();
             $table->foreignId('actor_id')->nullable()->constrained('users')->nullOnDelete();
             $table->string('action'); // e.g. 'kyc.approved', 'document.downloaded', 'contract.accepted'
-            $table->nullableMorphs('subject'); // subject_type + subject_id
+            $table->nullableMorphs('subject'); // subject_type + subject_id (already indexed by nullableMorphs)
             $table->json('metadata')->nullable();
             $table->string('ip_address', 45)->nullable();
             $table->string('user_agent')->nullable();
             $table->timestamp('created_at')->useCurrent();
 
-            $table->index(['subject_type', 'subject_id']);
             $table->index('action');
         });
     }

@@ -8,6 +8,7 @@ import { FieldError } from '@/components/Ui/FieldError';
 import { Input } from '@/components/Ui/Input';
 import { Select } from '@/components/Ui/Select';
 import { Textarea } from '@/components/Ui/Textarea';
+import { useConfirm } from '@/hooks/useConfirm';
 
 type FaqItem = { id: number; category: string; question: string; answer: string; is_published: boolean };
 
@@ -53,9 +54,12 @@ function FaqForm({ faq, onDone }: { faq?: FaqItem; onDone: () => void }) {
 
 export default function Index({ faqs }: { faqs: FaqItem[] }) {
     const [editing, setEditing] = useState<number | null>(null);
+    const { confirm, ConfirmDialog } = useConfirm();
 
-    function destroy(id: number) {
-        if (confirm('Supprimer cette question ?')) router.delete(`/admin/faqs/${id}`);
+    async function destroy(faq: FaqItem) {
+        if (await confirm({ description: `Supprimer la question « ${faq.question} » ?`, danger: true, confirmLabel: 'Supprimer' })) {
+            router.delete(`/admin/faqs/${faq.id}`);
+        }
     }
 
     return (
@@ -81,13 +85,14 @@ export default function Index({ faqs }: { faqs: FaqItem[] }) {
                                 <p className="max-w-lg text-caption">{faq.answer}</p>
                             </div>
                             <div className="flex gap-2">
-                                <button onClick={() => setEditing(faq.id)} className="border border-slate-300 p-2 hover:border-slate-900"><RiPencilLine size={14} /></button>
-                                <button onClick={() => destroy(faq.id)} className="border border-slate-300 p-2 text-orange-600 hover:border-orange-600"><RiDeleteBinLine size={14} /></button>
+                                <button onClick={() => setEditing(faq.id)} className="border border-slate-400 p-2 hover:border-slate-900"><RiPencilLine size={14} /></button>
+                                <button onClick={() => destroy(faq)} className="border border-slate-400 p-2 text-orange-600 hover:border-orange-600"><RiDeleteBinLine size={14} /></button>
                             </div>
                         </div>
                     ),
                 )}
             </div>
+            {ConfirmDialog}
         </AdminLayout>
     );
 }

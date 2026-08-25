@@ -12,8 +12,12 @@ class Subscription extends Model
     /** @use HasFactory<\Database\Factories\SubscriptionFactory> */
     use HasFactory;
 
+    // Renamed from 'subscriptions' — that name now belongs to Laravel
+    // Cashier's own Stripe-subscription table (Laravel\Cashier\Subscription).
+    protected $table = 'plan_subscriptions';
+
     protected $fillable = [
-        'subscription_plan_id', 'status', 'starts_at', 'trial_ends_at',
+        'subscription_plan_id', 'billing_period', 'status', 'starts_at', 'trial_ends_at',
         'ends_at', 'canceled_at', 'payment_provider', 'provider_subscription_id',
     ];
 

@@ -19,7 +19,7 @@ export default function ProfessionalDashboard({ currentPlan, profileComplete }: 
                 </div>
             )}
 
-            <div className="border border-slate-200 p-6">
+            <div className="border border-slate-300 p-6">
                 <div className="font-mono text-[11px] uppercase text-slate-500">Plan actuel</div>
                 <div className="mt-1 text-lg font-bold text-slate-900">{currentPlan.name}</div>
                 <Link href="/settings/subscription" className="mt-3 inline-block font-mono text-xs text-blue-600 hover:text-blue-700">

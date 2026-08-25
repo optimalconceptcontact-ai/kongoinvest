@@ -56,7 +56,7 @@ export function Textarea({ size = 'default', error, className, minLength, maxLen
                 className={cn(
                     'w-full resize-none overflow-hidden border focus:outline-none',
                     sizeClasses[size],
-                    error ? 'border-orange-600 focus:border-orange-600' : 'border-slate-300 focus:border-blue-600',
+                    error ? 'border-orange-600 focus:border-orange-600' : 'border-slate-400 focus:border-blue-600',
                     className,
                 )}
                 onInput={(e) => {

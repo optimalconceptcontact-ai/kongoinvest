@@ -20,7 +20,7 @@ export default function Index({ users, filters }: { users: Paginated<UserRow>; f
             <div className="mb-4 flex gap-2">
                 <button
                     onClick={() => router.get('/admin/users')}
-                    className={`border px-3 py-1.5 text-xs font-medium ${!filters.role ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-300 text-slate-600'}`}
+                    className={`border px-3 py-1.5 text-base font-semibold ${!filters.role ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-400 text-slate-700'}`}
                 >
                     Tous
                 </button>
@@ -28,7 +28,7 @@ export default function Index({ users, filters }: { users: Paginated<UserRow>; f
                     <button
                         key={r}
                         onClick={() => router.get('/admin/users', { role: r })}
-                        className={`border px-3 py-1.5 text-xs font-medium capitalize ${filters.role === r ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-300 text-slate-600'}`}
+                        className={`border px-3 py-1.5 text-base font-semibold capitalize ${filters.role === r ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-400 text-slate-700'}`}
                     >
                         {r}
                     </button>
@@ -59,7 +59,7 @@ export default function Index({ users, filters }: { users: Paginated<UserRow>; f
                             key={i}
                             disabled={!link.url}
                             onClick={() => link.url && router.get(link.url)}
-                            className={`min-w-[36px] border px-3 py-2 font-mono text-xs ${link.active ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-300 text-slate-600 disabled:opacity-30'}`}
+                            className={`min-w-[36px] border px-3 py-2 font-mono text-xs ${link.active ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-400 text-slate-700 disabled:opacity-30'}`}
                             dangerouslySetInnerHTML={{ __html: link.label }}
                         />
                     ))}

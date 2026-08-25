@@ -6,7 +6,7 @@ export type ButtonSize = 'default' | 'sm' | 'inline';
 
 export const buttonVariantClasses: Record<ButtonVariant, string> = {
     primary: 'bg-slate-900 text-white hover:bg-blue-700',
-    outline: 'border border-slate-300 text-slate-900 hover:border-slate-900',
+    outline: 'border border-slate-400 text-slate-900 hover:border-slate-900',
     secondary: 'bg-blue-600 text-white hover:bg-blue-700',
     cta: 'bg-orange-500 text-white hover:bg-orange-600',
     destructive: 'bg-orange-600 text-white hover:bg-orange-700',

@@ -19,7 +19,7 @@ export function Input({ size = 'default', error, className, ...props }: InputPro
             className={cn(
                 'w-full border focus:outline-none',
                 sizeClasses[size],
-                error ? 'border-orange-600 focus:border-orange-600' : 'border-slate-300 focus:border-blue-600',
+                error ? 'border-red-600 focus:border-red-600' : 'border-slate-400 focus:border-blue-600',
                 className,
             )}
             {...props}

@@ -27,6 +27,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // to server-to-server calls in the first place.
         $middleware->validateCsrfTokens(except: [
             'webhooks/*',
+            'stripe/*', // Cashier's auto-registered webhook (cashier.webhook) and payment confirmation page (cashier.payment)
         ]);
 
         // These gate whole route groups (spec §106) — the actual

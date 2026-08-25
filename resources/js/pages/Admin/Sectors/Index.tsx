@@ -7,6 +7,7 @@ import { Checkbox } from '@/components/Ui/Checkbox';
 import { FieldError } from '@/components/Ui/FieldError';
 import { Input } from '@/components/Ui/Input';
 import { Label } from '@/components/Ui/Label';
+import { useConfirm } from '@/hooks/useConfirm';
 
 type Sector = { id: number; name: string; icon: string | null; description: string | null; is_active: boolean; order: number; projects_count: number };
 
@@ -29,18 +30,18 @@ function SectorForm({ sector, onDone }: { sector?: Sector; onDone: () => void })
     }
 
     return (
-        <form onSubmit={submit} className="flex flex-wrap items-end gap-3 border border-slate-200 bg-slate-50 p-4">
+        <form onSubmit={submit} className="flex flex-wrap items-end gap-3 border border-slate-300 bg-slate-50 p-4">
             <div>
-                <Label className="text-xs">Nom</Label>
+                <Label>Nom</Label>
                 <Input size="sm" className="w-48" value={data.name} onChange={(e) => setData('name', e.target.value)} />
                 <FieldError>{errors.name}</FieldError>
             </div>
             <div>
-                <Label className="text-xs">Icône (RemixIcon)</Label>
+                <Label>Icône (RemixIcon)</Label>
                 <Input size="sm" className="w-36" value={data.icon} onChange={(e) => setData('icon', e.target.value)} placeholder="RiPlantLine" />
             </div>
             <div className="flex-1">
-                <Label className="text-xs">Description</Label>
+                <Label>Description</Label>
                 <Input size="sm" value={data.description} onChange={(e) => setData('description', e.target.value)} />
             </div>
             {sector && (
@@ -60,10 +61,15 @@ function SectorForm({ sector, onDone }: { sector?: Sector; onDone: () => void })
 
 export default function Index({ sectors }: { sectors: Sector[] }) {
     const [editing, setEditing] = useState<number | null>(null);
+    const { confirm, ConfirmDialog } = useConfirm();
 
-    function destroy(id: number) {
-        if (confirm('Supprimer ce secteur ?')) {
-            router.delete(`/admin/sectors/${id}`);
+    async function destroy(sector: Sector) {
+        const description = sector.projects_count > 0
+            ? `Supprimer ce secteur ? ${sector.projects_count} projet(s) l'utilisent actuellement.`
+            : 'Supprimer ce secteur ?';
+
+        if (await confirm({ description, danger: true, confirmLabel: 'Supprimer' })) {
+            router.delete(`/admin/sectors/${sector.id}`);
         }
     }
 
@@ -75,14 +81,14 @@ export default function Index({ sectors }: { sectors: Sector[] }) {
                 <SectorForm onDone={() => {}} />
             </div>
 
-            <div className="border border-slate-200">
+            <div className="border border-slate-300">
                 {sectors.map((sector) =>
                     editing === sector.id ? (
-                        <div key={sector.id} className="border-b border-slate-200 last:border-b-0">
+                        <div key={sector.id} className="border-b border-slate-300 last:border-b-0">
                             <SectorForm sector={sector} onDone={() => setEditing(null)} />
                         </div>
                     ) : (
-                        <div key={sector.id} className="flex items-center justify-between border-b border-slate-200 p-4 last:border-b-0">
+                        <div key={sector.id} className="flex items-center justify-between border-b border-slate-300 p-4 last:border-b-0">
                             <div>
                                 <div className="flex items-center gap-2">
                                     <span className="text-item-title">{sector.name}</span>
@@ -91,10 +97,10 @@ export default function Index({ sectors }: { sectors: Sector[] }) {
                                 <div className="text-caption">{sector.projects_count} projet(s) · {sector.description}</div>
                             </div>
                             <div className="flex gap-2">
-                                <button onClick={() => setEditing(sector.id)} className="border border-slate-300 p-2 hover:border-slate-900">
+                                <button onClick={() => setEditing(sector.id)} className="border border-slate-400 p-2 hover:border-slate-900">
                                     <RiPencilLine size={14} />
                                 </button>
-                                <button onClick={() => destroy(sector.id)} className="border border-slate-300 p-2 text-orange-600 hover:border-orange-600">
+                                <button onClick={() => destroy(sector)} className="border border-slate-400 p-2 text-orange-600 hover:border-orange-600">
                                     <RiDeleteBinLine size={14} />
                                 </button>
                             </div>
@@ -102,6 +108,7 @@ export default function Index({ sectors }: { sectors: Sector[] }) {
                     ),
                 )}
             </div>
+            {ConfirmDialog}
         </AdminLayout>
     );
 }

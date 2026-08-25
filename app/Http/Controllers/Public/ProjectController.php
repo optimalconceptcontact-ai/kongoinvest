@@ -95,6 +95,7 @@ class ProjectController extends Controller
             'aiAnalysis' => $latestAnalysis ? AiAnalysisData::fromModel($latestAnalysis) : null,
             'hasAdvisorFeature' => $user?->isInvestor() && $subscriptions->hasFeature($user, SubscriptionFeature::AiInvestmentAdvisor),
             'advisorConversation' => $this->advisorConversationFor($user, $project),
+            'isSaved' => $user?->isInvestor() && $project->isSavedBy($user),
         ]);
     }
 

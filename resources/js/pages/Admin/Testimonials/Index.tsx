@@ -8,6 +8,7 @@ import { FieldError } from '@/components/Ui/FieldError';
 import { Input } from '@/components/Ui/Input';
 import { Label } from '@/components/Ui/Label';
 import { Textarea } from '@/components/Ui/Textarea';
+import { useConfirm } from '@/hooks/useConfirm';
 
 type Testimonial = { id: number; name: string; role: string | null; company: string | null; content: string; is_published: boolean };
 
@@ -30,7 +31,7 @@ function TestimonialForm({ testimonial, onDone }: { testimonial?: Testimonial; o
     }
 
     return (
-        <form onSubmit={submit} className="flex flex-col gap-3 border border-slate-200 bg-slate-50 p-4">
+        <form onSubmit={submit} className="flex flex-col gap-3 border border-slate-300 bg-slate-50 p-4">
             <div className="flex flex-wrap gap-3">
                 <div>
                     <Label className="text-xs">Nom</Label>
@@ -66,29 +67,32 @@ function TestimonialForm({ testimonial, onDone }: { testimonial?: Testimonial; o
 
 export default function Index({ testimonials }: { testimonials: Testimonial[] }) {
     const [editing, setEditing] = useState<number | null>(null);
+    const { confirm, ConfirmDialog } = useConfirm();
 
-    function destroy(id: number) {
-        if (confirm('Supprimer ce témoignage ?')) router.delete(`/admin/testimonials/${id}`);
+    async function destroy(id: number) {
+        if (await confirm({ description: 'Supprimer ce témoignage ?', danger: true, confirmLabel: 'Supprimer' })) {
+            router.delete(`/admin/testimonials/${id}`);
+        }
     }
 
     return (
         <AdminLayout title="Témoignages">
             <Head title="Admin — Témoignages" />
-            <p className="mb-6 border border-orange-200 bg-orange-50 px-4 py-3 text-xs text-orange-700">
+            <p className="mb-6 border border-red-200 bg-red-50 px-4 py-3 text-form-error">
                 N'entrez ici que les mots réels d'un utilisateur réel, avec son accord. Rien ici ne doit être
                 inventé (spec §69).
             </p>
 
             <div className="mb-6"><TestimonialForm onDone={() => {}} /></div>
 
-            <div className="border border-slate-200">
+            <div className="border border-slate-300">
                 {testimonials.map((t) =>
                     editing === t.id ? (
-                        <div key={t.id} className="border-b border-slate-200 last:border-b-0">
+                        <div key={t.id} className="border-b border-slate-300 last:border-b-0">
                             <TestimonialForm testimonial={t} onDone={() => setEditing(null)} />
                         </div>
                     ) : (
-                        <div key={t.id} className="flex items-start justify-between border-b border-slate-200 p-4 last:border-b-0">
+                        <div key={t.id} className="flex items-start justify-between border-b border-slate-300 p-4 last:border-b-0">
                             <div>
                                 <div className="flex items-center gap-2">
                                     <span className="text-item-title">{t.name}</span>
@@ -97,16 +101,17 @@ export default function Index({ testimonials }: { testimonials: Testimonial[] })
                                     </span>
                                 </div>
                                 <div className="mb-1 text-caption">{[t.role, t.company].filter(Boolean).join(', ')}</div>
-                                <p className="max-w-lg text-sm text-slate-600">"{t.content}"</p>
+                                <p className="max-w-lg text-sm text-slate-700">"{t.content}"</p>
                             </div>
                             <div className="flex gap-2">
-                                <button onClick={() => setEditing(t.id)} className="border border-slate-300 p-2 hover:border-slate-900"><RiPencilLine size={14} /></button>
-                                <button onClick={() => destroy(t.id)} className="border border-slate-300 p-2 text-orange-600 hover:border-orange-600"><RiDeleteBinLine size={14} /></button>
+                                <button onClick={() => setEditing(t.id)} className="border border-slate-400 p-2 hover:border-slate-900"><RiPencilLine size={14} /></button>
+                                <button onClick={() => destroy(t.id)} className="border border-slate-400 p-2 text-orange-600 hover:border-orange-600"><RiDeleteBinLine size={14} /></button>
                             </div>
                         </div>
                     ),
                 )}
             </div>
+            {ConfirmDialog}
         </AdminLayout>
     );
 }

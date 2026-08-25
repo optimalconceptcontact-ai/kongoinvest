@@ -29,8 +29,8 @@ export default function Index({ weights }: { weights: Weight[] }) {
         <AdminLayout title="Pondérations du matching">
             <Head title="Admin — Pondérations" />
 
-            <p className="mb-6 border border-blue-200 bg-blue-50 px-4 py-3 text-xs text-blue-700">
-                Ces pourcentages pilotent directement le calcul du score de compatibilité (spec §23). Ils
+            <p className="mb-6 border border-slate-300 bg-slate-50 px-4 py-3 text-caption">
+                Ces pourcentages pilotent directement le calcul du score de compatibilité. Ils
                 doivent totaliser 100%. Les changements s'appliquent aux prochains calculs de matching, pas
                 rétroactivement aux scores déjà stockés.
             </p>
@@ -40,11 +40,11 @@ export default function Index({ weights }: { weights: Weight[] }) {
             )}
             {errors.weights && <div className="mb-6 border border-orange-200 bg-orange-50 px-4 py-3 text-sm text-orange-700">{errors.weights}</div>}
 
-            <form onSubmit={submit} className="border border-slate-200">
+            <form onSubmit={submit} className="border border-slate-300">
                 {weights.map((w) => {
                     const current = data.weights.find((x) => x.criterion === w.criterion)!;
                     return (
-                        <div key={w.criterion} className="flex items-center gap-4 border-b border-slate-200 p-4 last:border-b-0">
+                        <div key={w.criterion} className="flex items-center gap-4 border-b border-slate-300 p-4 last:border-b-0">
                             <div className="w-40 text-sm font-medium text-slate-900">{w.label}</div>
                             <input
                                 type="range"

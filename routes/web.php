@@ -37,9 +37,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/subscription', [Settings\SubscriptionController::class, 'edit'])->name('subscription.edit');
         Route::put('/subscription', [Settings\SubscriptionController::class, 'update'])->name('subscription.update');
 
+        // Declared before /subscription/{plan}/checkout so the literal
+        // "history" segment is never swallowed by the {plan} wildcard.
+        Route::get('/subscription/history', [Settings\SubscriptionHistoryController::class, 'index'])->name('subscription.history');
+        Route::get('/subscription/history/{subscription}', [Settings\SubscriptionHistoryController::class, 'show'])->name('subscription.history.show');
+
         Route::get('/subscription/{plan}/checkout', [Settings\BillingController::class, 'checkout'])->name('billing.checkout');
         Route::post('/subscription/{plan}/checkout', [Settings\BillingController::class, 'pay'])->name('billing.pay');
         Route::post('/subscription/{plan}/checkout/intent', [Settings\BillingController::class, 'intent'])->name('billing.intent');
+        Route::post('/subscription/{plan}/checkout/subscribe', [Settings\BillingController::class, 'subscribe'])->name('billing.subscribe');
 
         Route::get('/kyc', [Settings\KycController::class, 'edit'])->name('kyc.edit');
         Route::post('/kyc', [Settings\KycController::class, 'submit'])->name('kyc.submit');
@@ -70,6 +76,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/connections/{connection}/accept', [Entrepreneur\ConnectionController::class, 'accept'])->name('connections.accept');
         Route::post('/connections/{connection}/reject', [Entrepreneur\ConnectionController::class, 'reject'])->name('connections.reject');
         Route::post('/projects/{project}/ai-coach', [Entrepreneur\AiCoachController::class, 'ask'])->name('ai-coach.ask');
+        Route::get('/contracts', [Entrepreneur\ContractController::class, 'index'])->name('contracts.index');
     });
 
     Route::middleware('role:investor')->prefix('investor')->name('investor.')->group(function () {
@@ -81,6 +88,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/projects/{project}/connections', [Investor\ConnectionController::class, 'store'])->name('connections.store');
         Route::post('/connections/{connection}/cancel', [Investor\ConnectionController::class, 'cancel'])->name('connections.cancel');
         Route::post('/projects/{project}/ai-advisor', [Investor\AiAdvisorController::class, 'ask'])->name('ai-advisor.ask');
+        Route::get('/contracts', [Investor\ContractController::class, 'index'])->name('contracts.index');
+        Route::get('/portfolio', [Investor\PortfolioController::class, 'index'])->name('portfolio.index');
+        Route::get('/saved-projects', [Investor\SavedProjectController::class, 'index'])->name('saved-projects.index');
+        Route::post('/projects/{project}/save', [Investor\SavedProjectController::class, 'store'])->name('saved-projects.store');
+        Route::delete('/projects/{project}/save', [Investor\SavedProjectController::class, 'destroy'])->name('saved-projects.destroy');
     });
 
     // AI project analysis (spec §50) — available to anyone who can view
@@ -122,6 +134,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::middleware(['role:admin', 'permission:admin.dashboard'])->prefix('admin')->name('admin.')->group(function () {
         Route::get('/', [Admin\DashboardController::class, 'index'])->name('dashboard');
         Route::get('/users', [Admin\UserController::class, 'index'])->name('users.index');
+        Route::get('/projects', [Admin\ProjectController::class, 'index'])->name('projects.index');
+        Route::get('/subscriptions', [Admin\SubscriptionController::class, 'index'])->name('subscriptions.index');
+        Route::get('/payments', [Admin\PaymentController::class, 'index'])->name('payments.index');
+        Route::get('/escrow', [Admin\EscrowController::class, 'index'])->name('escrow.index');
+        Route::get('/contracts', [Admin\ContractController::class, 'index'])->name('contracts.index');
         Route::resource('sectors', Admin\SectorController::class)->only(['index', 'store', 'update', 'destroy']);
         Route::resource('stages', Admin\StageController::class)->only(['index', 'store', 'update', 'destroy']);
         Route::resource('partners', Admin\PartnerController::class)->only(['index', 'store', 'update', 'destroy']);

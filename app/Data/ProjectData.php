@@ -42,7 +42,8 @@ class ProjectData extends Data
         public string|Lazy|null $businessModel = null,
         public string|Lazy|null $market = null,
         public string|Lazy|null $competitiveAdvantage = null,
-        public string|Lazy|null $team = null,
+        /** @var array|Lazy */
+        public array|Lazy $team = [],
         public string|Lazy|null $traction = null,
         public string|Lazy|null $financialInformation = null,
         public string|Lazy|null $impact = null,
@@ -52,6 +53,7 @@ class ProjectData extends Data
     public static function fromModel(Project $project, bool $full = false): self
     {
         $lazy = fn (?string $value) => $full ? $value : Lazy::create(fn () => $value);
+        $lazyTeam = fn (array $value) => $full ? $value : Lazy::create(fn () => $value);
 
         return new self(
             id: $project->id,
@@ -80,7 +82,7 @@ class ProjectData extends Data
             businessModel: $lazy($project->business_model),
             market: $lazy($project->market),
             competitiveAdvantage: $lazy($project->competitive_advantage),
-            team: $lazy($project->team),
+            team: $lazyTeam($project->team ?? []),
             traction: $lazy($project->traction),
             financialInformation: $lazy($project->financial_information),
             impact: $lazy($project->impact),

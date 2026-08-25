@@ -26,10 +26,9 @@ use App\Listeners\SendEscrowNotification;
 use App\Listeners\SendKycNotification;
 use App\Listeners\SendMatchNotification;
 use App\Listeners\SendPaymentNotification;
-use Illuminate\Auth\Events\Login;
-use Illuminate\Auth\Events\Logout;
-use App\Services\Ai\Providers\AnthropicConversationProvider;
+use App\Listeners\SyncPlanSubscriptionFromCashier;
 use App\Services\Ai\Providers\AnthropicContractDraftProvider;
+use App\Services\Ai\Providers\AnthropicConversationProvider;
 use App\Services\Ai\Providers\AnthropicProjectAnalysisProvider;
 use App\Services\Ai\Providers\NullAiConversationProvider;
 use App\Services\Ai\Providers\NullContractDraftProvider;
@@ -37,8 +36,12 @@ use App\Services\Ai\Providers\NullProjectAnalysisProvider;
 use App\Services\Matching\AiSemanticAnalyzer;
 use App\Services\Matching\AnthropicSemanticAnalyzer;
 use App\Services\Matching\NullSemanticAnalyzer;
+use Illuminate\Auth\Events\Login;
+use Illuminate\Auth\Events\Logout;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
+use Laravel\Cashier\Events\WebhookHandled;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -79,10 +82,25 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        // Generated asset URLs (Spatie Media Library conversions, storage
+        // links, signed routes) inherit the APP_URL scheme. If a prod
+        // box is reached over HTTPS while APP_URL says http://, pages
+        // load but every media URL becomes mixed content and gets
+        // blocked/upgraded by browsers. Forcing HTTPS in production makes
+        // the scheme mismatch impossible; local dev (Herd/artisan serve)
+        // keeps whatever scheme it actually runs on.
+        URL::forceHttps(app()->isProduction());
+
         // Payment
-        Event::listen(PaymentSucceeded::class, ActivateSubscriptionOnPayment::class);
         Event::listen(PaymentSucceeded::class, FundEscrowOnPaymentSucceeded::class);
         Event::listen(PaymentSucceeded::class, SendPaymentNotification::class);
+        // PayPal/Mobile Money subscription rail only — see BillingController::pay().
+        Event::listen(PaymentSucceeded::class, ActivateSubscriptionOnPayment::class);
+
+        // Subscription billing (Cashier) — card rail. Fires after Cashier's
+        // own WebhookController has synced its subscriptions table; this
+        // just mirrors the result into the app's own plan-tier table.
+        Event::listen(WebhookHandled::class, SyncPlanSubscriptionFromCashier::class);
 
         // Matching & Connections — every one of these events has existed
         // since Phase 5/8 with a comment promising "Phase 13 attaches a

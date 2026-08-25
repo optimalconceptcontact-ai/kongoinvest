@@ -30,7 +30,7 @@ export function RegisterModal({ open, onClose }: { open: boolean; onClose: () =>
                 reset('password', 'password_confirmation');
                 onClose();
                 const intent = consumeIntent();
-                if (intent) window.dispatchEvent(new CustomEvent('kanda:resume-intent', { detail: intent }));
+                if (intent) window.dispatchEvent(new CustomEvent('kongoinvestment:resume-intent', { detail: intent }));
             },
         });
     }
@@ -61,11 +61,11 @@ export function RegisterModal({ open, onClose }: { open: boolean; onClose: () =>
                             className={`border px-3 py-3 text-left text-xs transition ${
                                 data.role === r.value
                                     ? 'border-slate-900 bg-slate-900 text-white'
-                                    : 'border-slate-300 text-slate-700 hover:border-slate-900'
+                                    : 'border-slate-400 text-slate-700 hover:border-slate-900'
                             }`}
                         >
                             <div className="font-semibold">{r.label}</div>
-                            <div className={`mt-1 ${data.role === r.value ? 'text-slate-300' : 'text-slate-500'}`}>
+                            <div className={`mt-1 ${data.role === r.value ? 'text-slate-400' : 'text-slate-500'}`}>
                                 {r.hint}
                             </div>
                         </button>

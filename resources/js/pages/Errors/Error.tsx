@@ -14,7 +14,7 @@ const copy: Record<number, { title: string; body: string }> = {
     422: { title: 'Requête invalide', body: 'Les données envoyées ne sont pas valides.' },
     429: { title: 'Trop de requêtes', body: 'Vous avez effectué trop de requêtes. Réessayez dans quelques instants.' },
     500: { title: 'Erreur serveur', body: "Une erreur inattendue s'est produite. Notre équipe a été notifiée." },
-    503: { title: 'Maintenance en cours', body: 'Kanda est temporairement indisponible. Revenez dans quelques instants.' },
+    503: { title: 'Maintenance en cours', body: 'KongoInvestment est temporairement indisponible. Revenez dans quelques instants.' },
 };
 
 export default function Error({ status }: { status: number }) {

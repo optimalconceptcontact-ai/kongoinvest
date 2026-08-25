@@ -11,6 +11,7 @@ use App\Enums\PaymentProviderName;
 use App\Enums\PaymentPurpose;
 use App\Models\Contract;
 use App\Models\Escrow;
+use App\Services\Escrow\AccompanimentFeeCalculator;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -30,26 +31,34 @@ class DealRoomEscrowController extends Controller
         return redirect()->route('escrow.checkout', $escrow)->with('success', 'Séquestre créé — financez-le pour l\'activer.');
     }
 
-    public function checkout(Request $request, Escrow $escrow): Response
+    public function checkout(Request $request, Escrow $escrow, AccompanimentFeeCalculator $fees): Response
     {
         $this->authorize('fund', $escrow);
 
         return Inertia::render('Escrow/Checkout', [
             'escrow' => $escrow->only(['id', 'amount_minor', 'currency']),
+            // Coaching accompaniment fee — the app manages the investor/
+            // entrepreneur relationship through to closing, and charges a
+            // tiered percentage of the investment for it (see
+            // AccompanimentFeeCalculator). Charged on top of the contract
+            // amount so the entrepreneur still receives the full amount.
+            'fee' => $fees->breakdown($escrow->amount_minor, $escrow->currency),
         ]);
     }
 
     /** Card rail only — see BillingController::intent() for the same pattern applied to subscriptions. */
-    public function intent(Request $request, Escrow $escrow, CreatePayment $action): JsonResponse
+    public function intent(Request $request, Escrow $escrow, CreatePayment $action, AccompanimentFeeCalculator $fees): JsonResponse
     {
         $this->authorize('fund', $escrow);
+
+        $totalMinor = $fees->breakdown($escrow->amount_minor, $escrow->currency)['totalMinor'];
 
         try {
             [, $intent] = $action->handle(
                 payer: $request->user(),
                 purpose: PaymentPurpose::Investment,
                 provider: PaymentProviderName::Stripe,
-                amountMinor: $escrow->amount_minor,
+                amountMinor: $totalMinor,
                 currency: $escrow->currency,
                 payable: $escrow,
                 idempotencyKey: "escrow-{$escrow->id}-".now()->format('YmdHisv'),
@@ -61,7 +70,7 @@ class DealRoomEscrowController extends Controller
         return response()->json(['clientSecret' => $intent->clientSecret]);
     }
 
-    public function pay(Request $request, Escrow $escrow, CreatePayment $action): RedirectResponse
+    public function pay(Request $request, Escrow $escrow, CreatePayment $action, AccompanimentFeeCalculator $fees): RedirectResponse
     {
         $this->authorize('fund', $escrow);
 
@@ -71,13 +80,14 @@ class DealRoomEscrowController extends Controller
         ]);
 
         $provider = PaymentProviderName::from($data['provider']);
+        $totalMinor = $fees->breakdown($escrow->amount_minor, $escrow->currency)['totalMinor'];
 
         try {
             [$payment, $intent] = $action->handle(
                 payer: $request->user(),
                 purpose: PaymentPurpose::Investment,
                 provider: $provider,
-                amountMinor: $escrow->amount_minor,
+                amountMinor: $totalMinor,
                 currency: $escrow->currency,
                 payable: $escrow,
                 metadata: array_filter(['phone_number' => $data['phone_number'] ?? null]),

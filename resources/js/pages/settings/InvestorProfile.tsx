@@ -187,7 +187,7 @@ export default function InvestorProfile({ profile, sectors, stages }: Props) {
                         className="gap-2"
                     />
 
-                    <fieldset className="border border-slate-200 p-4">
+                    <fieldset className="border border-slate-300 p-4">
                         <legend className="px-1 font-mono text-xs uppercase text-slate-500">Structure (optionnel)</legend>
                         <Input
                             placeholder="Nom du fonds / de la structure"

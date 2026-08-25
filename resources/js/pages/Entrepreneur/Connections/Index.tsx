@@ -2,6 +2,7 @@ import { Head, router } from '@inertiajs/react';
 import { EntrepreneurLayout } from '@/layouts/EntrepreneurLayout';
 import { Button } from '@/components/Ui/Button';
 import { Link } from '@/components/Ui/Link';
+import { useConfirm } from '@/hooks/useConfirm';
 
 type ConnectionRow = {
     id: number;
@@ -25,12 +26,14 @@ const statusLabels: Record<string, string> = {
 };
 
 export default function Index({ connections }: { connections: ConnectionRow[] }) {
+    const { confirm, ConfirmDialog } = useConfirm();
+
     function accept(id: number) {
         router.post(`/entrepreneur/connections/${id}/accept`);
     }
 
-    function reject(id: number) {
-        if (confirm('Refuser cette demande de connexion ?')) {
+    async function reject(id: number) {
+        if (await confirm({ description: 'Refuser cette demande de connexion ?', danger: true, confirmLabel: 'Refuser' })) {
             router.post(`/entrepreneur/connections/${id}/reject`, {}, { preserveScroll: true });
         }
     }
@@ -40,7 +43,7 @@ export default function Index({ connections }: { connections: ConnectionRow[] })
             <Head title="Connexions" />
 
             {connections.length === 0 ? (
-                <div className="border border-dashed border-slate-300 py-16 text-center text-body">
+                <div className="border border-dashed border-slate-400 py-16 text-center text-body">
                     Aucune demande de connexion pour l'instant.
                 </div>
             ) : (
@@ -65,7 +68,7 @@ export default function Index({ connections }: { connections: ConnectionRow[] })
                                         <Button variant="secondary" size="sm" onClick={() => accept(c.id)} className="py-2">
                                             Accepter
                                         </Button>
-                                        <button onClick={() => reject(c.id)} className="border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-500 hover:border-orange-600 hover:text-orange-600">
+                                        <button onClick={() => reject(c.id)} className="border border-slate-400 px-3 py-2 text-xs font-semibold text-slate-500 hover:border-orange-600 hover:text-orange-600">
                                             Refuser
                                         </button>
                                     </>
@@ -80,6 +83,7 @@ export default function Index({ connections }: { connections: ConnectionRow[] })
                     ))}
                 </div>
             )}
+            {ConfirmDialog}
         </EntrepreneurLayout>
     );
 }

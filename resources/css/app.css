@@ -151,7 +151,7 @@
  */
 
 @utility text-eyebrow {
-    @apply font-mono text-xs uppercase tracking-widest text-orange-600;
+    @apply font-mono text-sm uppercase tracking-widest text-orange-600;
 }
 
 @utility text-page-title {
@@ -187,23 +187,23 @@
 }
 
 @utility text-btn {
-    @apply text-base font-semibold;
+    @apply text-lg font-semibold;
 }
 
 @utility text-body {
-    @apply text-base text-slate-500;
+    @apply text-base text-slate-700;
 }
 
 @utility text-caption {
-    @apply text-sm text-slate-500;
+    @apply text-sm text-slate-600;
 }
 
 @utility text-form-label {
-    @apply mb-1 block text-base font-medium text-slate-700;
+    @apply mb-1 block text-lg font-semibold text-slate-800;
 }
 
 @utility text-form-error {
-    @apply mt-1 text-sm text-orange-600;
+    @apply mt-1 text-sm font-medium text-red-600;
 }
 
 @utility text-menu-title {

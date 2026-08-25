@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils';
 type SelectSize = 'default' | 'sm';
 
 const sizeClasses: Record<SelectSize, string> = {
-    default: 'px-3 py-2 text-sm',
+    default: 'px-3 py-2.5 text-sm',
     sm: 'px-2 py-1.5 text-xs',
 };
 
@@ -19,7 +19,7 @@ export function Select({ size = 'default', error, className, ...props }: SelectP
             className={cn(
                 'w-full border focus:outline-none',
                 sizeClasses[size],
-                error ? 'border-orange-600 focus:border-orange-600' : 'border-slate-300 focus:border-blue-600',
+                error ? 'border-orange-600 focus:border-orange-600' : 'border-slate-400 focus:border-blue-600',
                 className,
             )}
             {...props}

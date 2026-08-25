@@ -50,13 +50,13 @@ export default function Index({ profiles }: { profiles: Profile[] }) {
             <Head title="Admin — KYC" />
 
             {profiles.length === 0 ? (
-                <div className="border border-dashed border-slate-300 py-16 text-center text-body">
+                <div className="border border-dashed border-slate-400 py-16 text-center text-body">
                     Aucun dossier en attente de vérification.
                 </div>
             ) : (
-                <div className="border border-slate-200">
+                <div className="border border-slate-300">
                     {profiles.map((p) => (
-                        <div key={p.id} className="border-b border-slate-200 p-5 last:border-b-0">
+                        <div key={p.id} className="border-b border-slate-300 p-5 last:border-b-0">
                             <div className="mb-2 flex items-center justify-between">
                                 <div>
                                     <div className="text-item-title">{p.userName}</div>
@@ -69,7 +69,7 @@ export default function Index({ profiles }: { profiles: Profile[] }) {
 
                             <div className="mb-3 flex flex-wrap gap-3">
                                 {p.documents.map((d) => (
-                                    <a key={d.id} href={d.downloadUrl} className="flex items-center gap-1.5 border border-slate-200 px-2 py-1 font-mono text-xs text-blue-600 hover:border-blue-600">
+                                    <a key={d.id} href={d.downloadUrl} className="flex items-center gap-1.5 border border-slate-300 px-2 py-1 font-mono text-xs text-blue-600 hover:border-blue-600">
                                         <RiFileTextLine size={13} /> {d.name}
                                     </a>
                                 ))}

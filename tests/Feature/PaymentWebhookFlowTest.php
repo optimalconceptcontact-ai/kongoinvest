@@ -1,15 +1,9 @@
 <?php
 
-use App\Enums\PaymentProviderName;
-use App\Enums\PaymentPurpose;
 use App\Models\Payment;
 use App\Models\PaymentTransaction;
-use App\Models\SubscriptionPlan;
-use App\Models\User;
-use App\Services\SubscriptionService;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Database\Seeders\SubscriptionPlansSeeder;
-use Illuminate\Support\Str;
 
 beforeEach(function () {
     $this->seed(RolesAndPermissionsSeeder::class);
@@ -26,41 +20,6 @@ function postStripeWebhook(array $payload, ?int $timestamp = null): \Illuminate\
     return test()->withHeaders(['Stripe-Signature' => "t={$timestamp},v1={$signature}"])
         ->call('POST', '/webhooks/stripe', [], [], [], ['CONTENT_TYPE' => 'application/json'], $body);
 }
-
-it('activates the paid plan once a genuinely signed webhook confirms payment success', function () {
-    $entrepreneur = User::factory()->entrepreneur()->create();
-    app(SubscriptionService::class)->assignFreePlan($entrepreneur);
-    $plan = SubscriptionPlan::where('key', 'entrepreneur')->firstOrFail();
-
-    $payment = Payment::create([
-        'payer_id' => $entrepreneur->id,
-        'purpose' => PaymentPurpose::Subscription->value,
-        'payable_type' => SubscriptionPlan::class,
-        'payable_id' => $plan->id,
-        'provider' => PaymentProviderName::Stripe->value,
-        'provider_reference' => 'pi_test_123',
-        'amount_minor' => $plan->price_minor,
-        'currency' => $plan->currency,
-        'status' => 'pending',
-        'idempotency_key' => (string) Str::uuid(),
-    ]);
-
-    expect(app(SubscriptionService::class)->currentPlanFor($entrepreneur)->key)->toBe('free');
-
-    postStripeWebhook([
-        'id' => 'evt_test_1',
-        'type' => 'payment_intent.succeeded',
-        'data' => ['object' => [
-            'id' => 'pi_test_123',
-            'status' => 'succeeded',
-            'amount' => $plan->price_minor,
-            'currency' => strtolower($plan->currency),
-        ]],
-    ])->assertOk();
-
-    expect($payment->fresh()->status->value)->toBe('succeeded');
-    expect(app(SubscriptionService::class)->currentPlanFor($entrepreneur->fresh())->key)->toBe('entrepreneur');
-});
 
 it('never processes the same webhook event twice, even if the provider redelivers it', function () {
     $payment = Payment::factory()->create(['provider_reference' => 'pi_dup_test', 'amount_minor' => 2900]);

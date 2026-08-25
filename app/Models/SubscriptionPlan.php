@@ -14,8 +14,8 @@ class SubscriptionPlan extends Model
     use HasFactory;
 
     protected $fillable = [
-        'key', 'name', 'role_scope', 'price_minor', 'currency', 'billing_period',
-        'limits', 'features', 'is_active', 'order',
+        'key', 'name', 'role_scope', 'price_minor', 'annual_price_minor', 'currency', 'billing_period',
+        'limits', 'features', 'is_active', 'order', 'stripe_price_id', 'annual_stripe_price_id',
     ];
 
     protected function casts(): array
@@ -26,7 +26,18 @@ class SubscriptionPlan extends Model
             'features' => 'array',
             'is_active' => 'boolean',
             'price_minor' => 'integer',
+            'annual_price_minor' => 'integer',
         ];
+    }
+
+    public function priceMinorFor(string $billingPeriod): ?int
+    {
+        return $billingPeriod === 'annual' ? $this->annual_price_minor : $this->price_minor;
+    }
+
+    public function stripePriceIdFor(string $billingPeriod): ?string
+    {
+        return $billingPeriod === 'annual' ? $this->annual_stripe_price_id : $this->stripe_price_id;
     }
 
     public function subscriptions(): HasMany

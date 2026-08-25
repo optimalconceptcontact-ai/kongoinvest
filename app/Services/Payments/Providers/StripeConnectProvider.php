@@ -38,7 +38,7 @@ class StripeConnectProvider implements PaymentProviderInterface
                 'amount' => $payment->amount_minor,
                 'currency' => strtolower($payment->currency),
                 'transfer_data' => ['destination' => $destinationAccountId],
-                'metadata' => ['kanda_payment_id' => (string) $payment->id],
+                'metadata' => ['kongoinvestment_payment_id' => (string) $payment->id],
             ], ['Idempotency-Key' => $payment->idempotency_key]);
 
         if ($response->failed()) {

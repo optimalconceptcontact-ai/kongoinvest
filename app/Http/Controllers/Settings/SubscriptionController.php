@@ -39,7 +39,12 @@ class SubscriptionController extends Controller
         // Payment succeeds, not from here. Free stays instant, since
         // there's nothing to charge.
         if ($plan->price_minor > 0) {
-            return redirect()->route('settings.billing.checkout', $plan);
+            // 303, not the default 302: this redirect follows a PUT, and
+            // only a 303 forces the browser to replay it as a GET against
+            // billing.checkout (a GET-only route). A 302 here silently
+            // fails — the client resubmits PUT and 405s — which is why
+            // choosing a paid plan never reached the checkout page.
+            return redirect()->route('settings.billing.checkout', $plan, 303);
         }
 
         $subscriptions->switchPlan($request->user(), $plan);

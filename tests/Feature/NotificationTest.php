@@ -1,7 +1,13 @@
 <?php
 
+use App\Actions\Escrow\RaiseDispute;
 use App\Models\Connection;
+use App\Models\Escrow;
+use App\Models\Project;
 use App\Models\User;
+use App\Notifications\ConnectionAcceptedNotification;
+use App\Notifications\ConnectionRequestNotification;
+use App\Notifications\EscrowNotification;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Database\Seeders\SubscriptionPlansSeeder;
 use Illuminate\Support\Facades\Notification;
@@ -16,11 +22,11 @@ it('notifies the entrepreneur when an investor requests a connection', function 
 
     $entrepreneur = User::factory()->entrepreneur()->create();
     $investor = User::factory()->investor()->create();
-    $project = \App\Models\Project::factory()->for($entrepreneur)->published()->withTaxonomy()->create();
+    $project = Project::factory()->for($entrepreneur)->published()->withTaxonomy()->create();
 
     $this->actingAs($investor)->post("/investor/projects/{$project->id}/connections");
 
-    Notification::assertSentTo($entrepreneur, \App\Notifications\ConnectionRequestNotification::class);
+    Notification::assertSentTo($entrepreneur, ConnectionRequestNotification::class);
 });
 
 it('notifies the investor once their connection is accepted', function () {
@@ -28,19 +34,19 @@ it('notifies the investor once their connection is accepted', function () {
 
     $entrepreneur = User::factory()->entrepreneur()->create();
     $investor = User::factory()->investor()->create();
-    $project = \App\Models\Project::factory()->for($entrepreneur)->published()->withTaxonomy()->create();
+    $project = Project::factory()->for($entrepreneur)->published()->withTaxonomy()->create();
 
     $this->actingAs($investor)->post("/investor/projects/{$project->id}/connections");
     $connection = Connection::firstOrFail();
     $this->actingAs($entrepreneur)->post("/entrepreneur/connections/{$connection->id}/accept");
 
-    Notification::assertSentTo($investor, \App\Notifications\ConnectionAcceptedNotification::class);
+    Notification::assertSentTo($investor, ConnectionAcceptedNotification::class);
 });
 
 it('actually persists a real, readable notification a user can mark as read - never someone else\'s', function () {
     $entrepreneur = User::factory()->entrepreneur()->create();
     $investor = User::factory()->investor()->create();
-    $project = \App\Models\Project::factory()->for($entrepreneur)->published()->withTaxonomy()->create();
+    $project = Project::factory()->for($entrepreneur)->published()->withTaxonomy()->create();
 
     $this->actingAs($investor)->post("/investor/projects/{$project->id}/connections");
 
@@ -54,18 +60,23 @@ it('actually persists a real, readable notification a user can mark as read - ne
     $this->actingAs($investor)->post("/notifications/{$notification->id}/read");
     expect($notification->fresh()->read_at)->toBeNull();
 
-    // The actual recipient can mark it read.
-    $this->actingAs($entrepreneur)->post("/notifications/{$notification->id}/read");
+    // The actual recipient can mark it read. Must stay a 204: the bell
+    // fires this POST right before navigating to the notification's
+    // target URL — a redirect (back()) would make Inertia follow it and
+    // bounce the user off the target page back to where they came from.
+    $this->actingAs($entrepreneur)
+        ->post("/notifications/{$notification->id}/read")
+        ->assertNoContent();
     expect($notification->fresh()->read_at)->not->toBeNull();
 });
 
 it('notifies both parties when a dispute is opened', function () {
     Notification::fake();
 
-    $escrow = \App\Models\Escrow::factory()->held()->create();
+    $escrow = Escrow::factory()->held()->create();
 
-    app(\App\Actions\Escrow\RaiseDispute::class)->handle($escrow->investor, $escrow, 'Issue with delivery.');
+    app(RaiseDispute::class)->handle($escrow->investor, $escrow, 'Issue with delivery.');
 
-    Notification::assertSentTo($escrow->entrepreneur, \App\Notifications\EscrowNotification::class);
-    Notification::assertSentTo($escrow->investor, \App\Notifications\EscrowNotification::class);
+    Notification::assertSentTo($escrow->entrepreneur, EscrowNotification::class);
+    Notification::assertSentTo($escrow->investor, EscrowNotification::class);
 });

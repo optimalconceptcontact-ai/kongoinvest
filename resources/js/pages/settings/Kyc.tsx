@@ -61,9 +61,9 @@ export default function Kyc({ status, rejectionReason, submittedAt, documents }:
             )}
 
             {documents.length > 0 && (
-                <div className="mb-8 border border-slate-200">
+                <div className="mb-8 border border-slate-300">
                     {documents.map((d) => (
-                        <div key={d.id} className="flex items-center justify-between border-b border-slate-200 p-3 text-sm last:border-b-0">
+                        <div key={d.id} className="flex items-center justify-between border-b border-slate-300 p-3 text-sm last:border-b-0">
                             <span className="flex items-center gap-2"><RiFileTextLine size={16} className="text-slate-400" /> {d.name}</span>
                             <a href={d.downloadUrl} className="font-mono text-xs text-blue-600 hover:text-blue-700">Télécharger</a>
                         </div>
@@ -72,7 +72,7 @@ export default function Kyc({ status, rejectionReason, submittedAt, documents }:
             )}
 
             {canSubmit && (
-                <form onSubmit={submit} className="flex flex-col gap-4 border border-slate-200 p-5">
+                <form onSubmit={submit} className="flex flex-col gap-4 border border-slate-300 p-5">
                     <div>
                         <Label>
                             Pièce d'identité, documents d'entreprise, justificatifs (PDF, JPG, PNG — 10 Mo max chacun)

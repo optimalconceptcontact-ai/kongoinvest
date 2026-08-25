@@ -42,8 +42,8 @@ class DashboardController extends Controller
                 ],
                 'totalMatches' => MatchModel::count(),
                 'subscriptionsByPlan' => Subscription::query()
-                    ->join('subscription_plans', 'subscriptions.subscription_plan_id', '=', 'subscription_plans.id')
-                    ->where('subscriptions.status', 'active')
+                    ->join('subscription_plans', 'plan_subscriptions.subscription_plan_id', '=', 'subscription_plans.id')
+                    ->where('plan_subscriptions.status', 'active')
                     ->selectRaw('subscription_plans.key as plan_key, count(*) as total')
                     ->groupBy('subscription_plans.key')
                     ->pluck('total', 'plan_key'),

@@ -67,7 +67,7 @@ export function MatchCard({
             <div className="flex flex-col gap-2">
                 {match.breakdown.map((item) => (
                     <div key={item.key} className="flex items-center gap-3">
-                        <div className="w-28 flex-shrink-0 text-xs text-slate-600">{item.label}</div>
+                        <div className="w-28 flex-shrink-0 text-xs text-slate-700">{item.label}</div>
                         <div className="h-1.5 flex-1 bg-slate-100">
                             <div
                                 className={`h-full ${item.source === 'ai' ? 'bg-orange-500' : item.source === 'fallback' ? 'bg-slate-300' : 'bg-blue-500'}`}

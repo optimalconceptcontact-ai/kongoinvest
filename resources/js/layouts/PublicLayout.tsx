@@ -1,12 +1,18 @@
 import { Link, usePage } from '@inertiajs/react';
 import { RiCloseLine, RiMenuLine } from '@remixicon/react';
-import { useState, type ReactNode } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { useState } from 'react';
+import type { ReactNode } from 'react';
 import { destroy } from '@/actions/Laravel/Fortify/Http/Controllers/AuthenticatedSessionController';
 import { NotificationBell } from '@/components/NotificationBell';
+import { PageTransition } from '@/components/PageTransition';
 import { UserMenu } from '@/components/UserMenu';
 import { useAuthModal } from '@/hooks/useAuthModal';
+import { fadeIn, slideInRight } from '@/lib/animations';
 
-type SharedAuth = { auth: { user: { id: number; name: string; email: string } | null } };
+type SharedAuth = {
+    auth: { user: { id: number; name: string; email: string } | null };
+};
 
 const navLinks = [
     { href: '/projects', label: 'Découvrir' },
@@ -29,23 +35,31 @@ export function PublicLayout({ children }: { children: ReactNode }) {
     const { openLogin, openRegister } = useAuthModal();
     const [drawerOpen, setDrawerOpen] = useState(false);
 
-    const isActive = (href: string) => url === href || (href !== '/' && url.startsWith(href));
+    const isActive = (href: string) =>
+        url === href || (href !== '/' && url.startsWith(href));
 
     return (
         <div className="flex min-h-screen flex-col">
-            <header className="sticky top-0 z-40 border-b border-slate-200 bg-white">
+            <header className="sticky top-0 z-40 border-b border-slate-300 bg-white">
                 <nav className="mx-auto flex h-[72px] max-w-6xl items-center justify-between px-6">
-                    <Link href="/" className="flex items-center gap-2 text-lg font-extrabold text-slate-900">
+                    <Link
+                        href="/"
+                        className="flex items-center gap-2 text-lg font-extrabold text-slate-900"
+                    >
                         <span className="relative h-[26px] w-[26px] flex-shrink-0 bg-slate-900 after:absolute after:inset-[6px] after:bg-orange-500" />
-                        Kanda
+                        KongoInvestment
                     </Link>
 
-                    <div className="hidden items-center gap-7 text-nav-link text-slate-600 lg:flex">
+                    <div className="hidden items-center gap-7 text-nav-link text-slate-700 lg:flex">
                         {navLinks.map((link) => (
                             <Link
                                 key={link.href}
                                 href={link.href}
-                                className={isActive(link.href) ? 'text-slate-900' : 'hover:text-slate-900'}
+                                className={
+                                    isActive(link.href)
+                                        ? 'font-bold text-slate-900'
+                                        : 'hover:text-slate-900'
+                                }
                             >
                                 {link.label}
                             </Link>
@@ -60,12 +74,15 @@ export function PublicLayout({ children }: { children: ReactNode }) {
                             </>
                         ) : (
                             <>
-                                <button onClick={() => openLogin()} className="border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-900 hover:border-slate-900">
+                                <button
+                                    onClick={() => openLogin()}
+                                    className="border border-slate-400 px-4 py-2 text-base font-semibold text-slate-900 hover:border-slate-900"
+                                >
                                     Se connecter
                                 </button>
-                                <button onClick={() => openRegister()} className="bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">
+                                {/*<button onClick={() => openRegister()} className="bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">
                                     Créer un compte
-                                </button>
+                                </button>*/}
                             </>
                         )}
                     </div>
@@ -81,59 +98,95 @@ export function PublicLayout({ children }: { children: ReactNode }) {
             </header>
 
             {/* Mobile drawer (spec §81) */}
-            {drawerOpen && (
-                <div className="fixed inset-0 z-50 lg:hidden">
-                    <div className="absolute inset-0 bg-slate-900/40" onClick={() => setDrawerOpen(false)} />
-                    <div className="absolute right-0 top-0 flex h-full w-72 flex-col bg-white">
-                        <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
-                            <span className="text-section-label">Menu</span>
-                            <button onClick={() => setDrawerOpen(false)} aria-label="Fermer le menu" className="text-slate-500 hover:text-slate-900">
-                                <RiCloseLine size={22} />
-                            </button>
-                        </div>
-                        <nav className="flex flex-col gap-1 px-3 py-4">
-                            {navLinks.map((link) => (
-                                <Link
-                                    key={link.href}
-                                    href={link.href}
+            <AnimatePresence>
+                {drawerOpen && (
+                    <div className="fixed inset-0 z-50 lg:hidden">
+                        <motion.div
+                            variants={fadeIn}
+                            initial="initial"
+                            animate="animate"
+                            exit="exit"
+                            className="absolute inset-0 bg-slate-900/40"
+                            onClick={() => setDrawerOpen(false)}
+                        />
+                        <motion.div
+                            variants={slideInRight}
+                            initial="initial"
+                            animate="animate"
+                            exit="exit"
+                            className="absolute top-0 right-0 flex h-full w-72 flex-col bg-white"
+                        >
+                            <div className="flex items-center justify-between border-b border-slate-300 px-5 py-4">
+                                <span className="text-section-label">Menu</span>
+                                <button
                                     onClick={() => setDrawerOpen(false)}
-                                    className={`px-3 py-2.5 text-nav-link ${isActive(link.href) ? 'bg-slate-100 text-slate-900' : 'text-slate-600 hover:bg-slate-50'}`}
+                                    aria-label="Fermer le menu"
+                                    className="text-slate-500 hover:text-slate-900"
                                 >
-                                    {link.label}
-                                </Link>
-                            ))}
-                        </nav>
-                        <div className="mt-auto flex flex-col gap-2 border-t border-slate-200 p-4">
-                            {props.auth.user ? (
-                                <>
-                                    <Link href="/dashboard" className="bg-slate-900 px-4 py-2.5 text-center text-sm font-semibold text-white">
-                                        Tableau de bord
-                                    </Link>
+                                    <RiCloseLine size={22} />
+                                </button>
+                            </div>
+                            <nav className="flex flex-col gap-1 px-3 py-4">
+                                {navLinks.map((link) => (
                                     <Link
-                                        href={destroy()}
-                                        as="button"
+                                        key={link.href}
+                                        href={link.href}
                                         onClick={() => setDrawerOpen(false)}
-                                        className="border border-slate-300 px-4 py-2.5 text-center text-sm font-semibold text-slate-900"
+                                        className={`px-3 py-2.5 text-nav-link ${isActive(link.href) ? 'bg-slate-100 text-slate-900' : 'text-slate-700 hover:bg-slate-50'}`}
                                     >
-                                        Déconnexion
+                                        {link.label}
                                     </Link>
-                                </>
-                            ) : (
-                                <>
-                                    <button onClick={() => { setDrawerOpen(false); openLogin(); }} className="border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-900">
-                                        Se connecter
-                                    </button>
-                                    <button onClick={() => { setDrawerOpen(false); openRegister(); }} className="bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white">
-                                        Créer un compte
-                                    </button>
-                                </>
-                            )}
-                        </div>
+                                ))}
+                            </nav>
+                            <div className="mt-auto flex flex-col gap-2 border-t border-slate-300 p-4">
+                                {props.auth.user ? (
+                                    <>
+                                        <Link
+                                            href="/dashboard"
+                                            className="bg-slate-900 px-4 py-2.5 text-center text-sm font-semibold text-white"
+                                        >
+                                            Tableau de bord
+                                        </Link>
+                                        <Link
+                                            href={destroy()}
+                                            as="button"
+                                            onClick={() => setDrawerOpen(false)}
+                                            className="border border-slate-400 px-4 py-2.5 text-center text-sm font-semibold text-slate-900"
+                                        >
+                                            Déconnexion
+                                        </Link>
+                                    </>
+                                ) : (
+                                    <>
+                                        <button
+                                            onClick={() => {
+                                                setDrawerOpen(false);
+                                                openLogin();
+                                            }}
+                                            className="border border-slate-400 px-4 py-2.5 text-sm font-semibold text-slate-900"
+                                        >
+                                            Se connecter
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                setDrawerOpen(false);
+                                                openRegister();
+                                            }}
+                                            className="bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white"
+                                        >
+                                            Créer un compte
+                                        </button>
+                                    </>
+                                )}
+                            </div>
+                        </motion.div>
                     </div>
-                </div>
-            )}
+                )}
+            </AnimatePresence>
 
-            <main className="flex-1">{children}</main>
+            <main className="flex-1">
+                <PageTransition>{children}</PageTransition>
+            </main>
 
             <Footer />
         </div>
@@ -142,16 +195,17 @@ export function PublicLayout({ children }: { children: ReactNode }) {
 
 function Footer() {
     return (
-        <footer className="border-t border-slate-200">
+        <footer className="border-t border-slate-300">
             <div className="mx-auto max-w-6xl px-6 py-14">
                 <div className="mb-10 grid grid-cols-2 gap-8 sm:grid-cols-3 lg:grid-cols-5">
                     <div className="col-span-2 lg:col-span-1">
                         <div className="mb-3 flex items-center gap-2 text-base font-extrabold text-slate-900">
                             <span className="relative h-[22px] w-[22px] flex-shrink-0 bg-slate-900 after:absolute after:inset-[5px] after:bg-orange-500" />
-                            Kanda
+                            KongoInvestment
                         </div>
                         <p className="max-w-[200px] text-caption">
-                            La plateforme d'investissement propulsée par l'IA, entre la RDC et le monde.
+                            La plateforme d'investissement propulsée par l'IA,
+                            entre la RDC et le monde.
                         </p>
                     </div>
                     <FooterColumn
@@ -176,24 +230,49 @@ function Footer() {
                             ['/privacy', 'Confidentialité'],
                         ]}
                     />
-                    <FooterColumn title="RDC" links={[['#', 'Kinshasa'], ['#', 'Lubumbashi'], ['#', 'Goma']]} />
+                    <FooterColumn
+                        title="RDC"
+                        links={[
+                            ['#', 'Kinshasa'],
+                            ['#', 'Lubumbashi'],
+                            ['#', 'Goma'],
+                        ]}
+                    />
                 </div>
-                <div className="flex flex-col gap-2 border-t border-slate-200 pt-6 text-caption sm:flex-row sm:items-center sm:justify-between">
-                    <div>© {new Date().getFullYear()} Kanda. Tous droits réservés.</div>
-                    <div>Fait pour les entrepreneurs de la République Démocratique du Congo.</div>
+                <div className="flex flex-col gap-2 border-t border-slate-300 pt-6 text-caption sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                        © {new Date().getFullYear()} KongoInvestment. Tous
+                        droits réservés.
+                    </div>
+                    <div>
+                        Fait pour les entrepreneurs de la République
+                        Démocratique du Congo.
+                    </div>
                 </div>
             </div>
         </footer>
     );
 }
 
-function FooterColumn({ title, links }: { title: string; links: [string, string][] }) {
+function FooterColumn({
+    title,
+    links,
+}: {
+    title: string;
+    links: [string, string][];
+}) {
     return (
         <div>
-            <div className="mb-3 font-mono text-[11px] uppercase tracking-widest text-slate-400">{title}</div>
+            <div className="mb-3 font-mono text-[11px] tracking-widest text-slate-400 uppercase">
+                {title}
+            </div>
             <div className="flex flex-col gap-2">
                 {links.map(([href, label]) => (
-                    <Link key={label} href={href} className="text-xs text-slate-600 hover:text-slate-900">
+                    <Link
+                        key={label}
+                        href={href}
+                        className="text-xs text-slate-700 hover:text-slate-900"
+                    >
                         {label}
                     </Link>
                 ))}
