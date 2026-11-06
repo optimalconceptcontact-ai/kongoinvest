@@ -38,6 +38,10 @@ class KycController extends Controller
 
     public function approve(Request $request, KycProfile $kycProfile, ReviewKyc $action): RedirectResponse
     {
+        // The admin route group is a coarse gate only — the per-resource
+        // KycPolicy::review check decides who may actually review.
+        $this->authorize('review', KycProfile::class);
+
         $action->approve($request->user(), $kycProfile);
 
         return back()->with('success', 'KYC approuvé.');
@@ -45,6 +49,8 @@ class KycController extends Controller
 
     public function reject(Request $request, KycProfile $kycProfile, ReviewKyc $action): RedirectResponse
     {
+        $this->authorize('review', KycProfile::class);
+
         $data = $request->validate(['reason' => ['required', 'string', 'max:1000']]);
 
         $action->reject($request->user(), $kycProfile, $data['reason']);

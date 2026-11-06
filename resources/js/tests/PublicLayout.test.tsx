@@ -12,14 +12,25 @@ vi.mock('@inertiajs/react', () => ({
             {children}
         </a>
     ),
-    usePage: () => ({ props: { auth: { user: mockAuthUser } }, url: '/' }),
+    usePage: () => ({
+        props: {
+            auth: {
+                user: mockAuthUser,
+                roles: mockAuthUser ? ['investor'] : [],
+            },
+        },
+        url: '/',
+    }),
 }));
 
-vi.mock('@/Hooks/useAuthModal', () => ({
-    useAuthModal: () => ({ openLogin: mockOpenLogin, openRegister: mockOpenRegister }),
+vi.mock('@/hooks/useAuthModal', () => ({
+    useAuthModal: () => ({
+        openLogin: mockOpenLogin,
+        openRegister: mockOpenRegister,
+    }),
 }));
 
-vi.mock('@/Components/NotificationBell', () => ({
+vi.mock('@/components/NotificationBell', () => ({
     NotificationBell: () => <div data-testid="notification-bell" />,
 }));
 
@@ -31,7 +42,9 @@ describe('PublicLayout', () => {
             </PublicLayout>,
         );
 
-        expect(screen.getAllByText('KongoInvestment').length).toBeGreaterThan(0); // logo appears in both navbar and footer
+        expect(screen.getAllByText('KongoInvest').length).toBeGreaterThan(
+            0,
+        ); // logo appears in both navbar and footer
         expect(screen.getByText('Contenu de la page')).toBeInTheDocument();
         expect(screen.getByText(/Tous droits réservés/)).toBeInTheDocument(); // footer
     });
@@ -57,7 +70,11 @@ describe('PublicLayout', () => {
             </PublicLayout>,
         );
 
-        expect(screen.getAllByText('Tableau de bord').length).toBeGreaterThan(0);
+        fireEvent.click(screen.getByLabelText('Menu du compte'));
+
+        expect(screen.getAllByText('Tableau de bord').length).toBeGreaterThan(
+            0,
+        );
         expect(screen.getByTestId('notification-bell')).toBeInTheDocument();
         expect(screen.queryByText('Créer un compte')).not.toBeInTheDocument();
     });

@@ -3,17 +3,20 @@
 namespace Database\Factories;
 
 use App\Enums\DisputeStatus;
+use App\Models\Dispute;
+use App\Models\Escrow;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class DisputeFactory extends Factory
 {
-    protected $model = \App\Models\Dispute::class;
+    protected $model = Dispute::class;
 
     public function definition(): array
     {
         return [
-            'escrow_id' => \App\Models\Escrow::factory(),
-            'raised_by_user_id' => \App\Models\User::factory(),
+            'escrow_id' => Escrow::factory(),
+            'raised_by_user_id' => User::factory(),
             'status' => DisputeStatus::Opened->value,
             'reason' => fake()->sentence(),
         ];

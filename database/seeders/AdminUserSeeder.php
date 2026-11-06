@@ -11,9 +11,9 @@ class AdminUserSeeder extends Seeder
     public function run(): void
     {
         $admin = User::firstOrCreate(
-            ['email' => 'admin@kongoinvestment.app'],
+            ['email' => 'admin@KongoInvest.app'],
             [
-                'name' => 'KongoInvestment Admin',
+                'name' => 'KongoInvest Admin',
                 'password' => Hash::make('password'), // change immediately outside local/dev
                 'email_verified_at' => now(),
             ],

@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use App\Enums\UserRole;
+use Database\Factories\UserFactory;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
@@ -13,9 +15,9 @@ use Laravel\Cashier\Billable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 use Spatie\Permission\Traits\HasRoles;
 
-class User extends Authenticatable
+class User extends Authenticatable implements MustVerifyEmail
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
+    /** @use HasFactory<UserFactory> */
     use Billable, HasFactory, HasRoles, Notifiable, SoftDeletes, TwoFactorAuthenticatable;
 
     protected $fillable = [
@@ -64,7 +66,7 @@ class User extends Authenticatable
      */
     public function projects(): HasMany
     {
-        return $this->hasMany(\App\Models\Project::class);
+        return $this->hasMany(Project::class);
     }
 
     // Named planSubscriptions(), not subscriptions() — Laravel\Cashier\Billable
@@ -74,17 +76,17 @@ class User extends Authenticatable
     // avoids Cashier's internals silently calling the wrong relation.
     public function planSubscriptions(): HasMany
     {
-        return $this->hasMany(\App\Models\Subscription::class);
+        return $this->hasMany(Subscription::class);
     }
 
     public function kycProfile(): HasOne
     {
-        return $this->hasOne(\App\Models\KycProfile::class);
+        return $this->hasOne(KycProfile::class);
     }
 
     public function savedProjects(): HasMany
     {
-        return $this->hasMany(\App\Models\SavedProject::class, 'investor_user_id');
+        return $this->hasMany(SavedProject::class, 'investor_user_id');
     }
 
     public function isEntrepreneur(): bool

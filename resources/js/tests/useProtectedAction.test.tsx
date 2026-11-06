@@ -1,7 +1,8 @@
 import { render, screen, fireEvent, act } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
+import { AuthModalContext } from '@/components/Auth/AuthModalContext';
+import type { AuthModalContextValue } from '@/components/Auth/AuthModalContext';
 import { useProtectedAction } from '@/hooks/useProtectedAction';
-import { AuthModalContext, type AuthModalContextValue } from '@/components/Auth/AuthModalContext';
 
 let mockAuthUser: { id: number } | null = null;
 
@@ -9,7 +10,13 @@ vi.mock('@inertiajs/react', () => ({
     usePage: () => ({ props: { auth: { user: mockAuthUser } } }),
 }));
 
-function TestHarness({ openRegisterSpy, run }: { openRegisterSpy: (intent: unknown) => void; run: () => void }) {
+function TestHarness({
+    openRegisterSpy,
+    run,
+}: {
+    openRegisterSpy: (intent: unknown) => void;
+    run: () => void;
+}) {
     const contextValue = {
         activeModal: null,
         pendingIntent: null,
@@ -33,6 +40,7 @@ function TestHarness({ openRegisterSpy, run }: { openRegisterSpy: (intent: unkno
 
 function Inner({ run }: { run: () => void }) {
     const trigger = useProtectedAction({ action: 'contact_investor' }, run);
+
     return <button onClick={() => trigger()}>Contacter</button>;
 }
 
@@ -45,7 +53,9 @@ describe('useProtectedAction (spec §7 + §136)', () => {
         render(<TestHarness openRegisterSpy={openRegisterSpy} run={run} />);
         fireEvent.click(screen.getByText('Contacter'));
 
-        expect(openRegisterSpy).toHaveBeenCalledWith(expect.objectContaining({ action: 'contact_investor' }));
+        expect(openRegisterSpy).toHaveBeenCalledWith(
+            expect.objectContaining({ action: 'contact_investor' }),
+        );
         expect(run).not.toHaveBeenCalled();
     });
 
@@ -68,10 +78,18 @@ describe('useProtectedAction (spec §7 + §136)', () => {
         render(<TestHarness openRegisterSpy={vi.fn()} run={run} />);
 
         act(() => {
-            window.dispatchEvent(new CustomEvent('kongoinvestment:resume-intent', { detail: { action: 'contact_investor' } }));
+            window.dispatchEvent(
+                new CustomEvent('KongoInvest:resume-intent', {
+                    detail: { action: 'contact_investor' },
+                }),
+            );
         });
         act(() => {
-            window.dispatchEvent(new CustomEvent('kongoinvestment:resume-intent', { detail: { action: 'save_project' } })); // a different action — must be ignored
+            window.dispatchEvent(
+                new CustomEvent('KongoInvest:resume-intent', {
+                    detail: { action: 'save_project' },
+                }),
+            ); // a different action — must be ignored
         });
 
         expect(run).toHaveBeenCalledTimes(1);

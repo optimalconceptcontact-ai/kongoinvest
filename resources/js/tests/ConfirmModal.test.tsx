@@ -24,7 +24,13 @@ describe('ConfirmModal', () => {
         const onConfirm = vi.fn();
         const onClose = vi.fn();
         render(
-            <ConfirmModal open onClose={onClose} onConfirm={onConfirm} title="Titre" description="Description" />,
+            <ConfirmModal
+                open
+                onClose={onClose}
+                onConfirm={onConfirm}
+                title="Titre"
+                description="Description"
+            />,
         );
 
         fireEvent.click(screen.getByText('Annuler'));
@@ -36,7 +42,14 @@ describe('ConfirmModal', () => {
     it('disables the confirm button while processing, preventing a double-submit', () => {
         const onConfirm = vi.fn();
         render(
-            <ConfirmModal open onClose={() => {}} onConfirm={onConfirm} title="Titre" description="Description" processing />,
+            <ConfirmModal
+                open
+                onClose={() => {}}
+                onConfirm={onConfirm}
+                title="Titre"
+                description="Description"
+                processing
+            />,
         );
 
         const button = screen.getByRole('button', { name: '...' });

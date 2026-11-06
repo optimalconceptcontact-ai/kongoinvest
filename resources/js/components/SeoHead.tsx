@@ -9,9 +9,20 @@ type SharedUrl = { url?: string };
  * centralizes the full set so a new public page gets all four for free
  * instead of the pattern silently drifting per page.
  */
-export function SeoHead({ title, description, image }: { title: string; description: string; image?: string }) {
+export function SeoHead({
+    title,
+    description,
+    image,
+}: {
+    title: string;
+    description: string;
+    image?: string;
+}) {
     const page = usePage<SharedUrl>();
-    const canonical = typeof window !== 'undefined' ? window.location.origin + page.url : undefined;
+    const canonical =
+        typeof window !== 'undefined'
+            ? window.location.origin + page.url
+            : undefined;
 
     return (
         <Head title={title}>

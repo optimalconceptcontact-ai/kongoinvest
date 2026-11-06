@@ -22,6 +22,12 @@ const typeLabels: Record<string, string> = {
     kyc_approved: 'KYC approuvé',
     kyc_rejected: 'KYC rejeté',
     contract_accepted: 'Contrat accepté',
+    subscription_expiring: 'Expiration proche',
+    subscription_grace_reminder: "Renouvellement d'abonnement",
+    subscription_grace_started: 'Abonnement expiré',
+    subscription_downgraded: 'Retour au plan Free',
+    subscription_canceled: 'Abonnement annulé',
+    subscription_past_due: 'Paiement échoué',
 };
 
 export function NotificationBell({
@@ -95,23 +101,23 @@ export function NotificationBell({
         <div className="relative">
             <button
                 onClick={openDropdown}
-                className="relative p-2 text-slate-500 hover:text-slate-900"
+                className="relative flex h-11 w-11 items-center justify-center text-ink-muted hover:text-ink"
                 aria-label="Notifications"
             >
                 <RiNotification3Line size={19} />
                 {unreadCount > 0 && (
-                    <span className="absolute top-1 right-1 flex h-3 w-3 rounded-full bg-orange-500" />
+                    <span className="absolute top-1.5 right-1.5 flex h-2.5 w-2.5 bg-signal ring-2 ring-paper" />
                 )}
             </button>
 
             {open && (
                 <div
-                    className={`absolute z-50 mt-2 w-80 max-w-[calc(100vw-2rem)] border border-slate-200 bg-white shadow-sm ${
+                    className={`absolute z-50 mt-2 w-80 max-w-[calc(100vw-2rem)] border border-rule-strong bg-paper shadow-[4px_4px_0_0_rgba(14,23,38,0.08)] dark:shadow-[4px_4px_0_0_rgba(0,0,0,0.35)] ${
                         align === 'left' ? 'left-0' : 'right-0'
                     }`}
                 >
-                    <div className="flex items-center justify-between border-b border-slate-200 px-3 py-2">
-                        <span className="font-mono text-[11px] text-slate-500 uppercase">
+                    <div className="flex items-center justify-between border-b border-rule px-3 py-2">
+                        <span className="font-mono text-lg font-medium tracking-[0.16em] text-ink-muted uppercase">
                             Notifications
                         </span>
                         {unreadCount > 0 && (
@@ -126,7 +132,7 @@ export function NotificationBell({
                                         },
                                     )
                                 }
-                                className="font-mono text-[11px] text-blue-600 hover:text-blue-700"
+                                className="min-h-11 px-2 font-mono text-lg text-action hover:underline"
                             >
                                 Tout marquer lu
                             </button>
@@ -142,17 +148,17 @@ export function NotificationBell({
                                 <button
                                     key={n.id}
                                     onClick={() => goTo(n)}
-                                    className={`block w-full border-b border-slate-100 px-3 py-2.5 text-left text-xs last:border-b-0 hover:bg-slate-50 ${!n.readAt ? 'bg-blue-50/50' : ''}`}
+                                    className={`block min-h-11 w-full border-b border-l-2 border-rule border-l-transparent px-3 py-2.5 text-left text-lg last:border-b-0 hover:bg-surface-2 ${!n.readAt ? 'border-l-signal bg-surface-2' : ''}`}
                                 >
-                                    <div className="font-semibold text-slate-900">
+                                    <div className="font-semibold text-ink">
                                         {typeLabels[n.type ?? ''] ?? n.type}
                                     </div>
                                     {n.data.project_title && (
-                                        <div className="text-slate-500">
+                                        <div className="text-ink-muted">
                                             {n.data.project_title}
                                         </div>
                                     )}
-                                    <div className="mt-0.5 font-mono text-[10px] text-slate-400">
+                                    <div className="mt-0.5 font-mono text-lg text-ink-muted">
                                         {new Date(
                                             n.createdAt,
                                         ).toLocaleDateString('fr-FR')}

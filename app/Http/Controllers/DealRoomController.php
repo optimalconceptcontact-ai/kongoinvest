@@ -24,7 +24,7 @@ class DealRoomController extends Controller
         return Inertia::render('DealRoom/Show', [
             'dealRoom' => DealRoomData::fromModel($dealRoom->load([
                 'project', 'entrepreneur', 'investor', 'conversation.messages.sender',
-                'documents.owner', 'documents.media', 'contracts.versions',
+                'documents.owner', 'documents.media', 'contracts.versions', 'contractWorkspace',
             ]), $request->user()),
             'viewerRole' => $request->user()->id === $dealRoom->entrepreneur_user_id ? 'entrepreneur' : 'investor',
         ]);

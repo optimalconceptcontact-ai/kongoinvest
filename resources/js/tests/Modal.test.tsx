@@ -5,7 +5,12 @@ import { Modal } from '@/components/Modal';
 describe('Modal', () => {
     it('renders title and description when open', () => {
         render(
-            <Modal open onClose={() => {}} title="Confirmer" description="Voulez-vous continuer ?">
+            <Modal
+                open
+                onClose={() => {}}
+                title="Confirmer"
+                description="Voulez-vous continuer ?"
+            >
                 <p>Contenu</p>
             </Modal>,
         );

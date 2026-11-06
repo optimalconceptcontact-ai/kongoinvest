@@ -1,8 +1,17 @@
-import { Elements, PaymentElement, useElements, useStripe } from '@stripe/react-stripe-js';
+import {
+    Elements,
+    PaymentElement,
+    useElements,
+    useStripe,
+} from '@stripe/react-stripe-js';
 import { useEffect, useState } from 'react';
 import { useStripePromise } from '@/hooks/useStripe';
-import { Button } from '@/components/Ui/Button';
-import { stripeAppearance, stripePaymentElementOptions } from '@/lib/stripeAppearance';
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
+import {
+    stripeAppearance,
+    stripePaymentElementOptions,
+} from '@/lib/stripeAppearance';
 
 /**
  * The actual card number / expiry / CVC fields the checkout page was
@@ -33,13 +42,18 @@ export function StripeCardForm({
             headers: {
                 'Content-Type': 'application/json',
                 Accept: 'application/json',
-                'X-CSRF-TOKEN': document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '',
+                'X-CSRF-TOKEN':
+                    document.querySelector<HTMLMetaElement>(
+                        'meta[name="csrf-token"]',
+                    )?.content ?? '',
             },
         })
             .then(async (res) => {
                 if (!res.ok) {
                     const body = await res.json().catch(() => null);
-                    throw new Error(body?.message ?? 'Impossible de préparer le paiement.');
+                    throw new Error(
+                        body?.message ?? 'Impossible de préparer le paiement.',
+                    );
                 }
                 return res.json();
             })
@@ -57,22 +71,34 @@ export function StripeCardForm({
 
     if (!stripePromise) {
         return (
-            <div className="border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-                Le paiement par carte n'est pas configuré sur cet environnement (clé publique Stripe manquante).
+            <div className="border border-danger/30 bg-danger/10 px-4 py-3 text-lg text-danger">
+                Le paiement par carte n'est pas configuré sur cet environnement
+                (clé publique Stripe manquante).
             </div>
         );
     }
 
     if (loadError) {
-        return <div className="border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{loadError}</div>;
+        return (
+            <div className="border border-danger/30 bg-danger/10 px-4 py-3 text-lg text-danger">
+                {loadError}
+            </div>
+        );
     }
 
     if (!clientSecret) {
-        return <div className="animate-pulse border border-slate-200 bg-slate-50 px-4 py-6 text-center text-caption">Préparation du formulaire de paiement...</div>;
+        return (
+            <Skeleton className="px-4 py-6 text-center text-caption">
+                Préparation du formulaire de paiement...
+            </Skeleton>
+        );
     }
 
     return (
-        <Elements stripe={stripePromise} options={{ clientSecret, appearance: stripeAppearance }}>
+        <Elements
+            stripe={stripePromise}
+            options={{ clientSecret, appearance: stripeAppearance }}
+        >
             <InnerForm onSuccess={onSuccess} />
         </Elements>
     );
@@ -94,13 +120,14 @@ function InnerForm({ onSuccess }: { onSuccess: () => void }) {
         // redirect: 'if_required' keeps the user on this page unless
         // their card actually requires 3D Secure / another redirect step
         // — most test/standard cards resolve without ever leaving here.
-        const { error: confirmError, paymentIntent } = await stripe.confirmPayment({
-            elements,
-            redirect: 'if_required',
-            confirmParams: {
-                return_url: window.location.href,
-            },
-        });
+        const { error: confirmError, paymentIntent } =
+            await stripe.confirmPayment({
+                elements,
+                redirect: 'if_required',
+                confirmParams: {
+                    return_url: window.location.href,
+                },
+            });
 
         setSubmitting(false);
 
@@ -109,7 +136,10 @@ function InnerForm({ onSuccess }: { onSuccess: () => void }) {
             return;
         }
 
-        if (paymentIntent?.status === 'succeeded' || paymentIntent?.status === 'processing') {
+        if (
+            paymentIntent?.status === 'succeeded' ||
+            paymentIntent?.status === 'processing'
+        ) {
             onSuccess();
         }
     }
@@ -118,9 +148,18 @@ function InnerForm({ onSuccess }: { onSuccess: () => void }) {
         <form onSubmit={submit} className="flex flex-col gap-4">
             <PaymentElement options={stripePaymentElementOptions} />
 
-            {error && <div className="border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>}
+            {error && (
+                <div className="border border-danger/30 bg-danger/10 px-3 py-2 text-lg text-danger">
+                    {error}
+                </div>
+            )}
 
-            <Button type="submit" variant="cta" disabled={!stripe || submitting} className="px-6 py-3">
+            <Button
+                type="submit"
+                variant="cta"
+                disabled={!stripe || submitting}
+                className="px-6 py-3"
+            >
                 {submitting ? 'Traitement...' : 'Payer'}
             </Button>
         </form>

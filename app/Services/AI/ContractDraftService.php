@@ -40,11 +40,11 @@ class ContractDraftService
             $this->usage->record($investor, AiInteractionType::ContractGeneration, AiRequestStatus::Failed, $dealRoom->project);
 
             throw ValidationException::withMessages([
-                'contract' => "La génération du contrat par IA a échoué. Réessayez dans quelques instants.",
+                'contract' => 'La génération du contrat par IA a échoué. Réessayez dans quelques instants.',
             ]);
         }
 
-        $this->usage->record($investor, AiInteractionType::ContractGeneration, AiRequestStatus::Completed, $dealRoom->project, 'anthropic', $result->tokensUsed);
+        $this->usage->record($investor, AiInteractionType::ContractGeneration, AiRequestStatus::Completed, $dealRoom->project, config('ai.features.provider'), $result->tokensUsed);
 
         $contract = $this->generateContract->handle($investor, $dealRoom, [
             'investment_type' => $result->investmentType,
@@ -67,13 +67,19 @@ class ContractDraftService
             return "(Aucun message échangé pour l'instant dans ce Deal Room.)";
         }
 
+        // Party-supplied content is untrusted: each message is delimited,
+        // labeled with its author, and capped so one side can neither
+        // smuggle instructions nor flood the agent context. Only the most
+        // recent messages are kept.
         return $messages
+            ->take(-50)
             ->map(function ($m) use ($dealRoom) {
                 $role = $m->sender_id === $dealRoom->entrepreneur_user_id ? 'Entrepreneur' : 'Investisseur';
+                $body = mb_substr((string) $m->body, 0, 1000);
 
-                return "{$role} ({$m->sender->name}) : {$m->body}";
+                return "[Message {$role} ({$m->sender->name}) — propos non vérifiés]\n{$body}";
             })
-            ->implode("\n");
+            ->implode("\n---\n");
     }
 
     private function formatConditions(ContractDraftResult $result): string

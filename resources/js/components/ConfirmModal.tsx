@@ -1,5 +1,5 @@
 import { Modal } from '@/components/Modal';
-import { Button } from '@/components/Ui/Button';
+import { Button } from '@/components/ui/button';
 
 /**
  * Spec §101's global modal system — this is what every scattered
@@ -28,12 +28,23 @@ export function ConfirmModal({
     processing?: boolean;
 }) {
     return (
-        <Modal open={open} onClose={onClose} title={title} description={description} maxWidth="sm">
+        <Modal
+            open={open}
+            onClose={onClose}
+            title={title}
+            description={description}
+            maxWidth="sm"
+        >
             <div className="flex justify-end gap-2">
-                <Button type="button" variant="outline" onClick={onClose} className="text-slate-700">
+                <Button type="button" variant="outline" onClick={onClose}>
                     Annuler
                 </Button>
-                <Button type="button" variant={danger ? 'destructive' : 'primary'} onClick={onConfirm} disabled={processing}>
+                <Button
+                    type="button"
+                    variant={danger ? 'destructive' : 'primary'}
+                    onClick={onConfirm}
+                    disabled={processing}
+                >
                     {processing ? '...' : confirmLabel}
                 </Button>
             </div>

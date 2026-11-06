@@ -2,13 +2,16 @@
 
 namespace Database\Factories;
 
+use App\Models\EntrepreneurProfile;
+use App\Models\InvestorProfile;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
 class UserFactory extends Factory
 {
-    protected $model = \App\Models\User::class;
+    protected $model = User::class;
 
     public function definition(): array
     {
@@ -31,18 +34,18 @@ class UserFactory extends Factory
     /** Creates the user, assigns the entrepreneur role, and an empty profile forced to DRC. */
     public function entrepreneur(): static
     {
-        return $this->afterCreating(function (\App\Models\User $user) {
+        return $this->afterCreating(function (User $user) {
             $user->assignRole('entrepreneur');
-            \App\Models\EntrepreneurProfile::factory()->create(['user_id' => $user->id]);
+            EntrepreneurProfile::factory()->create(['user_id' => $user->id]);
         });
     }
 
     /** Creates the user, assigns the investor role, and an empty investor profile. */
     public function investor(): static
     {
-        return $this->afterCreating(function (\App\Models\User $user) {
+        return $this->afterCreating(function (User $user) {
             $user->assignRole('investor');
-            \App\Models\InvestorProfile::factory()->create(['user_id' => $user->id]);
+            InvestorProfile::factory()->create(['user_id' => $user->id]);
         });
     }
 }

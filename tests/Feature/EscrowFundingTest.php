@@ -7,6 +7,7 @@ use App\Models\Payment;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Database\Seeders\SubscriptionPlansSeeder;
 use Illuminate\Support\Str;
+use Illuminate\Testing\TestResponse;
 
 beforeEach(function () {
     $this->seed(RolesAndPermissionsSeeder::class);
@@ -14,20 +15,25 @@ beforeEach(function () {
     config(['services.stripe.webhook_secret' => 'whsec_test_secret']);
 });
 
-function postSignedStripeWebhook(array $payload): \Illuminate\Testing\TestResponse
+function postSignedStripeWebhook(array $payload): TestResponse
 {
     $timestamp = time();
     $body = json_encode($payload);
     $signature = hash_hmac('sha256', "{$timestamp}.{$body}", 'whsec_test_secret');
 
-    return test()->withHeaders(['Stripe-Signature' => "t={$timestamp},v1={$signature}"])
-        ->call('POST', '/webhooks/stripe', [], [], [], ['CONTENT_TYPE' => 'application/json'], $body);
+    // withHeaders() does NOT apply to a raw call(): default headers only
+    // merge into the get/post/json helpers. A raw call needs its headers
+    // as $server vars, or the signature never reaches the provider.
+    return test()->call('POST', '/webhooks/stripe', [], [], [], [
+        'CONTENT_TYPE' => 'application/json',
+        'HTTP_STRIPE_SIGNATURE' => "t={$timestamp},v1={$signature}",
+    ], $body);
 }
 
 it('moves escrow from pending to held once a genuinely signed funding webhook arrives', function () {
     $escrow = Escrow::factory()->create(['status' => 'pending', 'amount_minor' => 50_000_00, 'currency' => 'USD']);
 
-    $payment = Payment::create([
+    $payment = Payment::forceCreate([
         'payer_id' => $escrow->investor_user_id,
         'purpose' => PaymentPurpose::Investment->value,
         'payable_type' => Escrow::class,
@@ -54,7 +60,7 @@ it('moves escrow from pending to held once a genuinely signed funding webhook ar
 
 it('never double-funds an escrow if the funding webhook is redelivered', function () {
     $escrow = Escrow::factory()->create(['status' => 'pending', 'amount_minor' => 10_000_00, 'currency' => 'USD']);
-    Payment::create([
+    Payment::forceCreate([
         'payer_id' => $escrow->investor_user_id, 'purpose' => 'investment',
         'payable_type' => Escrow::class, 'payable_id' => $escrow->id,
         'provider' => 'stripe', 'provider_reference' => 'pi_redeliver',

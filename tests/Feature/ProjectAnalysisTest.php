@@ -1,9 +1,11 @@
 <?php
 
 use App\Contracts\ProjectAnalysisProviderInterface;
+use App\Models\AiUsage;
 use App\Models\Project;
 use App\Models\User;
 use App\Services\Ai\ProjectAnalysisResult;
+use App\Services\SubscriptionService;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Database\Seeders\SubscriptionPlansSeeder;
 
@@ -41,7 +43,8 @@ it('never lets React trigger an AI call directly - it always goes through the co
     $entrepreneur = User::factory()->entrepreneur()->create();
     $project = Project::factory()->for($entrepreneur)->published()->withTaxonomy()->create();
 
-    app()->bind(ProjectAnalysisProviderInterface::class, fn () => new class implements ProjectAnalysisProviderInterface {
+    app()->bind(ProjectAnalysisProviderInterface::class, fn () => new class implements ProjectAnalysisProviderInterface
+    {
         public function analyze(Project $project): ?ProjectAnalysisResult
         {
             return fakeAnalysisResult();
@@ -55,14 +58,15 @@ it('never lets React trigger an AI call directly - it always goes through the co
     $analysis = $project->aiAnalyses()->first();
     expect($analysis->status->value)->toBe('completed');
     expect($analysis->investment_score)->toBe(78);
-    expect($analysis->content['disclaimer'])->toContain('ne constitue pas un conseil financier');
+    expect($analysis->content['disclaimer'])->toContain('ne constituent pas un conseil financier');
 });
 
 it('never breaks the page when the AI provider is unavailable - stores a Failed row instead', function () {
     $entrepreneur = User::factory()->entrepreneur()->create();
     $project = Project::factory()->for($entrepreneur)->published()->withTaxonomy()->create();
 
-    app()->bind(ProjectAnalysisProviderInterface::class, fn () => new class implements ProjectAnalysisProviderInterface {
+    app()->bind(ProjectAnalysisProviderInterface::class, fn () => new class implements ProjectAnalysisProviderInterface
+    {
         public function analyze(Project $project): ?ProjectAnalysisResult
         {
             return null; // simulates unconfigured / failed provider
@@ -80,10 +84,10 @@ it('never breaks the page when the AI provider is unavailable - stores a Failed 
 
 it('enforces the plan\'s monthly AI token quota', function () {
     $entrepreneur = User::factory()->entrepreneur()->create();
-    app(\App\Services\SubscriptionService::class)->assignFreePlan($entrepreneur); // Free: 20,000 token quota
+    app(SubscriptionService::class)->assignFreePlan($entrepreneur); // Free: 20,000 token quota
     $project = Project::factory()->for($entrepreneur)->published()->withTaxonomy()->create();
 
-    \App\Models\AiUsage::create([
+    AiUsage::create([
         'user_id' => $entrepreneur->id,
         'type' => 'project_analysis',
         'status' => 'completed',

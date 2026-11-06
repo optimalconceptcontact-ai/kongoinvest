@@ -1,13 +1,23 @@
 <?php
 
 use App\Actions\Escrow\RaiseDispute;
-use App\Actions\Escrow\ReleaseEscrow;
 use App\Actions\Escrow\RefundEscrow;
+use App\Actions\Escrow\ReleaseEscrow;
+use App\Contracts\PaymentProviderInterface;
+use App\Enums\PaymentProviderName;
+use App\Enums\PaymentStatus;
 use App\Models\Escrow;
+use App\Models\Payment;
 use App\Models\User;
+use App\Services\Payments\PaymentIntentResult;
+use App\Services\Payments\PaymentProviderFactory;
+use App\Services\Payments\RefundResult;
+use App\Services\Payments\WebhookEvent;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Database\Seeders\SubscriptionPlansSeeder;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Validation\ValidationException;
 
 beforeEach(function () {
     $this->seed(RolesAndPermissionsSeeder::class);
@@ -28,13 +38,15 @@ it('never lets release run twice on the same escrow, even called back-to-back', 
     app(ReleaseEscrow::class)->handle($escrow->investor, $escrow);
 
     expect(fn () => app(ReleaseEscrow::class)->handle($escrow->investor, $escrow->fresh()))
-        ->toThrow(\Illuminate\Validation\ValidationException::class);
+        ->toThrow(ValidationException::class);
 
     expect($escrow->fresh()->status->value)->toBe('released'); // unchanged by the second call
 });
 
 it('never lets the entrepreneur release or refund an escrow — only the investor may', function () {
     $escrow = Escrow::factory()->held()->create();
+    $escrow->investor->assignRole('investor');
+    $escrow->entrepreneur->assignRole('entrepreneur');
 
     expect($escrow->entrepreneur->can('release', $escrow))->toBeFalse();
     expect($escrow->entrepreneur->can('requestRefund', $escrow))->toBeFalse();
@@ -54,13 +66,13 @@ it('never lets someone outside the deal room view, release, refund, or dispute a
 
 it('actually calls the payment provider to refund, and only marks Refunded on a successful provider response', function () {
     $escrow = Escrow::factory()->held()->create();
-    $payment = \App\Models\Payment::factory()->create([
+    $payment = Payment::factory()->create([
         'payer_id' => $escrow->investor_user_id,
         'provider' => 'stripe',
         'provider_reference' => 'pi_refund_test',
         'amount_minor' => $escrow->amount_minor,
     ]);
-    $escrow->update(['payment_id' => $payment->id]);
+    $escrow->forceFill(['payment_id' => $payment->id])->save();
 
     Http::fake([
         'api.stripe.com/v1/refunds' => Http::response(['id' => 're_test_123', 'amount' => $escrow->amount_minor], 200),
@@ -75,19 +87,19 @@ it('actually calls the payment provider to refund, and only marks Refunded on a 
 
 it('leaves the escrow in refund_requested, not silently reverted, when the provider refund fails', function () {
     $escrow = Escrow::factory()->held()->create();
-    $payment = \App\Models\Payment::factory()->create([
+    $payment = Payment::factory()->create([
         'payer_id' => $escrow->investor_user_id,
         'provider' => 'stripe',
         'provider_reference' => 'pi_refund_fail',
     ]);
-    $escrow->update(['payment_id' => $payment->id]);
+    $escrow->forceFill(['payment_id' => $payment->id])->save();
 
     Http::fake([
         'api.stripe.com/v1/refunds' => Http::response(['error' => ['message' => 'card_declined']], 402),
     ]);
 
     expect(fn () => app(RefundEscrow::class)->handle($escrow->investor, $escrow->fresh()))
-        ->toThrow(\Illuminate\Validation\ValidationException::class);
+        ->toThrow(ValidationException::class);
 
     expect($escrow->fresh()->status->value)->toBe('refund_requested');
 });
@@ -107,5 +119,68 @@ it('never allows opening a second dispute while one is already open', function (
     app(RaiseDispute::class)->handle($escrow->investor, $escrow, 'First issue.');
 
     expect(fn () => app(RaiseDispute::class)->handle($escrow->entrepreneur, $escrow->fresh(), 'Second issue.'))
-        ->toThrow(\Illuminate\Validation\ValidationException::class);
+        ->toThrow(ValidationException::class);
+});
+
+it('never overwrites a dispute opened while the provider refund was in flight', function () {
+    $escrow = Escrow::factory()->held()->create();
+    $payment = Payment::factory()->create([
+        'payer_id' => $escrow->investor_user_id,
+        'provider' => 'stripe',
+        'provider_reference' => 'pi_refund_race',
+        'amount_minor' => $escrow->amount_minor,
+    ]);
+    $escrow->forceFill(['payment_id' => $payment->id])->save();
+
+    // A provider whose refund call opens a dispute mid-flight, simulating
+    // the concurrent entrepreneur request the split-transaction window
+    // allows. The refund itself succeeds at the provider.
+    $disputingEntrepreneur = $escrow->entrepreneur;
+    app()->instance(PaymentProviderFactory::class, new class($disputingEntrepreneur, $escrow) extends PaymentProviderFactory
+    {
+        public function __construct(private User $raiser, private Escrow $target) {}
+
+        public function make(PaymentProviderName $provider): PaymentProviderInterface
+        {
+            return new class($this->raiser, $this->target) implements PaymentProviderInterface
+            {
+                public function __construct(private User $raiser, private Escrow $target) {}
+
+                public function createPayment(Payment $payment): PaymentIntentResult
+                {
+                    throw new RuntimeException('Not implemented in test double.');
+                }
+
+                public function verifyPayment(Payment $payment): PaymentStatus
+                {
+                    return $payment->status;
+                }
+
+                public function refund(Payment $payment, ?int $amountMinor = null): RefundResult
+                {
+                    app(RaiseDispute::class)->handle($this->raiser, $this->target->fresh(), 'Litige ouvert pendant le remboursement.');
+
+                    return new RefundResult(successful: true, providerRefundId: 're_disputed_123', amountMinor: $payment->amount_minor);
+                }
+
+                public function getStatus(Payment $payment): PaymentStatus
+                {
+                    return $payment->status;
+                }
+
+                public function handleWebhook(Request $request): ?WebhookEvent
+                {
+                    return null;
+                }
+            };
+        }
+    });
+
+    expect(fn () => app(RefundEscrow::class)->handle($escrow->investor, $escrow->fresh()))
+        ->toThrow(ValidationException::class);
+
+    $fresh = $escrow->fresh();
+    expect($fresh->status->value)->toBe('disputed');
+    expect($fresh->openDispute())->not->toBeNull();
+    expect($fresh->events()->where('to_status', 'refunded')->exists())->toBeFalse();
 });

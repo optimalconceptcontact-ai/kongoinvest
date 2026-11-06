@@ -1,7 +1,8 @@
+import { usePage } from '@inertiajs/react';
 import { useState } from 'react';
 import { SeoHead } from '@/components/SeoHead';
-import { Button } from '@/components/Ui/Button';
-import { Link } from '@/components/Ui/Link';
+import { Button } from '@/components/ui/button';
+import { Link } from '@/components/ui/Link';
 import { useAuthModal } from '@/hooks/useAuthModal';
 import { PublicLayout } from '@/layouts/PublicLayout';
 
@@ -73,23 +74,29 @@ const prerequisites = {
     },
 } as const;
 
+type SharedAuth = {
+    auth: { user: { id: number; name: string } | null; roles: string[] };
+};
+
 export default function HowItWorks() {
+    const { props } = usePage<SharedAuth>();
+    const isEntrepreneur = props.auth?.roles?.includes('entrepreneur');
     const [tab, setTab] = useState<'entrepreneur' | 'investor'>('entrepreneur');
-    const { openRegister } = useAuthModal();
+    const { openRegister, openLogin } = useAuthModal();
     const prereq = prerequisites[tab];
 
     return (
         <PublicLayout>
             <SeoHead
                 title="Comment ça marche"
-                description="Le parcours entrepreneur et investisseur sur KongoInvestment, étape par étape, de l'inscription à l'investissement."
+                description="Le parcours entrepreneur et investisseur sur KongoInvest, étape par étape, de l'inscription à l'investissement."
             />
-            <div className="mx-auto max-w-3xl px-6 py-16">
+            <div className="mx-auto max-w-4xl px-4 py-16 md:px-6">
                 <p className="text-eyebrow">Comment ça marche</p>
                 <h1 className="mt-2 mb-4 text-page-title-lg">
                     Un parcours structuré, des deux côtés.
                 </h1>
-                <p className="mb-10 max-w-2xl text-lg leading-relaxed text-slate-500">
+                <p className="mb-10 max-w-2xl text-2xl leading-relaxed text-ink-muted">
                     Que vous soyez porteur de projet en RDC ou investisseur
                     partout ailleurs dans le monde, la plateforme vous fait
                     avancer par étapes claires : chacune a un objectif précis,
@@ -97,16 +104,16 @@ export default function HowItWorks() {
                     rencontre ne soit confirmée des deux côtés.
                 </p>
 
-                <div className="mb-10 flex w-max border border-slate-900">
+                <div className="mb-10 flex w-max border border-rule-strong">
                     {(['entrepreneur', 'investor'] as const).map((key) => (
                         <button
                             key={key}
                             onClick={() => setTab(key)}
-                            className={`px-5 py-2.5 font-mono text-xs ${
+                            className={`min-h-11 px-5 py-2.5 text-btn ${
                                 tab === key
-                                    ? 'bg-slate-900 text-white'
-                                    : 'bg-white text-slate-500'
-                            } ${key === 'entrepreneur' ? 'border-r border-slate-900' : ''}`}
+                                    ? 'bg-ink text-paper'
+                                    : 'bg-paper text-ink-muted hover:text-ink'
+                            } ${key === 'entrepreneur' ? 'border-r border-rule-strong' : ''}`}
                         >
                             {key === 'entrepreneur'
                                 ? 'Entrepreneur'
@@ -115,13 +122,13 @@ export default function HowItWorks() {
                     ))}
                 </div>
 
-                <div className="border border-slate-300">
+                <div className="border border-rule-strong bg-paper">
                     {paths[tab].map(([title, body], i) => (
                         <div
                             key={title}
-                            className="flex gap-4 border-b border-slate-300 p-5 last:border-b-0"
+                            className="flex gap-4 border-b border-rule p-5 last:border-b-0"
                         >
-                            <div className="font-mono text-sm font-bold text-orange-600">
+                            <div className="font-mono text-lg font-medium text-ink-muted">
                                 {String(i + 1).padStart(2, '0')}
                             </div>
                             <div>
@@ -134,22 +141,20 @@ export default function HowItWorks() {
                     ))}
                 </div>
 
-                <div className="mt-8 border border-slate-300 bg-slate-50 p-6">
-                    <h2 className="mb-4 font-mono text-xs tracking-widest text-slate-500 uppercase">
-                        {prereq.title}
-                    </h2>
-                    <ul className="list-disc space-y-2 pl-5 text-body text-slate-700">
+                <div className="mt-8 border border-rule-strong bg-surface-2 p-6">
+                    <h2 className="mb-4 text-section-label">{prereq.title}</h2>
+                    <ul className="list-disc space-y-2 pl-5 text-body">
                         {prereq.items.map((item) => (
                             <li key={item}>{item}</li>
                         ))}
                     </ul>
                 </div>
 
-                <div className="mt-12 border-t border-slate-300 pt-8">
-                    <h2 className="mb-3 text-xl font-extrabold text-slate-900">
+                <div className="mt-12 border-t border-rule pt-8">
+                    <h2 className="mb-3 text-section-title">
                         Et après le match ?
                     </h2>
-                    <div className="max-w-2xl space-y-4 text-lg leading-relaxed text-slate-700">
+                    <div className="max-w-lg space-y-4 text-2xl leading-relaxed text-ink">
                         <p>
                             Le matching n'est que le point de départ. Une fois
                             l'intérêt mutuel confirmé, les deux parties
@@ -183,7 +188,7 @@ export default function HowItWorks() {
                                 conditions ne sont pas remplies.
                             </li>
                         </ul>
-                        <p className="text-base text-slate-500">
+                        <p className="text-xl text-ink-muted">
                             Certaines de ces étapes sont encore en cours de
                             déploiement : consultez la FAQ pour connaître l'état
                             exact de chaque fonctionnalité.
@@ -192,21 +197,44 @@ export default function HowItWorks() {
                 </div>
 
                 <div className="mt-12 flex flex-wrap gap-3">
-                    <Button
-                        type="button"
-                        onClick={() => openRegister()}
-                        variant="cta"
-                        className="px-6 py-3"
-                    >
-                        Créer mon compte
-                    </Button>
-                    <Link
-                        href="/projects"
-                        variant="outline"
-                        className="px-6 py-3"
-                    >
-                        Découvrir les projets
-                    </Link>
+                    {props.auth?.user ? (
+                        <Link
+                            href="/dashboard"
+                            variant="primary"
+                            className="px-6 py-3"
+                        >
+                            Aller à mon tableau de bord
+                        </Link>
+                    ) : (
+                        <Button
+                            type="button"
+                            onClick={() => openRegister()}
+                            variant="primary"
+                            className="px-6 py-3"
+                        >
+                            Créer mon compte
+                        </Button>
+                    )}
+                    {props.auth?.user ? (
+                        !isEntrepreneur && (
+                            <Link
+                                href="/projects"
+                                variant="outline"
+                                className="px-6 py-3"
+                            >
+                                Découvrir les projets
+                            </Link>
+                        )
+                    ) : (
+                        <Button
+                            type="button"
+                            onClick={() => openLogin()}
+                            variant="outline"
+                            className="px-6 py-3"
+                        >
+                            Découvrir les projets
+                        </Button>
+                    )}
                 </div>
             </div>
         </PublicLayout>

@@ -1,0 +1,858 @@
+<!doctype html>
+<html lang="fr" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Registre de match —&nbsp;maquette</title>
+<link rel="preconnect" href="https://fonts.bunny.net">
+<link rel="stylesheet" href="https://fonts.bunny.net/css?family=azeret-mono:400,500,600,700&display=swap">
+<style>
+:root,[data-theme="light"]{
+  color-scheme:light;
+  --page:#F7F8FA;
+  --paper:#FFFFFF;
+  --surface-2:#F4F6F8;
+  --ink:#0E1726;
+  --muted:#4A5568;
+  --line:rgba(14,23,38,.14);
+  --line-strong:rgba(14,23,38,.30);
+  --action:#1D4ED8;
+  --signal:#F2B705;
+  --danger:#B42318;
+  --on-ink:#FFFFFF;
+  --mono:'Azeret Mono',ui-monospace,'Cascadia Mono',Consolas,monospace;
+  --sans:ui-sans-serif,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+}
+[data-theme="dark"]{
+  color-scheme:dark;
+  --page:#070C16;
+  --paper:#0B1220;
+  --surface-2:#121A2B;
+  --ink:#E6EDF7;
+  --muted:#A3B1C6;
+  --line:rgba(230,237,247,.16);
+  --line-strong:rgba(230,237,247,.34);
+  --action:#8AB4FF;
+  --signal:#F5C542;
+  --danger:#FF9B90;
+  --on-ink:#0B1220;
+}
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;
+  background:var(--page);
+  color:var(--ink);
+  font-family:var(--sans);
+  font-size:16px;
+  line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+}
+a{color:inherit}
+button{font:inherit}
+:focus-visible{outline:2px solid var(--action);outline-offset:2px}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.nowrap{white-space:nowrap}
+.wrap{max-width:1160px;margin:0 auto;padding:0 32px}
+.topbar{
+  position:sticky;top:0;z-index:20;
+  display:flex;align-items:center;justify-content:space-between;gap:24px;
+  padding:14px 32px;border-bottom:1px solid var(--line);
+  background:var(--page);
+}
+.brand{display:flex;align-items:center;gap:10px;font:700 14px/1 var(--mono);letter-spacing:.06em}
+.brand-mark{width:10px;height:10px;background:var(--signal);flex:0 0 auto}
+.brand-tag{
+  border:1px solid var(--line-strong);padding:3px 6px;
+  font:500 13px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);
+}
+.theme{display:flex;gap:4px;border:1px solid var(--line);padding:3px}
+.theme button{
+  min-height:44px;padding:0 12px;border:0;background:transparent;color:var(--muted);
+  font:500 13px/1 var(--mono);letter-spacing:.04em;cursor:pointer;
+}
+.theme button[aria-pressed="true"]{background:var(--ink);color:var(--on-ink)}
+.intro{padding:72px 0 40px;border-bottom:1px solid var(--line)}
+.eyebrow{font:500 13px/1.5 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:0}
+h1{
+  font:700 clamp(40px,6.2vw,72px)/.98 var(--mono);letter-spacing:-.03em;
+  margin:18px 0 0;max-width:12ch;
+}
+.lede{max-width:620px;margin:20px 0 0;font-size:17px;line-height:1.6;color:var(--muted)}
+.lede strong{color:var(--ink);font-weight:500}
+.principles{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:1px;
+  background:var(--line);border:1px solid var(--line);margin-top:40px;
+}
+.principle{background:var(--paper);padding:18px 20px}
+.principle b{display:block;font:700 13px/1.4 var(--mono);letter-spacing:.08em;margin-bottom:6px}
+.principle span{font-size:14px;line-height:1.5;color:var(--muted)}
+.section{padding:56px 0;border-bottom:1px solid var(--line)}
+.section-head{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;margin-bottom:24px}
+.section-head h2{font:700 clamp(22px,2.4vw,30px)/1.2 var(--mono);letter-spacing:-.02em;margin:0}
+.section-head p{max-width:440px;margin:0;font-size:14px;color:var(--muted)}
+.anatomy{display:grid;grid-template-columns:minmax(0,760px) minmax(0,1fr);gap:32px;align-items:start}
+.sheet{background:var(--paper);color:var(--ink);border:1px solid var(--line-strong)}
+.sheet-meta{
+  display:flex;justify-content:space-between;gap:16px;
+  padding:11px 20px;border-bottom:1px solid var(--line);
+  font:500 13px/1.4 var(--mono);letter-spacing:.07em;text-transform:uppercase;color:var(--muted);
+}
+.sheet-body{display:grid;grid-template-columns:216px minmax(0,1fr)}
+.score-col{display:flex;flex-direction:column;padding:24px 20px;border-right:1px solid var(--line)}
+.score-legend{margin-top:auto;padding-top:18px;border-top:1px solid var(--line)}
+.score-legend dl{margin:8px 0 0;display:grid;gap:6px}
+.score-legend dl div{display:flex;gap:8px;align-items:baseline}
+.score-legend dt{font:500 13px/1.4 var(--mono);flex:0 0 42px}
+.score-legend dd{margin:0;font:400 13px/1.45 var(--sans);color:var(--muted)}
+.thresholds{margin:12px 0 0;font:400 13px/1.5 var(--mono);color:var(--muted)}
+.score-label{font:500 13px/1.4 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:0}
+.big{display:flex;align-items:baseline;gap:6px;margin-top:8px}
+.big b{font:700 64px/.9 var(--mono);letter-spacing:-.04em;font-variant-numeric:tabular-nums}
+.big span{font:400 14px/1 var(--mono);color:var(--muted)}
+.signal{width:56px;height:4px;background:var(--signal);margin:16px 0 14px}
+.tier{
+  display:inline-block;border:1px solid var(--line-strong);padding:5px 8px;
+  font:600 13px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;
+}
+.score-note{margin:16px 0 0;font-size:13px;line-height:1.55;color:var(--muted)}
+.detail-col{padding:24px;min-width:0}
+.kicker{
+  font:500 13px/1.4 var(--mono);letter-spacing:.1em;text-transform:uppercase;
+  color:var(--muted);margin:0;
+}
+.match-title{font:700 clamp(19px,2vw,23px)/1.25 var(--mono);letter-spacing:-.02em;margin:6px 0 8px}
+.match-meta{margin:0;font-size:14px;line-height:1.55;color:var(--muted)}
+.ledger{width:100%;border-collapse:collapse;margin-top:20px}
+.ledger thead th{
+  padding:0 0 8px;border-bottom:1px solid var(--line-strong);
+  font:500 13px/1.4 var(--mono);letter-spacing:.08em;text-transform:uppercase;
+  color:var(--muted);text-align:left;
+}
+.ledger thead th.num{text-align:right;padding-left:12px}
+.ledger tbody th{
+  padding:11px 0;border-bottom:1px solid var(--line);
+  font:400 14px/1.35 var(--mono);text-align:left;color:var(--ink);vertical-align:top;
+}
+.ledger td{
+  padding:11px 0;border-bottom:1px solid var(--line);
+  font:400 14px/1.35 var(--mono);vertical-align:top;
+}
+.ledger td.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap;padding-left:12px}
+.crit{display:block;color:var(--ink)}
+.src{display:block;margin-top:3px;font:400 13px/1.3 var(--sans);color:var(--muted)}
+.totals{margin-top:14px}
+.total-row{display:flex;justify-content:space-between;gap:16px;font:400 13px/1.7 var(--mono);color:var(--muted)}
+.total-row span:last-child{font-variant-numeric:tabular-nums;white-space:nowrap}
+.grand{
+  display:flex;justify-content:space-between;gap:16px;align-items:baseline;
+  margin-top:2px;padding-top:6px;border-top:1px solid var(--line-strong);
+  font:700 18px/1.4 var(--mono);white-space:nowrap;
+}
+.actions{display:flex;flex-wrap:wrap;align-items:center;gap:14px;margin-top:22px;padding-top:18px;border-top:1px solid var(--line)}
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;
+  min-height:44px;padding:0 16px;border:1px solid var(--ink);
+  background:var(--ink);color:var(--on-ink);text-decoration:none;
+  font:500 13px/1 var(--mono);letter-spacing:.06em;text-transform:uppercase;cursor:pointer;
+}
+.btn:hover{opacity:.86}
+.btn.ghost{background:transparent;color:var(--ink);border-color:var(--line-strong)}
+.btn.ghost:hover{border-color:var(--ink);opacity:1}
+.link{
+  display:inline-flex;align-items:center;min-height:44px;
+  color:var(--action);font:500 13px/1.4 var(--mono);
+  text-decoration:underline;text-underline-offset:4px;text-decoration-thickness:1px;
+}
+.link:hover{text-decoration-thickness:2px}
+.notes{position:sticky;top:84px;border-top:1px solid var(--line-strong)}
+.note{display:grid;grid-template-columns:28px 1fr;gap:10px;padding:16px 0;border-bottom:1px solid var(--line)}
+.note b{font:500 13px/1.5 var(--mono);color:var(--muted)}
+.note p{margin:0;font-size:14px;line-height:1.55;color:var(--muted)}
+.note strong{color:var(--ink);font-weight:500}
+.card-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;max-width:900px}
+.card{
+  display:flex;flex-direction:column;gap:14px;
+  padding:18px;background:var(--paper);color:var(--ink);border:1px solid var(--line-strong);
+}
+.card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
+.card-title{font:600 16px/1.4 var(--mono);letter-spacing:-.01em;margin:0}
+.card-sub{margin:4px 0 0;font-size:13px;line-height:1.5;color:var(--muted)}
+.card-score{text-align:right;flex:0 0 auto}
+.card-score .signal{width:28px;height:3px;margin:6px 0 5px auto}
+.score-sm{font:700 36px/1 var(--mono);letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.tier-sm{display:block;margin-top:5px;font:500 13px/1.2 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.card .ledger{margin-top:0}
+.card .ledger td,.card .ledger tbody th{padding:8px 0;font-size:13px}
+.card .ledger thead th{padding-bottom:6px}
+.card-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;border-top:1px solid var(--line);padding-top:12px;margin-top:auto}
+.card-foot .link{margin-left:auto}
+.flag{display:inline-flex;align-items:center;gap:7px;font:500 13px/1.4 var(--mono);color:var(--danger)}
+.flag::before{content:"";width:7px;height:7px;background:var(--danger)}
+.room{max-width:800px;background:var(--paper);color:var(--ink);border:1px solid var(--line-strong)}
+.room-head{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;padding:20px 24px;border-bottom:1px solid var(--line)}
+.room-title{font:700 21px/1.3 var(--mono);letter-spacing:-.02em;margin:5px 0 4px}
+.room-sub{margin:0;font-size:13px;color:var(--muted)}
+.stamp{
+  display:inline-flex;align-items:center;gap:8px;flex:0 0 auto;
+  border:1px solid var(--line-strong);padding:5px 8px;
+  font:500 13px/1 var(--mono);letter-spacing:.06em;text-transform:uppercase;
+}
+.stamp::before{content:"";width:7px;height:7px;background:var(--ink)}
+.stamp.wait::before{background:transparent;border:1px solid var(--ink)}
+.amounts{width:100%;border-collapse:collapse}
+.amounts td{padding:10px 24px;border-bottom:1px solid var(--line);font:400 14px/1.4 var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.amounts td:last-child{text-align:right}
+.amounts tr.total td{font-weight:600;border-bottom:1px solid var(--line-strong);padding-top:13px;padding-bottom:13px}
+.room-register{display:grid;grid-template-columns:150px minmax(0,1fr);border-top:1px solid var(--line)}
+.room-score{padding:16px 24px;border-right:1px solid var(--line)}
+.room-score span{display:block;font:500 13px/1.4 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.room-score span:last-of-type{color:var(--ink)}
+.room-score b{display:block;margin:4px 0;font:700 42px/1 var(--mono);letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.room-score .signal{width:40px;height:3px;margin:8px 0 10px}
+.room-register .ledger{margin:0}
+.room-register .ledger thead th{padding-top:12px}
+.room-register .ledger thead th:first-child,.room-register .ledger tbody th{padding-left:24px}
+.room-register .ledger thead th:last-child{padding-right:24px}
+.room-register .ledger td:last-child{padding-right:24px}
+.docs{border-top:1px solid var(--line)}
+.doc{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:11px 24px;border-bottom:1px solid var(--line);font-size:14px}
+.doc:last-child{border-bottom:0}
+.doc b{font:500 13px/1.4 var(--mono);white-space:nowrap}
+.room-foot{padding:14px 24px;border-top:1px solid var(--line);font-size:13px;line-height:1.55;color:var(--muted)}
+.states{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.state{
+  display:flex;flex-direction:column;gap:12px;min-height:250px;
+  padding:18px;background:var(--paper);color:var(--ink);border:1px solid var(--line);
+}
+.state .kicker{font-size:13px}
+.state-title{font:600 16px/1.4 var(--mono);margin:0}
+.state p{margin:0;font-size:14px;line-height:1.55;color:var(--muted)}
+.state .actions{margin-top:auto;padding-top:14px}
+.state .btn,.state .link{font-size:13px}
+.skel{height:11px;background:var(--surface-2);border:1px solid var(--line)}
+.skel.w1{width:100%}
+.skel.w2{width:72%}
+.skel.w3{width:56%}
+.skel.live{position:relative;overflow:hidden}
+.skel.live::after{
+  content:"";position:absolute;inset:0;transform:translateX(-100%);
+  background:linear-gradient(90deg,transparent,var(--line),transparent);
+  animation:sweep 1.6s ease-in-out infinite;
+}
+@keyframes sweep{to{transform:translateX(100%)}}
+@media(prefers-reduced-motion:reduce){.skel.live::after{animation:none}}
+.state[data-state="error"]{border-top:3px solid var(--danger)}
+@keyframes rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:no-preference){
+  [data-reveal].is-playing .r{animation:rise .18s cubic-bezier(.2,.6,.2,1) both;animation-delay:calc(var(--i) * 40ms)}
+}
+.frames{display:flex;gap:24px;overflow-x:auto;padding-bottom:10px}
+.phone{display:flex;flex-direction:column;min-height:812px;width:375px;flex:0 0 375px;background:var(--paper);border:1px solid var(--line-strong);color:var(--ink)}
+.phone-top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;border-bottom:1px solid var(--line)}
+.phone-brand{font:700 13px/1 var(--mono);letter-spacing:.06em}
+.phone-icon{display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;border:1px solid var(--line-strong);font:500 13px/1 var(--mono)}
+.phone-body{flex:1;padding:16px 16px 20px}
+.phone h3{font:700 22px/1.2 var(--mono);letter-spacing:-.02em;margin:0 0 4px}
+.phone .lede-sm{margin:0 0 16px;font-size:13px;color:var(--muted)}
+.phone .card{padding:14px;gap:12px}
+.phone .card-title{font-size:15px}
+.phone .score-sm{font-size:32px}
+.phone .ledger td{font-size:13px;padding:8px 0}
+.phone .ledger td.num{padding-left:8px}
+.phone .ledger th{font-size:13px}
+.phone .btn{width:100%}
+.phone-bottom{display:grid;grid-template-columns:repeat(5,1fr);border-top:1px solid var(--line)}
+.phone-bottom a{
+  display:flex;align-items:center;justify-content:center;min-height:56px;
+  border-top:2px solid transparent;text-decoration:none;
+  font:500 13px/1 var(--mono);color:var(--muted);
+}
+.phone-bottom a[aria-current="page"]{color:var(--ink);border-top-color:var(--ink)}
+.phone-actions{display:flex;flex-direction:column;gap:8px;padding:12px 16px;border-top:1px solid var(--line);background:var(--paper)}
+.phone-actions .btn{width:100%}
+.phone-actions .link{justify-content:center}
+.phone .score-band{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;padding:14px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin-bottom:16px}
+.phone .score-band b{font:700 52px/.9 var(--mono);letter-spacing:-.04em;line-height:1}
+.phone .score-band .score-label{display:block;font:500 13px/1.4 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.phone .signal{margin:8px 0 6px;width:44px}
+.back{display:inline-flex;align-items:center;min-height:44px;font:500 13px/1 var(--mono);color:var(--muted);text-decoration:none}
+.back:hover{color:var(--ink)}
+.token-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line)}
+.token{background:var(--paper);padding:14px;display:flex;flex-direction:column;gap:2px}
+.swatch{height:38px;border:1px solid var(--line);margin-bottom:8px}
+.swatch.split{background:linear-gradient(90deg,var(--sw-light) 0 calc(50% - .5px),var(--line-strong) calc(50% - .5px) calc(50% + .5px),var(--sw-dark) calc(50% + .5px) 100%)}
+.token b{display:block;font:600 13px/1.4 var(--mono)}
+.token span{display:block;font:400 13px/1.5 var(--mono);color:var(--muted)}
+.specimen{display:grid;grid-template-columns:240px minmax(0,1fr);gap:24px;padding:18px 0;border-top:1px solid var(--line)}
+.specimen b{font:500 13px/1.5 var(--mono);color:var(--muted);letter-spacing:.04em}
+.spec-large{font:700 56px/1 var(--mono);letter-spacing:-.04em;margin:0}
+.spec-data{font:400 14px/1.5 var(--mono);margin:0;font-variant-numeric:tabular-nums}
+.spec-label{font:500 13px/1.5 var(--mono);letter-spacing:.1em;text-transform:uppercase;margin:0;color:var(--ink)}
+.spec-body{font-size:16px;line-height:1.6;margin:0;max-width:560px}
+.footer{padding:32px 0 56px;font-size:13px;line-height:1.65;color:var(--muted)}
+.footer b{font:500 13px/1.5 var(--mono);color:var(--ink)}
+@media(max-width:1080px){
+  .anatomy{grid-template-columns:1fr}
+  .notes{position:static;display:grid;grid-template-columns:repeat(3,1fr);gap:0 24px;border-bottom:1px solid var(--line)}
+  .note{border-top:1px solid var(--line);border-bottom:0}
+}
+@media(max-width:900px){
+  .principles{grid-template-columns:1fr}
+  .sheet-body{grid-template-columns:1fr}
+  .score-col{
+    display:flex;flex-direction:column;flex-wrap:nowrap;align-items:flex-start;gap:8px;
+    border-right:0;border-bottom:1px solid var(--line);
+  }
+  .score-col .score-label{width:100%}
+  .score-col .big{margin-top:0}
+  .score-col .signal{margin:0}
+  .score-col .score-note{width:100%;margin:6px 0 0}
+  .score-legend{display:none}
+  .states{grid-template-columns:1fr}
+  .notes{grid-template-columns:1fr}
+  .room-register{grid-template-columns:1fr}
+  .room-score{border-right:0;border-bottom:1px solid var(--line)}
+  .room-score b{font-size:36px}
+  .room-head{flex-wrap:wrap}
+}
+@media(max-width:760px){
+  .card-row{grid-template-columns:1fr;max-width:none}
+  .token-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:640px){
+  .wrap{padding:0 20px}
+  .topbar{padding:12px 20px;gap:12px}
+  .brand-tag{display:none}
+  .theme button{padding:0 6px;font-size:13px}
+  .intro{padding:48px 0 32px}
+  .eyebrow{letter-spacing:.1em}
+  .intro .eyebrow-date{display:block}
+  h1{font-size:clamp(38px,12vw,52px)}
+  .lede{font-size:16px}
+  .section{padding:44px 0}
+  .section-head{flex-direction:column;align-items:flex-start;gap:8px}
+  .sheet-meta{flex-direction:column;gap:2px}
+  .detail-col{padding:18px}
+  .score-col{padding:18px}
+  .sheet .ledger .weight{display:none}
+  .sheet .ledger .src[data-weight]::after{content:" · poids\00a0" attr(data-weight)}
+  .actions{flex-direction:column;align-items:stretch;gap:8px}
+  .actions .btn{width:100%}
+  .actions .link{justify-content:center}
+  .specimen{grid-template-columns:1fr;gap:6px}
+  .frames{margin:0 -20px;padding:0 20px 10px}
+}
+@media(max-width:480px){
+  .topbar{flex-wrap:wrap}
+  .theme{width:100%}
+  .theme button{flex:1}
+}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand"><span class="brand-mark" aria-hidden="true"></span>KONGOINVEST <span class="brand-tag">Maquette</span></div>
+  <div class="theme" role="group" aria-label="Apparence">
+    <button type="button" data-set-theme="light" aria-pressed="true">Clair</button>
+    <button type="button" data-set-theme="dark" aria-pressed="false">Sombre</button>
+    <button type="button" data-set-theme="system" aria-pressed="false">Système</button>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <section class="intro">
+    <p class="eyebrow">Direction visuelle · <span class="eyebrow-date">23 octobre 2026</span></p>
+    <h1>Le registre de match</h1>
+    <p class="lede">Le score n'est pas une pastille colorée : c'est <strong>un chiffre, une provenance et une pondération</strong>. La fiche se lit comme un grand livre —&nbsp;ce qui est calculé, par qui, et pour quel poids.</p>
+
+    <div class="principles">
+      <div class="principle">
+        <b>01 —&nbsp;Le score d'abord</b>
+        <span>Un chiffre dominant, un niveau écrit. Aucun dégradé, aucune couleur ne porte l'information seule.</span>
+      </div>
+      <div class="principle">
+        <b>02 —&nbsp;La provenance ensuite</b>
+        <span>Chaque critère déclare sa source : règle, IA ou estimation. Le doute est visible, pas masqué.</span>
+      </div>
+      <div class="principle">
+        <b>03 —&nbsp;Une seule couleur d'accent</b>
+        <span>Le jaune du drapeau marque le score. Le bleu agit, le rouge alerte. Une teinte, un rôle.</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="anatomie">
+    <div class="section-head">
+      <h2 id="anatomie">Anatomie d'une fiche</h2>
+      <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+        <p>Le score à gauche, le registre à droite. Sous 900 px, les deux s'empilent, le score reste en tête.</p>
+        <button class="btn ghost" type="button" data-replay>Rejouer l'assemblage</button>
+      </div>
+    </div>
+
+    <div class="anatomy">
+      <article class="sheet" data-reveal aria-labelledby="match-title">
+        <div class="sheet-meta">
+          <span>Registre de match · 042</span>
+          <span>Calculé le 21 oct. 2026 · 09:41</span>
+        </div>
+        <div class="sheet-body">
+          <div class="score-col r" style="--i:0">
+            <p class="score-label">Score</p>
+            <div class="big"><b>87</b><span aria-hidden="true">/100</span><span class="sr-only">sur 100</span></div>
+            <div class="signal" aria-hidden="true"></div>
+            <span class="tier">Forte</span>
+            <p class="score-note">Somme pondérée de 6 critères.<br>Arrondi à l'entier.</p>
+            <div class="score-legend">
+              <p class="score-label">Légende</p>
+              <dl>
+                <div><dt>Règle</dt><dd>Critère objectif</dd></div>
+                <div><dt>IA</dt><dd>Lecture narrative</dd></div>
+                <div><dt>Est.</dt><dd>Repli documenté</dd></div>
+              </dl>
+              <p class="thresholds">Forte ≥ 75<br>Moyenne 50–74<br>Faible &lt; 50</p>
+            </div>
+          </div>
+
+          <div class="detail-col">
+            <p class="kicker">Projet</p>
+            <h3 class="match-title" id="match-title">Transformation de <span class="nowrap">manioc —&nbsp;Kasaï</span></h3>
+            <p class="match-meta">Fonds d'impact Katanga · Ticket 250 000 USD · Série A · Kasaï</p>
+
+            <table class="ledger">
+              <caption class="sr-only">Détail du score de correspondance par critère</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Critère</th>
+                  <th scope="col" class="num weight">Poids</th>
+                  <th scope="col" class="num">Note</th>
+                  <th scope="col" class="num">Contribution</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="r" style="--i:1">
+                  <th scope="row"><span class="crit">Secteur</span><span class="src" data-weight="0,25">Règle</span></th>
+                  <td class="num weight">0,25</td>
+                  <td class="num">95</td>
+                  <td class="num">23,75</td>
+                </tr>
+                <tr class="r" style="--i:2">
+                  <th scope="row"><span class="crit">Stade</span><span class="src" data-weight="0,15">Règle</span></th>
+                  <td class="num weight">0,15</td>
+                  <td class="num">80</td>
+                  <td class="num">12,00</td>
+                </tr>
+                <tr class="r" style="--i:3">
+                  <th scope="row"><span class="crit">Géographie</span><span class="src" data-weight="0,20">Règle</span></th>
+                  <td class="num weight">0,20</td>
+                  <td class="num">90</td>
+                  <td class="num">18,00</td>
+                </tr>
+                <tr class="r" style="--i:4">
+                  <th scope="row"><span class="crit">Ticket</span><span class="src" data-weight="0,15">Règle</span></th>
+                  <td class="num weight">0,15</td>
+                  <td class="num">75</td>
+                  <td class="num">11,25</td>
+                </tr>
+                <tr class="r" style="--i:5">
+                  <th scope="row"><span class="crit">Modèle économique</span><span class="src" data-weight="0,15">IA</span></th>
+                  <td class="num weight">0,15</td>
+                  <td class="num">88</td>
+                  <td class="num">13,20</td>
+                </tr>
+                <tr class="r" style="--i:6">
+                  <th scope="row"><span class="crit">Impact</span><span class="src" data-weight="0,10">Estimation</span></th>
+                  <td class="num weight">0,10</td>
+                  <td class="num">90</td>
+                  <td class="num">9,00</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <div class="totals">
+              <div class="total-row"><span>Somme des contributions</span><span>87,20</span></div>
+              <div class="grand"><span>Score retenu</span><span>87</span></div>
+            </div>
+
+            <div class="actions">
+              <a class="btn" href="#">Ouvrir la fiche</a>
+              <a class="link" href="#">Voir le projet</a>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <aside class="notes" aria-label="Notes de conception">
+        <div class="note"><b>01</b><p><strong>Un seul chiffre dominant.</strong> 87 est l'information ; les notes de critères sont le justificatif. Aucune barre ne concurrence le score.</p></div>
+        <div class="note"><b>02</b><p><strong>La provenance est écrite.</strong> « Règle », « IA », « Estimation » sous chaque critère. L'IA n'est pas signalée par une couleur.</p></div>
+        <div class="note"><b>03</b><p><strong>Le calcul est vérifiable.</strong> Poids × note = contribution, puis 87,20 arrondi à 87. Le lecteur peut refaire l'opération.</p></div>
+      </aside>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="densites">
+    <div class="section-head">
+      <h2 id="densites">Densités</h2>
+      <p>La même fiche en carte de liste. Le registre garde son ordre : critère, provenance, note.</p>
+    </div>
+
+    <div class="card-row">
+      <article class="card" aria-labelledby="card-1">
+        <div class="card-top">
+          <div>
+            <h3 class="card-title" id="card-1">Transformation de <span class="nowrap">manioc —&nbsp;Kasaï</span></h3>
+            <p class="card-sub">Fonds d'impact Katanga · 250 000 USD</p>
+          </div>
+          <div class="card-score">
+            <div class="score-sm">87</div>
+            <div class="signal" aria-hidden="true"></div>
+            <span class="tier-sm">Forte</span>
+          </div>
+        </div>
+
+        <table class="ledger">
+          <caption class="sr-only">Trois principaux critères de correspondance</caption>
+          <thead>
+            <tr><th scope="col">Critère</th><th scope="col" class="num">Note</th></tr>
+          </thead>
+          <tbody>
+            <tr><th scope="row"><span class="crit">Secteur</span><span class="src">Règle</span></th><td class="num">95</td></tr>
+            <tr><th scope="row"><span class="crit">Géographie</span><span class="src">Règle</span></th><td class="num">90</td></tr>
+            <tr><th scope="row"><span class="crit">Modèle économique</span><span class="src">IA</span></th><td class="num">88</td></tr>
+          </tbody>
+        </table>
+
+        <div class="card-foot">
+          <span class="src" style="margin:0">+ 3 autres critères</span>
+          <a class="link" href="#">Voir la fiche</a>
+        </div>
+      </article>
+
+      <article class="card" aria-labelledby="card-2">
+        <div class="card-top">
+          <div>
+            <h3 class="card-title" id="card-2">Élevage <span class="nowrap">bovin —&nbsp;Haut-Katanga</span></h3>
+            <p class="card-sub">Fonds agricole Kivu · 900 000 USD</p>
+          </div>
+          <div class="card-score">
+            <div class="score-sm">61</div>
+            <div class="signal" aria-hidden="true"></div>
+            <span class="tier-sm">Moyenne</span>
+          </div>
+        </div>
+
+        <table class="ledger">
+          <caption class="sr-only">Trois principaux critères de correspondance</caption>
+          <thead>
+            <tr><th scope="col">Critère</th><th scope="col" class="num">Note</th></tr>
+          </thead>
+          <tbody>
+            <tr><th scope="row"><span class="crit">Secteur</span><span class="src">Règle</span></th><td class="num">88</td></tr>
+            <tr><th scope="row"><span class="crit">Géographie</span><span class="src">Règle</span></th><td class="num">80</td></tr>
+            <tr><th scope="row"><span class="crit">Ticket</span><span class="src">Règle</span></th><td class="num">12</td></tr>
+          </tbody>
+        </table>
+
+        <div class="card-foot">
+          <span class="flag">1 critère hors fourchette</span>
+          <a class="link" href="#">Voir la fiche</a>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="sombre">
+    <div class="section-head">
+      <h2 id="sombre">Réutilisation —&nbsp;Deal Room</h2>
+      <p>Le même langage pour l'argent. Les montants sont alignés, les statuts sont écrits, le registre reste consultable.</p>
+    </div>
+
+    <div class="room" data-theme="dark">
+      <div class="room-head">
+        <div>
+          <p class="kicker">Deal Room · Séquestre</p>
+          <h3 class="room-title">Transformation de <span class="nowrap">manioc —&nbsp;Kasaï</span></h3>
+          <p class="room-sub">Fonds d'impact Katanga · Mis à jour le 22 oct. 2026</p>
+        </div>
+        <span class="stamp">Séquestre financé</span>
+      </div>
+
+      <table class="amounts">
+        <caption class="sr-only">Montants du séquestre</caption>
+        <tbody>
+          <tr><td>Montant financé</td><td>250 000,00 USD</td></tr>
+          <tr><td>Frais de service</td><td>5 000,00 USD</td></tr>
+          <tr class="total"><td>Total appelé</td><td>255 000,00 USD</td></tr>
+        </tbody>
+      </table>
+
+      <div class="room-register">
+        <div class="room-score">
+          <span>Score</span>
+          <b>87</b>
+          <div class="signal" aria-hidden="true"></div>
+          <span>Forte</span>
+        </div>
+        <table class="ledger">
+          <caption class="sr-only">Critères principaux du match</caption>
+          <thead>
+            <tr><th scope="col">Critère</th><th scope="col" class="num">Poids</th><th scope="col" class="num">Note</th></tr>
+          </thead>
+          <tbody>
+            <tr><th scope="row"><span class="crit">Secteur</span><span class="src">Règle</span></th><td class="num">0,25</td><td class="num">95</td></tr>
+            <tr><th scope="row"><span class="crit">Ticket</span><span class="src">Règle</span></th><td class="num">0,15</td><td class="num">75</td></tr>
+            <tr><th scope="row"><span class="crit">Modèle économique</span><span class="src">IA</span></th><td class="num">0,15</td><td class="num">88</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="docs">
+        <div class="doc"><span>Contrat d'investissement</span><b>Signé · 20 oct. 2026</b></div>
+        <div class="doc"><span>Attestation de séquestre</span><b class="stamp wait" style="border:0;padding:0">En attente</b></div>
+      </div>
+
+      <p class="room-foot">Les fonds restent au séquestre jusqu'à confirmation de leur libération. Aucun mouvement n'est possible sans accord des deux parties.</p>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="etats">
+    <div class="section-head">
+      <h2 id="etats">États</h2>
+      <p>Le registre ne prétend jamais avoir un score qu'il n'a pas. Chaque état dit ce qui manque et ce qu'on peut faire.</p>
+    </div>
+
+    <div class="states">
+      <article class="state" aria-busy="true">
+        <p class="kicker">Calcul en cours</p>
+        <p class="score-sm" style="color:var(--muted)">—</p>
+        <h3 class="state-title">Le score arrive</h3>
+        <p>Les critères sont déjà listés. Le calcul se termine en arrière-plan.</p>
+        <div style="display:grid;gap:8px">
+          <div class="skel live w1"></div>
+          <div class="skel live w2"></div>
+          <div class="skel live w3"></div>
+        </div>
+        <div class="actions"><span class="link" aria-disabled="true" style="color:var(--muted);text-decoration:none">Ouvrir la fiche</span></div>
+      </article>
+
+      <article class="state">
+        <p class="kicker">Profil incomplet</p>
+        <p class="score-sm" style="color:var(--muted)">—</p>
+        <h3 class="state-title">Score indisponible</h3>
+        <p>Ajoutez votre thèse d'investissement et votre fourchette de ticket pour obtenir un score.</p>
+        <div class="actions"><a class="btn" href="#">Compléter le profil</a></div>
+      </article>
+
+      <article class="state" data-state="error">
+        <p class="kicker">Échec du calcul</p>
+        <p class="score-sm" style="color:var(--muted)">—</p>
+        <h3 class="state-title">Non calculé</h3>
+        <p>Le calcul n'a pas abouti. Vos données n'ont pas été modifiées.</p>
+        <div class="actions"><button class="btn ghost" type="button">Réessayer</button></div>
+      </article>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="mobile">
+    <div class="section-head">
+      <h2 id="mobile">Mobile</h2>
+      <p>375 px. Le rail d'icônes disparaît au profit d'une barre basse ; le score reste lisible sans zoom.</p>
+    </div>
+
+    <div class="frames">
+      <div class="phone" data-theme="light">
+        <div class="phone-top">
+          <span class="phone-brand">KONGOINVEST</span>
+          <span class="phone-icon" aria-hidden="true">≡</span>
+        </div>
+        <div class="phone-body">
+          <h3>Correspondances</h3>
+          <p class="lede-sm">2 nouvelles correspondances cette semaine.</p>
+
+          <article class="card" style="margin-bottom:12px">
+            <div class="card-top">
+              <div>
+                <h4 class="card-title">Manioc —&nbsp;Kasaï</h4>
+                <p class="card-sub">250 000 USD</p>
+              </div>
+              <div class="card-score"><div class="score-sm">87</div><div class="signal" aria-hidden="true"></div><span class="tier-sm">Forte</span></div>
+            </div>
+            <table class="ledger">
+              <tbody>
+                <tr><th scope="row"><span class="crit">Secteur</span><span class="src">Règle</span></th><td class="num">95</td></tr>
+                <tr><th scope="row"><span class="crit">Géographie</span><span class="src">Règle</span></th><td class="num">90</td></tr>
+              </tbody>
+            </table>
+            <a class="link" href="#">Voir la fiche</a>
+          </article>
+
+          <article class="card">
+            <div class="card-top">
+              <div>
+                <h4 class="card-title">Élevage —&nbsp;Haut-Katanga</h4>
+                <p class="card-sub">900 000 USD</p>
+              </div>
+              <div class="card-score"><div class="score-sm">61</div><div class="signal" aria-hidden="true"></div><span class="tier-sm">Moyenne</span></div>
+            </div>
+            <table class="ledger">
+              <tbody>
+                <tr><th scope="row"><span class="crit">Secteur</span><span class="src">Règle</span></th><td class="num">88</td></tr>
+                <tr><th scope="row"><span class="crit">Ticket</span><span class="src">Règle</span></th><td class="num">12</td></tr>
+              </tbody>
+            </table>
+            <a class="link" href="#">Voir la fiche</a>
+          </article>
+        </div>
+        <nav class="phone-bottom" aria-label="Navigation principale">
+          <a href="#">Accueil</a>
+          <a href="#">Projets</a>
+          <a href="#" aria-current="page">Matchs</a>
+          <a href="#">Escrow</a>
+          <a href="#">Plus</a>
+        </nav>
+      </div>
+
+      <div class="phone" data-theme="light">
+        <div class="phone-top">
+          <a class="back" href="#">← Correspondances</a>
+          <span class="phone-icon" aria-hidden="true">⋯</span>
+        </div>
+        <div class="phone-body">
+          <div class="score-band">
+            <div>
+              <span class="score-label">Score</span>
+              <b>87</b>
+              <div class="signal" aria-hidden="true"></div>
+            </div>
+            <span class="tier">Forte</span>
+          </div>
+
+          <h3 style="font-size:20px">Transformation de <span class="nowrap">manioc —&nbsp;Kasaï</span></h3>
+          <p class="lede-sm">Fonds d'impact Katanga · 250 000 USD</p>
+
+          <table class="ledger">
+            <caption class="sr-only">Détail du score</caption>
+            <thead>
+              <tr><th scope="col">Critère</th><th scope="col" class="num">Poids</th><th scope="col" class="num">Note</th></tr>
+            </thead>
+            <tbody>
+              <tr><th scope="row"><span class="crit">Secteur</span><span class="src">Règle</span></th><td class="num">0,25</td><td class="num">95</td></tr>
+              <tr><th scope="row"><span class="crit">Stade</span><span class="src">Règle</span></th><td class="num">0,15</td><td class="num">80</td></tr>
+              <tr><th scope="row"><span class="crit">Géographie</span><span class="src">Règle</span></th><td class="num">0,20</td><td class="num">90</td></tr>
+              <tr><th scope="row"><span class="crit">Ticket</span><span class="src">Règle</span></th><td class="num">0,15</td><td class="num">75</td></tr>
+              <tr><th scope="row"><span class="crit">Impact</span><span class="src">Estimation</span></th><td class="num">0,10</td><td class="num">90</td></tr>
+            </tbody>
+          </table>
+
+          <div class="grand" style="font-size:16px;margin-top:12px"><span>Score retenu</span><span>87</span></div>
+        </div>
+        <div class="phone-actions">
+          <a class="btn" href="#">Ouvrir la fiche</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="tokens">
+    <div class="section-head">
+      <h2 id="tokens">Jetons et plancher</h2>
+      <p>Les valeurs du système, vérifiées en clair et en sombre. Le jaune ne sert qu'en aplat ou en filet épais, jamais en texte fin.</p>
+    </div>
+
+    <div class="token-grid">
+      <div class="token"><div class="swatch split" style="--sw-light:#F7F8FA;--sw-dark:#070C16"></div><b>--page</b><span>#F7F8FA · #070C16</span></div>
+      <div class="token"><div class="swatch split" style="--sw-light:#FFFFFF;--sw-dark:#0B1220"></div><b>--paper</b><span>#FFFFFF · #0B1220</span></div>
+      <div class="token"><div class="swatch split" style="--sw-light:#F4F6F8;--sw-dark:#121A2B"></div><b>--surface-2</b><span>#F4F6F8 · #121A2B</span></div>
+      <div class="token"><div class="swatch split" style="--sw-light:#0E1726;--sw-dark:#E6EDF7"></div><b>--ink</b><span>#0E1726 · #E6EDF7</span><span>17,8:1 · 16,4:1</span></div>
+      <div class="token"><div class="swatch split" style="--sw-light:#4A5568;--sw-dark:#A3B1C6"></div><b>--ink-muted</b><span>#4A5568 · #A3B1C6</span><span>7,6:1 · 9,1:1</span></div>
+      <div class="token"><div class="swatch split" style="--sw-light:#1D4ED8;--sw-dark:#8AB4FF"></div><b>--action</b><span>#1D4ED8 · #8AB4FF</span><span>6,8:1 · 10,0:1</span></div>
+      <div class="token"><div class="swatch split" style="--sw-light:#F2B705;--sw-dark:#F5C542"></div><b>--signal</b><span>#F2B705 · #F5C542</span><span>aplats uniquement</span></div>
+      <div class="token"><div class="swatch split" style="--sw-light:#B42318;--sw-dark:#FF9B90"></div><b>--danger</b><span>#B42318 · #FF9B90</span><span>6,4:1 · 9,6:1</span></div>
+    </div>
+
+    <div style="margin-top:28px">
+      <div class="specimen">
+        <b>Étiquette · mono 500 · 13</b>
+        <p class="spec-label">Provenance · Règle</p>
+      </div>
+      <div class="specimen">
+        <b>Display · Azeret Mono 700</b>
+        <p class="spec-large">87</p>
+      </div>
+      <div class="specimen">
+        <b>Donnée · Azeret Mono 400</b>
+        <p class="spec-data">Poids 0,25 · Note 95 · Contribution 23,75</p>
+      </div>
+      <div class="specimen">
+        <b>Prose · système 400 · 16/26</b>
+        <p class="spec-body">Les fonds restent au séquestre jusqu'à confirmation de leur libération. La fiche dit ce qui est calculé, par qui, et pour quel poids.</p>
+      </div>
+      <div class="specimen">
+        <b>Mouvement</b>
+        <p class="spec-body" style="font-size:14px;color:var(--muted)">Entrée du registre : 180 ms, décalage de 40 ms par ligne, opacité + 6 px. Aucun mouvement si <code style="font-family:var(--mono)">prefers-reduced-motion</code> est actif. Pas de transition de route.</p>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <p><b>Plancher de qualité.</b> 320 px sans débordement · 13 px minimum · 44 px de cible · champs 16 px sur mobile · 4,5:1 vérifié en clair et en sombre · information jamais portée par la couleur seule · navigation clavier avec focus visible · 200 % de texte.</p>
+    <p>Maquette statique de direction, 23 octobre 2026. Fichier de revue —&nbsp;à supprimer avant mise en production.</p>
+  </footer>
+
+</main>
+
+<script>
+(function () {
+  var root = document.documentElement;
+  var media = window.matchMedia('(prefers-color-scheme: dark)');
+  var buttons = document.querySelectorAll('[data-set-theme]');
+
+  function apply(mode) {
+    var resolved = mode === 'system' ? (media.matches ? 'dark' : 'light') : mode;
+    root.dataset.theme = resolved;
+    root.dataset.mode = mode;
+    buttons.forEach(function (button) {
+      button.setAttribute('aria-pressed', String(button.dataset.setTheme === mode));
+    });
+  }
+
+  buttons.forEach(function (button) {
+    button.addEventListener('click', function () {
+      apply(button.dataset.setTheme);
+    });
+  });
+
+  media.addEventListener('change', function () {
+    if (root.dataset.mode === 'system') {
+      apply('system');
+    }
+  });
+
+  apply(root.dataset.mode || 'light');
+
+  var register = document.querySelector('[data-reveal]');
+  var replay = document.querySelector('[data-replay]');
+
+  function play() {
+    if (!register) {
+      return;
+    }
+    register.classList.remove('is-playing');
+    void register.offsetWidth;
+    register.classList.add('is-playing');
+  }
+
+  if (replay) {
+    replay.addEventListener('click', play);
+  }
+
+  if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    play();
+  }
+})();
+</script>
+</body>
+</html>

@@ -4,8 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Actions\Escrow\CreateEscrow;
 use App\Actions\Escrow\RaiseDispute;
-use App\Actions\Escrow\ReleaseEscrow;
 use App\Actions\Escrow\RefundEscrow;
+use App\Actions\Escrow\ReleaseEscrow;
 use App\Actions\Payments\CreatePayment;
 use App\Enums\PaymentProviderName;
 use App\Enums\PaymentPurpose;
@@ -36,7 +36,7 @@ class DealRoomEscrowController extends Controller
         $this->authorize('fund', $escrow);
 
         return Inertia::render('Escrow/Checkout', [
-            'escrow' => $escrow->only(['id', 'amount_minor', 'currency']),
+            'escrow' => $escrow->only(['id', 'deal_room_id', 'amount_minor', 'currency']),
             // Coaching accompaniment fee — the app manages the investor/
             // entrepreneur relationship through to closing, and charges a
             // tiered percentage of the investment for it (see

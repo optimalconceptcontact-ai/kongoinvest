@@ -2,11 +2,14 @@
 
 namespace App\Actions\Payments;
 
+use App\Enums\PaymentProviderName;
+use App\Enums\PaymentPurpose;
 use App\Enums\PaymentStatus;
 use App\Models\Payment;
 use App\Models\User;
 use App\Services\Payments\PaymentIntentResult;
 use App\Services\Payments\PaymentProviderFactory;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -15,8 +18,8 @@ class CreatePayment
     public function __construct(private PaymentProviderFactory $providers) {}
 
     /**
-     * @param  \App\Enums\PaymentPurpose  $purpose
-     * @param  \App\Enums\PaymentProviderName  $provider
+     * @param  PaymentPurpose  $purpose
+     * @param  PaymentProviderName  $provider
      * @return array{0: Payment, 1: PaymentIntentResult}
      */
     public function handle(
@@ -25,7 +28,7 @@ class CreatePayment
         $provider,
         int $amountMinor,
         string $currency,
-        ?\Illuminate\Database\Eloquent\Model $payable = null,
+        ?Model $payable = null,
         array $metadata = [],
         ?string $idempotencyKey = null,
     ): array {

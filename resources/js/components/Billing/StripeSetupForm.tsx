@@ -1,8 +1,17 @@
-import { Elements, PaymentElement, useElements, useStripe } from '@stripe/react-stripe-js';
+import {
+    Elements,
+    PaymentElement,
+    useElements,
+    useStripe,
+} from '@stripe/react-stripe-js';
 import { useEffect, useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useStripePromise } from '@/hooks/useStripe';
-import { Button } from '@/components/Ui/Button';
-import { stripeAppearance, stripePaymentElementOptions } from '@/lib/stripeAppearance';
+import {
+    stripeAppearance,
+    stripePaymentElementOptions,
+} from '@/lib/stripeAppearance';
 
 /**
  * Subscription checkout, not a one-off charge — mounts against a
@@ -35,21 +44,32 @@ export function StripeSetupForm({
             headers: {
                 'Content-Type': 'application/json',
                 Accept: 'application/json',
-                'X-CSRF-TOKEN': document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '',
+                'X-CSRF-TOKEN':
+                    document.querySelector<HTMLMetaElement>(
+                        'meta[name="csrf-token"]',
+                    )?.content ?? '',
             },
         })
             .then(async (res) => {
                 if (!res.ok) {
                     const body = await res.json().catch(() => null);
-                    throw new Error(body?.message ?? 'Impossible de préparer le paiement.');
+
+                    throw new Error(
+                        body?.message ?? 'Impossible de préparer le paiement.',
+                    );
                 }
+
                 return res.json();
             })
             .then((data) => {
-                if (!cancelled) setClientSecret(data.clientSecret);
+                if (!cancelled) {
+                    setClientSecret(data.clientSecret);
+                }
             })
             .catch((err) => {
-                if (!cancelled) setLoadError(err.message);
+                if (!cancelled) {
+                    setLoadError(err.message);
+                }
             });
 
         return () => {
@@ -59,23 +79,39 @@ export function StripeSetupForm({
 
     if (!stripePromise) {
         return (
-            <div className="border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-                Le paiement par carte n'est pas configuré sur cet environnement (clé publique Stripe manquante).
+            <div className="border border-danger/30 bg-danger/10 px-4 py-3 text-lg text-danger">
+                Le paiement par carte n'est pas configuré sur cet environnement
+                (clé publique Stripe manquante).
             </div>
         );
     }
 
     if (loadError) {
-        return <div className="border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{loadError}</div>;
+        return (
+            <div className="border border-danger/30 bg-danger/10 px-4 py-3 text-lg text-danger">
+                {loadError}
+            </div>
+        );
     }
 
     if (!clientSecret) {
-        return <div className="animate-pulse border border-slate-200 bg-slate-50 px-4 py-6 text-center text-caption">Préparation du formulaire de paiement...</div>;
+        return (
+            <Skeleton className="px-4 py-6 text-center text-caption">
+                Préparation du formulaire de paiement...
+            </Skeleton>
+        );
     }
 
     return (
-        <Elements stripe={stripePromise} options={{ clientSecret, appearance: stripeAppearance }}>
-            <InnerForm subscribeUrl={subscribeUrl} billingPeriod={billingPeriod} onSuccess={onSuccess} />
+        <Elements
+            stripe={stripePromise}
+            options={{ clientSecret, appearance: stripeAppearance }}
+        >
+            <InnerForm
+                subscribeUrl={subscribeUrl}
+                billingPeriod={billingPeriod}
+                onSuccess={onSuccess}
+            />
         </Elements>
     );
 }
@@ -96,7 +132,10 @@ function InnerForm({
 
     async function submit(e: React.FormEvent) {
         e.preventDefault();
-        if (!stripe || !elements) return;
+
+        if (!stripe || !elements) {
+            return;
+        }
 
         setSubmitting(true);
         setError(null);
@@ -111,7 +150,11 @@ function InnerForm({
 
         if (confirmError) {
             setSubmitting(false);
-            setError(confirmError.message ?? "L'enregistrement de la carte a échoué.");
+            setError(
+                confirmError.message ??
+                    "L'enregistrement de la carte a échoué.",
+            );
+
             return;
         }
 
@@ -120,6 +163,7 @@ function InnerForm({
         if (setupIntent?.status !== 'succeeded' || !paymentMethod) {
             setSubmitting(false);
             setError("L'enregistrement de la carte a échoué.");
+
             return;
         }
 
@@ -129,15 +173,23 @@ function InnerForm({
                 headers: {
                     'Content-Type': 'application/json',
                     Accept: 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '',
+                    'X-CSRF-TOKEN':
+                        document.querySelector<HTMLMetaElement>(
+                            'meta[name="csrf-token"]',
+                        )?.content ?? '',
                 },
-                body: JSON.stringify({ payment_method: paymentMethod, billing_period: billingPeriod }),
+                body: JSON.stringify({
+                    payment_method: paymentMethod,
+                    billing_period: billingPeriod,
+                }),
             });
 
             const data = await res.json();
 
             if (!res.ok) {
-                throw new Error(data?.message ?? "L'abonnement n'a pas pu être activé.");
+                throw new Error(
+                    data?.message ?? "L'abonnement n'a pas pu être activé.",
+                );
             }
 
             if (data.requiresAction) {
@@ -145,12 +197,17 @@ function InnerForm({
                 // first invoice — distinct from the SetupIntent's own 3DS,
                 // which confirmSetup() above already handled for saving the card.
                 window.location.href = `/stripe/payment/${data.paymentId}?redirect=${encodeURIComponent('/settings/subscription')}`;
+
                 return;
             }
 
             onSuccess();
         } catch (err) {
-            setError(err instanceof Error ? err.message : "L'abonnement n'a pas pu être activé.");
+            setError(
+                err instanceof Error
+                    ? err.message
+                    : "L'abonnement n'a pas pu être activé.",
+            );
         } finally {
             setSubmitting(false);
         }
@@ -160,10 +217,19 @@ function InnerForm({
         <form onSubmit={submit} className="flex flex-col gap-4">
             <PaymentElement options={stripePaymentElementOptions} />
 
-            {error && <div className="border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>}
+            {error && (
+                <div className="border border-danger/30 bg-danger/10 px-3 py-2 text-lg text-danger">
+                    {error}
+                </div>
+            )}
 
-            <Button type="submit" variant="cta" disabled={!stripe || submitting} className="px-6 py-3">
-                {submitting ? 'Traitement...' : "S'abonner"}
+            <Button
+                type="submit"
+                variant="cta"
+                disabled={!stripe || submitting}
+                className="px-6 py-3"
+            >
+                {submitting ? 'Traitement...' : "Commencer l'essai de 30 jours"}
             </Button>
         </form>
     );

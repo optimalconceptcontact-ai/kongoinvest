@@ -10,15 +10,16 @@ use App\Data\AiConversationData;
 use App\Data\ProjectData;
 use App\Data\SectorData;
 use App\Data\StageData;
+use App\Enums\AiInteractionType;
+use App\Enums\SubscriptionFeature;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreProjectRequest;
 use App\Http\Requests\UpdateProjectRequest;
+use App\Models\AiConversation;
 use App\Models\Project;
 use App\Models\Sector;
 use App\Models\Stage;
-use App\Enums\AiInteractionType;
-use App\Enums\SubscriptionFeature;
-use App\Models\AiConversation;
+use App\Services\FundingLimitService;
 use App\Services\ProjectLimitService;
 use App\Services\SubscriptionService;
 use Illuminate\Http\RedirectResponse;
@@ -29,15 +30,43 @@ use Inertia\Response;
 
 class ProjectController extends Controller
 {
-    public function index(Request $request, ProjectLimitService $limits): Response
+    public function index(Request $request, ProjectLimitService $limits, SubscriptionService $subscriptions): Response
     {
         // Spec §12: always scoped through the relationship — never
         // Project::all() with a client-side filter.
         $projects = $request->user()->projects()->with(['sectors', 'stages'])->latest()->get();
 
+        $fundingLimitService = app(FundingLimitService::class);
+
         return Inertia::render('Entrepreneur/Projects/Index', [
-            'projects' => $projects->map(fn (Project $p) => ProjectData::fromModel($p)),
+            'projects' => $projects->map(function (Project $p) use ($fundingLimitService) {
+                $projectData = ProjectData::fromModel($p);
+
+                // Ajouter les informations de warning si le projet doit afficher un avertissement
+                if ($p->shouldShowFundingLimitWarning()) {
+                    $limits = $fundingLimitService->getLimits($p->funding_currency);
+                    $daysRemaining = $p->funding_limit_deadline
+                        ? max(0, now()->diffInDays($p->funding_limit_deadline, false))
+                        : 0;
+
+                    $projectData->fundingLimitWarning = [
+                        'shouldShow' => true,
+                        'currentAmount' => $fundingLimitService->formatAmount($p->funding_target_minor, $p->funding_currency),
+                        'maxLimit' => $fundingLimitService->formatAmount($limits['max'], $p->funding_currency),
+                        'deadline' => $p->funding_limit_deadline?->translatedFormat('d F Y') ?? '',
+                        'deadlinePassed' => $p->hasFundingLimitDeadlinePassed(),
+                        'daysRemaining' => (int) $daysRemaining,
+                    ];
+                }
+
+                return $projectData;
+            }),
             'canCreateProject' => $limits->canCreateProject($request->user()),
+            // Whichever plan actually capped project creation — the
+            // limit-reached message used to hardcode "Free", which was
+            // simply wrong once any other plan's cap was the real reason.
+            'currentPlanName' => $subscriptions->currentPlanFor($request->user())->name,
+            'maxActiveProjects' => $limits->limitFor($request->user()),
         ]);
     }
 

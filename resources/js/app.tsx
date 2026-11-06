@@ -5,13 +5,16 @@ import type { ResolvedComponent } from '@inertiajs/react';
 import { configureEcho } from '@laravel/echo-react';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { createRoot } from 'react-dom/client';
+import { initializeTheme } from '@/hooks/use-appearance';
 import RootLayout from '@/layouts/root-layout';
 
 configureEcho({
     broadcaster: 'reverb',
 });
 
-const appName = import.meta.env.VITE_APP_NAME || 'KongoInvestment';
+initializeTheme();
+
+const appName = import.meta.env.VITE_APP_NAME || 'KongoInvest';
 
 function resolve(name: string) {
     const pages = import.meta.glob('./pages/**/*.tsx') as Record<

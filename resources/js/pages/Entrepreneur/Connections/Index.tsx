@@ -1,8 +1,8 @@
 import { Head, router } from '@inertiajs/react';
-import { EntrepreneurLayout } from '@/layouts/EntrepreneurLayout';
-import { Button } from '@/components/Ui/Button';
-import { Link } from '@/components/Ui/Link';
+import { Button } from '@/components/ui/button';
+import { Link } from '@/components/ui/Link';
 import { useConfirm } from '@/hooks/useConfirm';
+import { EntrepreneurLayout } from '@/layouts/EntrepreneurLayout';
 
 type ConnectionRow = {
     id: number;
@@ -15,17 +15,24 @@ type ConnectionRow = {
 };
 
 const statusStyles: Record<string, string> = {
-    pending: 'bg-orange-50 text-orange-700',
-    accepted: 'bg-blue-50 text-blue-700',
-    rejected: 'bg-slate-100 text-slate-400',
-    cancelled: 'bg-slate-100 text-slate-400',
+    pending: 'bg-surface-2 text-ink',
+    accepted: 'bg-surface-2 text-ink',
+    rejected: 'bg-surface-2  text-ink-muted ',
+    cancelled: 'bg-surface-2  text-ink-muted ',
 };
 
 const statusLabels: Record<string, string> = {
-    pending: 'En attente', accepted: 'Acceptée', rejected: 'Refusée', cancelled: 'Annulée',
+    pending: 'En attente',
+    accepted: 'Acceptée',
+    rejected: 'Refusée',
+    cancelled: 'Annulée',
 };
 
-export default function Index({ connections }: { connections: ConnectionRow[] }) {
+export default function Index({
+    connections,
+}: {
+    connections: ConnectionRow[];
+}) {
     const { confirm, ConfirmDialog } = useConfirm();
 
     function accept(id: number) {
@@ -33,8 +40,18 @@ export default function Index({ connections }: { connections: ConnectionRow[] })
     }
 
     async function reject(id: number) {
-        if (await confirm({ description: 'Refuser cette demande de connexion ?', danger: true, confirmLabel: 'Refuser' })) {
-            router.post(`/entrepreneur/connections/${id}/reject`, {}, { preserveScroll: true });
+        if (
+            await confirm({
+                description: 'Refuser cette demande de connexion ?',
+                danger: true,
+                confirmLabel: 'Refuser',
+            })
+        ) {
+            router.post(
+                `/entrepreneur/connections/${id}/reject`,
+                {},
+                { preserveScroll: true },
+            );
         }
     }
 
@@ -43,38 +60,64 @@ export default function Index({ connections }: { connections: ConnectionRow[] })
             <Head title="Connexions" />
 
             {connections.length === 0 ? (
-                <div className="border border-dashed border-slate-400 py-16 text-center text-body">
+                <div className="border border-rule-strong bg-paper p-6 text-body">
                     Aucune demande de connexion pour l'instant.
                 </div>
             ) : (
-                <div className="border border-slate-200">
+                <div className="border border-rule">
                     {connections.map((c) => (
-                        <div key={c.id} className="flex items-center justify-between border-b border-slate-200 p-5 last:border-b-0">
+                        <div
+                            key={c.id}
+                            className="flex items-center justify-between border-b border-rule p-5 last:border-b-0"
+                        >
                             <div>
                                 <div className="mb-1 flex items-center gap-2">
-                                    <span className={`px-2 py-0.5 font-mono text-[11px] uppercase ${statusStyles[c.status]}`}>
+                                    <span
+                                        className={`px-2 py-0.5 font-mono text-lg uppercase ${statusStyles[c.status]}`}
+                                    >
                                         {statusLabels[c.status]}
                                     </span>
-                                    <span className="font-mono text-[11px] text-slate-400">
-                                        {new Date(c.createdAt).toLocaleDateString('fr-FR')}
+                                    <span className="font-mono text-lg text-ink-muted">
+                                        {new Date(
+                                            c.createdAt,
+                                        ).toLocaleDateString('fr-FR')}
                                     </span>
                                 </div>
-                                <div className="text-item-title">{c.investorName}</div>
-                                {c.message && <p className="mt-1 max-w-md text-caption">"{c.message}"</p>}
+                                <div className="text-item-title">
+                                    {c.investorName}
+                                </div>
+                                {c.message && (
+                                    <p className="mt-1 max-w-md text-caption">
+                                        "{c.message}"
+                                    </p>
+                                )}
                             </div>
                             <div className="flex gap-2">
                                 {c.status === 'pending' && (
                                     <>
-                                        <Button variant="secondary" size="sm" onClick={() => accept(c.id)} className="py-2">
+                                        <Button
+                                            variant="secondary"
+                                            size="sm"
+                                            onClick={() => accept(c.id)}
+                                            className="py-2"
+                                        >
                                             Accepter
                                         </Button>
-                                        <button onClick={() => reject(c.id)} className="border border-slate-400 px-3 py-2 text-xs font-semibold text-slate-500 hover:border-orange-600 hover:text-orange-600">
+                                        <button
+                                            onClick={() => reject(c.id)}
+                                            className="border border-rule-strong px-3 py-2 text-btn text-ink-muted hover:border-ink hover:text-ink"
+                                        >
                                             Refuser
                                         </button>
                                     </>
                                 )}
                                 {c.status === 'accepted' && c.dealRoomId && (
-                                    <Link href={`/deal-rooms/${c.dealRoomId}`} variant="secondary" size="sm" className="py-2">
+                                    <Link
+                                        href={`/deal-rooms/${c.dealRoomId}`}
+                                        variant="secondary"
+                                        size="sm"
+                                        className="py-2"
+                                    >
                                         Ouvrir la Deal Room
                                     </Link>
                                 )}

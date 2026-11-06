@@ -4,9 +4,13 @@ use App\Http\Middleware\HandleInertiaRequests;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets;
+use Illuminate\Http\Request;
+use Inertia\Inertia;
 use Spatie\Permission\Middleware\PermissionMiddleware;
 use Spatie\Permission\Middleware\RoleMiddleware;
 use Spatie\Permission\Middleware\RoleOrPermissionMiddleware;
+use Symfony\Component\HttpFoundation\Response;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -15,9 +19,28 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
+        // Herd (and most real deployments) terminate TLS in a proxy and
+        // forward plain HTTP to PHP — without this, $request->isSecure()
+        // is always false, so anything that builds a URL from the current
+        // request (e.g. Spatie MediaLibrary's thumbnail URLs) generates
+        // http:// even though the browser loaded the page over https://,
+        // triggering mixed-content warnings/upgrades.
+        $middleware->trustProxies(at: '*');
+
+        // There is no /login page — auth is presented as React modals, so
+        // guests bounced by the `auth` middleware go back to the home page
+        // with a flashed `authModal` payload instead. AuthModalProvider
+        // restores the login modal (plus any pending intent) from it on
+        // page load, so the redirect opens the login modal (spec §6, §7).
+        $middleware->redirectGuestsTo(function (Request $request) {
+            $request->session()->flash('authModal', ['modal' => 'login', 'intent' => null]);
+
+            return route('home');
+        });
+
         $middleware->web(append: [
             HandleInertiaRequests::class,
-            \Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets::class,
+            AddLinkHeadersForPreloadedAssets::class,
         ]);
 
         // Webhook callers (Stripe, PayPal, Mobile Money operators) can't
@@ -46,7 +69,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // Pages/Errors/Error.tsx. Validation errors (422) are excluded:
         // those already redirect back with field-level `errors`, which
         // is a better UX than a full error page for a form submission.
-        $exceptions->respond(function (\Symfony\Component\HttpFoundation\Response $response, \Throwable $e, \Illuminate\Http\Request $request) {
+        $exceptions->respond(function (Response $response, Throwable $e, Request $request) {
             $status = $response->getStatusCode();
 
             // Inertia::render(...)->toResponse() already handles both the
@@ -55,7 +78,7 @@ return Application::configure(basePath: dirname(__DIR__))
             // header ourselves. Applies to a direct URL visit to a bad
             // route just as much as an in-app navigation.
             if (in_array($status, [401, 403, 404, 419, 429, 500, 503], true) && ! $request->expectsJson()) {
-                return \Inertia\Inertia::render('Errors/Error', ['status' => $status])
+                return Inertia::render('Errors/Error', ['status' => $status])
                     ->toResponse($request)
                     ->setStatusCode($status);
             }

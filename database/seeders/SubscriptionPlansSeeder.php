@@ -87,12 +87,28 @@ class SubscriptionPlansSeeder extends Seeder
                 'role_scope' => null,
                 'price_minor' => 7000, // $70.00/mo
                 'annual_price_minor' => 70000, // $700.00/yr — 10x monthly, i.e. 2 months free
-                'limits' => [],
+                'limits' => [
+                    // Left unset here, this silently fell back to Free's
+                    // cap of 1 (ProjectLimitService's fallback exists for
+                    // "no subscription at all", not "plan omitted this
+                    // key") — a premium plan blocking project creation
+                    // harder than the plans below it. Set explicitly,
+                    // generous — Coaching is the top tier.
+                    'max_active_projects' => 10,
+                ],
                 'features' => [
                     F::EscrowAccess->value,
                     F::KycAccess->value,
                     F::ContractsAccess->value,
                     F::DealRoomAccess->value,
+                    // "Coaching" is role-agnostic: an entrepreneur subscriber
+                    // gets the project-improvement coach (§53), an investor
+                    // subscriber gets the investment coach/advisor (§54). The
+                    // role-scoped plans above each carry only their own one;
+                    // this top tier carries both so whichever role signs up
+                    // has the conversational assistant on the project page.
+                    F::AiCoach->value,
+                    F::AiInvestmentAdvisor->value,
                 ],
                 'order' => 3,
             ],

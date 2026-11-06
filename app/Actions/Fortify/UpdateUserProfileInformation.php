@@ -3,6 +3,7 @@
 namespace App\Actions\Fortify;
 
 use App\Models\User;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Support\Facades\Validator;
 use Laravel\Fortify\Contracts\UpdatesUserProfileInformation;
 
@@ -19,8 +20,9 @@ class UpdateUserProfileInformation implements UpdatesUserProfileInformation
             'phone' => ['nullable', 'string', 'max:30'],
         ])->validateWithBag('updateProfileInformation');
 
-        if ($input['email'] !== $user->email && $user instanceof \Illuminate\Contracts\Auth\MustVerifyEmail) {
+        if ($input['email'] !== $user->email && $user instanceof MustVerifyEmail) {
             $this->updateVerifiedUser($user, $input);
+
             return;
         }
 

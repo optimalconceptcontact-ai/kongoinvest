@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import { ProjectCard, type ProjectCardData } from '@/components/ProjectCard';
+import { ProjectCard } from '@/components/ProjectCard';
+import type { ProjectCardData } from '@/components/ProjectCard';
 
 // The real @inertiajs/react Link needs a mounted Inertia app instance
 // (window.Inertia / router context) that doesn't exist in a unit test —
@@ -38,7 +39,7 @@ describe('ProjectCard', () => {
         const { container } = render(<ProjectCard project={baseProject} />);
 
         // 2,500 / 10,000 = 25%
-        const bar = container.querySelector('.bg-blue-500') as HTMLElement;
+        const bar = container.querySelector('.bg-action') as HTMLElement;
         expect(bar.style.width).toBe('25%');
     });
 
@@ -46,7 +47,7 @@ describe('ProjectCard', () => {
         const overfunded = { ...baseProject, fundingRaisedMinor: 20_000_00 };
         const { container } = render(<ProjectCard project={overfunded} />);
 
-        const bar = container.querySelector('.bg-blue-500') as HTMLElement;
+        const bar = container.querySelector('.bg-action') as HTMLElement;
         expect(bar.style.width).toBe('100%');
     });
 
@@ -60,6 +61,9 @@ describe('ProjectCard', () => {
     it('links to the project detail page by slug', () => {
         render(<ProjectCard project={baseProject} />);
 
-        expect(screen.getByRole('link')).toHaveAttribute('href', '/projects/agrokin');
+        expect(screen.getByRole('link')).toHaveAttribute(
+            'href',
+            '/projects/agrokin',
+        );
     });
 });

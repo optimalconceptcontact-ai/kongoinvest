@@ -11,22 +11,27 @@ class ProjectPolicy
 {
     public function __construct(private ProjectLimitService $limits) {}
 
-    /** Anyone (including guests) may view a published, public project. */
+    /** Only authenticated users may view a project (never guests). */
     public function view(?User $user, Project $project): bool
     {
-        if ($project->visibility === ProjectVisibility::Public && $project->status->value === 'published') {
-            return true;
-        }
-
         if (! $user) {
             return false;
         }
 
-        if ($project->isOwnedBy($user)) {
+        if ($user->can('projects.view-all')) {
             return true;
         }
 
-        if ($user->can('projects.view-all')) {
+        // Spec: Entrepreneurs may ONLY view their own project.
+        if ($user->isEntrepreneur()) {
+            return $project->isOwnedBy($user);
+        }
+
+        if ($project->visibility === ProjectVisibility::Public && $project->status->value === 'published') {
+            return true;
+        }
+
+        if ($project->isOwnedBy($user)) {
             return true;
         }
 

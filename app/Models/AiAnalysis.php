@@ -3,13 +3,14 @@
 namespace App\Models;
 
 use App\Enums\AiRequestStatus;
+use Database\Factories\AiAnalysisFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class AiAnalysis extends Model
 {
-    /** @use HasFactory<\Database\Factories\AiAnalysisFactory> */
+    /** @use HasFactory<AiAnalysisFactory> */
     use HasFactory;
 
     // Every field here is written exclusively by ProjectAnalysisService —

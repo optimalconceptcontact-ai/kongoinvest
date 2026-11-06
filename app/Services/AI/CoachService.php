@@ -62,7 +62,7 @@ class CoachService
                 return $conversation->fresh('messages');
             }
 
-            $this->usage->record($entrepreneur, AiInteractionType::EntrepreneurCoach, AiRequestStatus::Completed, $project, 'anthropic', $result->tokensUsed);
+            $this->usage->record($entrepreneur, AiInteractionType::EntrepreneurCoach, AiRequestStatus::Completed, $project, config('ai.features.provider'), $result->tokensUsed);
 
             $conversation->messages()->create([
                 'role' => 'assistant',

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\DocumentVisibility;
+use Database\Factories\DocumentFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -11,7 +12,7 @@ use Spatie\MediaLibrary\InteractsWithMedia;
 
 class Document extends Model implements HasMedia
 {
-    /** @use HasFactory<\Database\Factories\DocumentFactory> */
+    /** @use HasFactory<DocumentFactory> */
     use HasFactory, InteractsWithMedia;
 
     protected $fillable = ['title'];

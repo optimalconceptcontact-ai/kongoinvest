@@ -4,6 +4,7 @@ use App\Models\Payment;
 use App\Models\PaymentTransaction;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Database\Seeders\SubscriptionPlansSeeder;
+use Illuminate\Testing\TestResponse;
 
 beforeEach(function () {
     $this->seed(RolesAndPermissionsSeeder::class);
@@ -11,14 +12,19 @@ beforeEach(function () {
     config(['services.stripe.webhook_secret' => 'whsec_test_secret']);
 });
 
-function postStripeWebhook(array $payload, ?int $timestamp = null): \Illuminate\Testing\TestResponse
+function postStripeWebhook(array $payload, ?int $timestamp = null): TestResponse
 {
     $timestamp ??= time();
     $body = json_encode($payload);
     $signature = hash_hmac('sha256', "{$timestamp}.{$body}", 'whsec_test_secret');
 
-    return test()->withHeaders(['Stripe-Signature' => "t={$timestamp},v1={$signature}"])
-        ->call('POST', '/webhooks/stripe', [], [], [], ['CONTENT_TYPE' => 'application/json'], $body);
+    // withHeaders() does NOT apply to a raw call(): default headers only
+    // merge into the get/post/json helpers. A raw call needs its headers
+    // as $server vars, or the signature never reaches the provider.
+    return test()->call('POST', '/webhooks/stripe', [], [], [], [
+        'CONTENT_TYPE' => 'application/json',
+        'HTTP_STRIPE_SIGNATURE' => "t={$timestamp},v1={$signature}",
+    ], $body);
 }
 
 it('never processes the same webhook event twice, even if the provider redelivers it', function () {

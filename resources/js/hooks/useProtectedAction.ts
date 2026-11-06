@@ -12,7 +12,7 @@ type SharedAuth = { auth: { user: { id: number } | null } };
  *
  * If the visitor is a guest, this opens the Register modal with the
  * intent attached instead of running `run`. Once auth completes, the
- * AuthModalProvider dispatches `kongoinvestment:resume-intent` and whichever
+ * AuthModalProvider dispatches `KongoInvest:resume-intent` and whichever
  * component owns that action is responsible for actually resuming it —
  * this hook only listens for its *own* intent so the action can never
  * fire twice.
@@ -31,8 +31,12 @@ export function useProtectedAction<T extends PendingIntent>(
             if (detail?.action === intent.action) run(detail.payload);
         }
 
-        window.addEventListener('kongoinvestment:resume-intent', onResume);
-        return () => window.removeEventListener('kongoinvestment:resume-intent', onResume);
+        window.addEventListener('KongoInvest:resume-intent', onResume);
+        return () =>
+            window.removeEventListener(
+                'KongoInvest:resume-intent',
+                onResume,
+            );
     }, [intent.action, run]);
 
     return function trigger(payload?: Record<string, unknown>) {

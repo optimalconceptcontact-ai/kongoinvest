@@ -67,6 +67,22 @@ class RefundEscrow
                 ]);
             }
 
+            if ($current->status !== EscrowStatus::RefundRequested) {
+                // The escrow left refund_requested while the provider call
+                // was in flight (typically a dispute was opened, which
+                // refund_requested explicitly allows). Never overwrite that
+                // newer state: the provider-side refund already happened,
+                // so leave the current state for an admin to reconcile.
+                $this->audit->log($investor, 'escrow.refund_superseded', $current, [
+                    'provider_refund_id' => $result->providerRefundId,
+                    'current_status' => $current->status->value,
+                ]);
+
+                throw ValidationException::withMessages([
+                    'escrow' => 'Ce séquestre a changé d\'état pendant le remboursement (litige ouvert). Le remboursement a été enregistré côté fournisseur et un administrateur va réconcilier le dossier.',
+                ]);
+            }
+
             $current->forceFill([
                 'status' => EscrowStatus::Refunded->value,
                 'refund_reference' => $result->providerRefundId,

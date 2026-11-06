@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Entrepreneur;
 
+use App\Enums\SubscriptionFeature;
 use App\Http\Controllers\Controller;
 use App\Models\Project;
 use App\Services\Ai\CoachService;
@@ -18,7 +19,7 @@ class AiCoachController extends Controller
 
         // Spec §53: gated to the Entrepreneur plan's ai_coach feature —
         // Free entrepreneurs see an upsell in the UI, not this endpoint.
-        if (! $subscriptions->hasFeature($request->user(), \App\Enums\SubscriptionFeature::AiCoach)) {
+        if (! $subscriptions->hasFeature($request->user(), SubscriptionFeature::AiCoach)) {
             abort(403, "Le coach IA n'est pas disponible sur votre plan actuel.");
         }
 

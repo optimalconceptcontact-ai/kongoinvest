@@ -23,9 +23,11 @@ class DashboardTest extends TestCase
     public function test_guests_are_redirected_to_the_home_page()
     {
         // There is no /login page (auth is a modal, spec §6) — guests
-        // bounce back to the home page instead.
+        // bounce back to the home page with a flashed authModal payload,
+        // and AuthModalProvider opens the login modal on page load.
         $response = $this->get(route('dashboard'));
         $response->assertRedirect(route('home'));
+        $response->assertSessionHas('authModal.modal', 'login');
     }
 
     public function test_authenticated_users_can_visit_the_dashboard()

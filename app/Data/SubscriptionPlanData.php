@@ -3,6 +3,7 @@
 namespace App\Data;
 
 use App\Models\SubscriptionPlan;
+use App\Models\User;
 use Spatie\LaravelData\Data;
 
 class SubscriptionPlanData extends Data
@@ -24,7 +25,7 @@ class SubscriptionPlanData extends Data
         public bool $isCurrent,
     ) {}
 
-    public static function fromModel(SubscriptionPlan $plan, ?\App\Models\User $viewer, bool $isCurrent = false): self
+    public static function fromModel(SubscriptionPlan $plan, ?User $viewer, bool $isCurrent = false): self
     {
         return new self(
             id: $plan->id,

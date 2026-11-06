@@ -8,6 +8,8 @@ export function SidebarLink({
     active,
     disabled,
     badge,
+    expand = false,
+    onClick,
 }: {
     href: string;
     icon: RemixiconComponentType;
@@ -15,14 +17,26 @@ export function SidebarLink({
     active?: boolean;
     disabled?: boolean;
     badge?: string;
+    expand?: boolean;
+    onClick?: () => void;
 }) {
+    const labelClass = expand ? 'inline' : 'hidden md:inline';
+    const layoutClass = expand ? 'justify-between' : 'md:justify-between';
+
     if (disabled) {
         return (
-            <div className="flex items-center justify-between px-3 py-2 text-sm text-slate-400">
-                <span className="flex items-center gap-2.5">
-                    <Icon size={18} /> {label}
+            <div
+                className={`flex min-h-11 cursor-not-allowed items-center gap-2.5 border-l-2 border-transparent px-3 py-2 font-mono text-[16px] text-ink-muted ${layoutClass}`}
+            >
+                <span className="flex items-center gap-2.5" title={label}>
+                    <Icon size={18} />
+                    <span className={labelClass}>{label}</span>
                 </span>
-                {badge && <span className="font-mono text-[10px] text-slate-400">{badge}</span>}
+                {badge && (
+                    <span className={`${labelClass} font-mono text-lg`}>
+                        {badge}
+                    </span>
+                )}
             </div>
         );
     }
@@ -30,15 +44,27 @@ export function SidebarLink({
     return (
         <Link
             href={href}
-            className={`flex items-center justify-between px-3 py-2 text-base transition ${
-                active ? 'bg-slate-900 text-white font-semibold' : 'text-slate-700 hover:bg-slate-100'
+            title={label}
+            onClick={onClick}
+            aria-current={active ? 'page' : undefined}
+            className={`flex min-h-11 items-center gap-2.5 border-l-2 px-3 py-2 font-mono text-[16px] tracking-[0.01em] transition-[background-color,border-color,color] duration-150 focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-action ${layoutClass} ${
+                active
+                    ? 'border-signal bg-ink text-paper'
+                    : 'border-transparent text-ink-muted hover:bg-surface-2 hover:text-ink'
             }`}
         >
-            <span className="flex items-center gap-2.5">
-                <Icon size={17} /> {label}
+            <span className="flex min-w-0 items-center gap-2.5">
+                <Icon size={17} className="flex-shrink-0" />
+                <span className={`truncate ${labelClass}`}>{label}</span>
             </span>
             {badge && (
-                <span className={`font-mono text-[10px] ${active ? 'text-slate-400' : 'text-slate-400'}`}>{badge}</span>
+                <span
+                    className={`${labelClass} flex-shrink-0 font-mono text-lg ${
+                        active ? 'text-paper' : 'text-ink-muted'
+                    }`}
+                >
+                    {badge}
+                </span>
             )}
         </Link>
     );

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Database\Factories\SectorFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -10,7 +11,7 @@ use Spatie\Sluggable\SlugOptions;
 
 class Sector extends Model
 {
-    /** @use HasFactory<\Database\Factories\SectorFactory> */
+    /** @use HasFactory<SectorFactory> */
     use HasFactory, HasSlug;
 
     protected $fillable = ['name', 'icon', 'description', 'is_active', 'order'];

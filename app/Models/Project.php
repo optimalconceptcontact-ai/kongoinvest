@@ -4,10 +4,13 @@ namespace App\Models;
 
 use App\Enums\ProjectStatus;
 use App\Enums\ProjectVisibility;
+use App\Services\FundingLimitService;
+use Database\Factories\ProjectFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
@@ -17,7 +20,7 @@ use Spatie\Sluggable\SlugOptions;
 
 class Project extends Model implements HasMedia
 {
-    /** @use HasFactory<\Database\Factories\ProjectFactory> */
+    /** @use HasFactory<ProjectFactory> */
     use HasFactory, HasSlug, InteractsWithMedia, SoftDeletes;
 
     protected $fillable = [
@@ -57,6 +60,8 @@ class Project extends Model implements HasMedia
             'funding_min_minor' => 'integer',
             'funding_max_minor' => 'integer',
             'funding_raised_minor' => 'integer',
+            'funding_limit_notified_at' => 'datetime',
+            'funding_limit_deadline' => 'datetime',
             'published_at' => 'datetime',
             'archived_at' => 'datetime',
         ];
@@ -86,17 +91,17 @@ class Project extends Model implements HasMedia
         return $this->belongsToMany(Stage::class);
     }
 
-    public function matches(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function matches(): HasMany
     {
         return $this->hasMany(MatchModel::class);
     }
 
-    public function aiAnalyses(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function aiAnalyses(): HasMany
     {
         return $this->hasMany(AiAnalysis::class)->latest();
     }
 
-    public function savedBy(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function savedBy(): HasMany
     {
         return $this->hasMany(SavedProject::class);
     }
@@ -136,19 +141,24 @@ class Project extends Model implements HasMedia
 
     public function scopeVisibleTo($query, ?User $viewer)
     {
-        // Public projects are visible to everyone. Anything else
-        // currently requires ownership or admin — matched_investors and
-        // connection_only will widen once Matching (Phase 5) and
-        // Connections (Phase 8) exist to define "matched" / "connected".
+        // Guests cannot view any projects.
+        if (! $viewer) {
+            return $query->whereRaw('0 = 1');
+        }
+
+        // Entrepreneurs can only view their own projects.
+        if ($viewer->isEntrepreneur()) {
+            return $query->where('user_id', $viewer->id);
+        }
+
+        // Public projects are visible to other authenticated users (investors, admins).
         return $query->where(function ($q) use ($viewer) {
             $q->where('visibility', ProjectVisibility::Public);
 
-            if ($viewer) {
-                $q->orWhere('user_id', $viewer->id);
+            $q->orWhere('user_id', $viewer->id);
 
-                if ($viewer->can('projects.view-all')) {
-                    $q->orWhereNotNull('id');
-                }
+            if ($viewer->can('projects.view-all')) {
+                $q->orWhereNotNull('id');
             }
         });
     }
@@ -156,5 +166,47 @@ class Project extends Model implements HasMedia
     public function isOwnedBy(User $user): bool
     {
         return $this->user_id === $user->id;
+    }
+
+    /**
+     * Vérifie si le montant de financement du projet dépasse les limites autorisées.
+     *
+     * @return bool True si le funding_target_minor est hors des limites définies pour la devise
+     */
+    public function isOutsideFundingLimits(): bool
+    {
+        if ($this->funding_target_minor === null) {
+            return false;
+        }
+
+        $service = app(FundingLimitService::class);
+
+        return ! $service->isWithinLimits($this->funding_target_minor, $this->funding_currency);
+    }
+
+    /**
+     * Vérifie si la deadline de correction des limites de financement est dépassée.
+     *
+     * @return bool True si la deadline existe et est dans le passé
+     */
+    public function hasFundingLimitDeadlinePassed(): bool
+    {
+        if ($this->funding_limit_deadline === null) {
+            return false;
+        }
+
+        return $this->funding_limit_deadline->isPast();
+    }
+
+    /**
+     * Détermine si un avertissement de limite de financement doit être affiché.
+     *
+     * Un avertissement est affiché si le projet est hors limites ET a été notifié.
+     *
+     * @return bool True si un warning doit être affiché à l'entrepreneur
+     */
+    public function shouldShowFundingLimitWarning(): bool
+    {
+        return $this->isOutsideFundingLimits() && $this->funding_limit_notified_at !== null;
     }
 }

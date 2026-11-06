@@ -2,9 +2,11 @@
 
 namespace App\Actions\Fortify;
 
+use App\Enums\KycStatus;
 use App\Enums\UserRole;
 use App\Models\EntrepreneurProfile;
 use App\Models\InvestorProfile;
+use App\Models\KycProfile;
 use App\Models\User;
 use App\Services\SubscriptionService;
 use Illuminate\Support\Facades\DB;
@@ -73,7 +75,7 @@ class CreateNewUser implements CreatesNewUsers
             // always exists (status=draft) so later code never has to
             // special-case "user has no KYC profile at all" — it just
             // checks the status.
-            \App\Models\KycProfile::create(['user_id' => $user->id, 'status' => \App\Enums\KycStatus::Draft->value]);
+            KycProfile::create(['user_id' => $user->id, 'status' => KycStatus::Draft->value]);
 
             return $user;
         });

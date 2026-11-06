@@ -3,16 +3,18 @@
 namespace Database\Factories;
 
 use App\Enums\KycStatus;
+use App\Models\KycProfile;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class KycProfileFactory extends Factory
 {
-    protected $model = \App\Models\KycProfile::class;
+    protected $model = KycProfile::class;
 
     public function definition(): array
     {
         return [
-            'user_id' => \App\Models\User::factory(),
+            'user_id' => User::factory(),
             'status' => KycStatus::Draft->value,
         ];
     }

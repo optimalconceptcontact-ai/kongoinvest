@@ -1,7 +1,9 @@
 <?php
 
+use App\Enums\MatchCriterion;
 use App\Models\Sector;
 use App\Models\User;
+use App\Services\Matching\MatchingWeightsService;
 use Database\Seeders\MatchingWeightsSeeder;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Database\Seeders\SectorsSeeder;
@@ -48,7 +50,7 @@ it('rejects matching weights that do not sum to 100%', function () {
     $admin = User::factory()->create();
     $admin->assignRole('admin');
 
-    $badWeights = collect(\App\Enums\MatchCriterion::cases())
+    $badWeights = collect(MatchCriterion::cases())
         ->map(fn ($c) => ['criterion' => $c->value, 'weight' => 0.05]) // sums to 0.40, not 1.0
         ->all();
 
@@ -61,7 +63,7 @@ it('accepts matching weights that sum to exactly 100%', function () {
     $admin = User::factory()->create();
     $admin->assignRole('admin');
 
-    $goodWeights = collect(\App\Services\Matching\MatchingWeightsService::defaults())
+    $goodWeights = collect(MatchingWeightsService::defaults())
         ->map(fn ($weight, $criterion) => ['criterion' => $criterion, 'weight' => $weight])
         ->values()
         ->all();

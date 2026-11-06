@@ -8,9 +8,13 @@ use App\Http\Controllers\DealRoomDocumentController;
 use App\Http\Controllers\DealRoomEscrowController;
 use App\Http\Controllers\Entrepreneur;
 use App\Http\Controllers\FileDownloadController;
+use App\Http\Controllers\InvestmentContractWorkspaceController;
 use App\Http\Controllers\Investor;
+use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\ProjectAnalysisController;
 use App\Http\Controllers\Public as PublicControllers;
 use App\Http\Controllers\Settings;
+use App\Http\Controllers\Webhooks\WebhookController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -20,15 +24,24 @@ Route::get('/about', fn () => Inertia::render('Public/About'))->name('about');
 Route::get('/pricing', [PublicControllers\PricingController::class, 'index'])->name('pricing');
 Route::get('/faq', [PublicControllers\FaqController::class, 'index'])->name('faq');
 Route::get('/how-it-works', fn () => Inertia::render('Public/HowItWorks'))->name('how-it-works');
-Route::get('/projects', [PublicControllers\ProjectController::class, 'index'])->name('projects.index');
-Route::get('/projects/{project:slug}', [PublicControllers\ProjectController::class, 'show'])->name('projects.show');
+
+Route::middleware('auth')->group(function () {
+    Route::get('/projects', [PublicControllers\ProjectController::class, 'index'])->name('projects.index');
+    Route::get('/projects/{project:slug}', [PublicControllers\ProjectController::class, 'show'])->name('projects.show');
+    Route::get('/projects/{project:slug}/report', [PublicControllers\ProjectController::class, 'report'])->name('projects.report');
+});
+
+// Fortify runs headless (no views), so the email-verification notice has
+// no vendor route: verified users never land here, unverified users are
+// redirected here by the `verified` middleware.
+Route::middleware('auth')->get('/email/verify', fn () => Inertia::render('Auth/VerifyEmail'))->name('verification.notice');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-    Route::get('/notifications', [\App\Http\Controllers\NotificationController::class, 'index'])->name('notifications.index');
-    Route::post('/notifications/{notification}/read', [\App\Http\Controllers\NotificationController::class, 'markRead'])->name('notifications.read');
-    Route::post('/notifications/read-all', [\App\Http\Controllers\NotificationController::class, 'markAllRead'])->name('notifications.read-all');
+    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::post('/notifications/{notification}/read', [NotificationController::class, 'markRead'])->name('notifications.read');
+    Route::post('/notifications/read-all', [NotificationController::class, 'markAllRead'])->name('notifications.read-all');
 
     Route::prefix('settings')->name('settings.')->group(function () {
         Route::get('/profile', [Settings\ProfileController::class, 'edit'])->name('profile.edit');
@@ -97,7 +110,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // AI project analysis (spec §50) — available to anyone who can view
     // the project, not scoped to a role like Coach/Advisor are.
-    Route::post('/projects/{project}/ai-analysis', [\App\Http\Controllers\ProjectAnalysisController::class, 'store'])->name('projects.ai-analysis.store');
+    Route::post('/projects/{project}/ai-analysis', [ProjectAnalysisController::class, 'store'])->name('projects.ai-analysis.store');
 
     // Shared between both roles — DealRoomPolicy alone decides access,
     // not which role: group the route sits under (spec §44's
@@ -111,6 +124,38 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/deal-rooms/{dealRoom}/contracts', [DealRoomContractController::class, 'store'])->name('deal-rooms.contracts.store');
     Route::post('/contracts/{contract}/accept', [DealRoomContractController::class, 'accept'])->name('contracts.accept');
     Route::post('/contracts/{contract}/reject', [DealRoomContractController::class, 'reject'])->name('contracts.reject');
+
+    // Espace contractuel (prompt §13-§17) — une salle = une opération :
+    // l'ouverture part de la DealRoom, l'espace est ensuite adressé
+    // directement. InvestmentContractWorkspacePolicy autorise tout.
+    Route::post('/deal-rooms/{dealRoom}/contract-workspace', [InvestmentContractWorkspaceController::class, 'store'])->name('contract-workspaces.store');
+    Route::get('/contract-workspaces/{workspace}', [InvestmentContractWorkspaceController::class, 'show'])->name('contract-workspaces.show');
+    Route::post('/contract-workspaces/{workspace}/consent', [InvestmentContractWorkspaceController::class, 'consent'])->name('contract-workspaces.consent');
+    Route::post('/contract-workspaces/{workspace}/ai-analysis', [InvestmentContractWorkspaceController::class, 'analyze'])->name('contract-workspaces.analyze');
+
+    // Structure de l'opération, contrôles financiers et cycle des
+    // clauses (prompt §7, §8, §10) — participants uniquement.
+    Route::post('/contract-workspaces/{workspace}/structure', [InvestmentContractWorkspaceController::class, 'structure'])->name('contract-workspaces.structure');
+    Route::post('/contract-workspaces/{workspace}/financial-checks', [InvestmentContractWorkspaceController::class, 'financialChecks'])->name('contract-workspaces.financial-checks');
+    Route::post('/contract-workspaces/{workspace}/clauses', [InvestmentContractWorkspaceController::class, 'proposeClause'])->name('contract-workspaces.clauses.propose');
+    Route::post('/contract-workspaces/{workspace}/clauses/{clause}/decision', [InvestmentContractWorkspaceController::class, 'decideClause'])->name('contract-workspaces.clauses.decide');
+
+    // Formalisation : documents, conditions et signatures (prompt
+    // §9, §11) — participants uniquement ; la validation juridique
+    // vérifie users.manage dans l'action (un juriste n'est pas un
+    // participant).
+    Route::post('/contract-workspaces/{workspace}/documents', [InvestmentContractWorkspaceController::class, 'createDocument'])->name('contract-workspaces.documents.store');
+    Route::post('/contract-workspaces/{workspace}/documents/{document}/approve', [InvestmentContractWorkspaceController::class, 'approveDocument'])->name('contract-workspaces.documents.approve');
+    Route::post('/contract-workspaces/{workspace}/documents/{document}/legal-validate', [InvestmentContractWorkspaceController::class, 'legallyValidateDocument'])->name('contract-workspaces.documents.legal-validate');
+    Route::post('/contract-workspaces/{workspace}/documents/{document}/signed-deposit', [InvestmentContractWorkspaceController::class, 'depositSignedDocument'])->name('contract-workspaces.documents.signed-deposit');
+    Route::post('/contract-workspaces/{workspace}/documents/{document}/signatures', [InvestmentContractWorkspaceController::class, 'requestSignatures'])->name('contract-workspaces.signatures.request');
+    Route::post('/contract-workspaces/{workspace}/signatures/{signature}/deposit', [InvestmentContractWorkspaceController::class, 'depositSignature'])->name('contract-workspaces.signatures.deposit');
+    Route::post('/contract-workspaces/{workspace}/conditions', [InvestmentContractWorkspaceController::class, 'createCondition'])->name('contract-workspaces.conditions.store');
+    Route::post('/contract-workspaces/{workspace}/conditions/{condition}/resolve', [InvestmentContractWorkspaceController::class, 'resolveCondition'])->name('contract-workspaces.conditions.resolve');
+
+    Route::post('/contract-workspaces/{workspace}/legal-review', [InvestmentContractWorkspaceController::class, 'legalReview'])->name('contract-workspaces.legal-review');
+    Route::post('/contract-workspaces/{workspace}/close', [InvestmentContractWorkspaceController::class, 'close'])->name('contract-workspaces.close');
+    Route::post('/contract-workspaces/{workspace}/cancel', [InvestmentContractWorkspaceController::class, 'cancel'])->name('contract-workspaces.cancel');
 
     Route::post('/contracts/{contract}/escrow', [DealRoomEscrowController::class, 'store'])->name('escrow.store');
     Route::get('/escrow/{escrow}/checkout', [DealRoomEscrowController::class, 'checkout'])->name('escrow.checkout');
@@ -160,11 +205,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
 // handleWebhook() verifies a cryptographic signature before anything is
 // trusted (spec §40) — this is not the same thing as "unprotected."
 Route::prefix('webhooks')->name('webhooks.')->group(function () {
-    Route::post('/stripe', [\App\Http\Controllers\Webhooks\WebhookController::class, 'stripe'])->name('stripe');
-    Route::post('/paypal', [\App\Http\Controllers\Webhooks\WebhookController::class, 'paypal'])->name('paypal');
-    Route::post('/orange-money', [\App\Http\Controllers\Webhooks\WebhookController::class, 'orangeMoney'])->name('orange-money');
-    Route::post('/mpesa', [\App\Http\Controllers\Webhooks\WebhookController::class, 'mpesa'])->name('mpesa');
-    Route::post('/airtel-money', [\App\Http\Controllers\Webhooks\WebhookController::class, 'airtelMoney'])->name('airtel-money');
+    Route::post('/stripe', [WebhookController::class, 'stripe'])->name('stripe');
+    Route::post('/paypal', [WebhookController::class, 'paypal'])->name('paypal');
+    Route::post('/orange-money', [WebhookController::class, 'orangeMoney'])->name('orange-money');
+    Route::post('/mpesa', [WebhookController::class, 'mpesa'])->name('mpesa');
+    Route::post('/airtel-money', [WebhookController::class, 'airtelMoney'])->name('airtel-money');
 });
 
 require __DIR__.'/auth.php';

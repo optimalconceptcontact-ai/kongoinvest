@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Investor;
 
 use App\Data\MatchData;
+use App\Enums\MatchStatus;
 use App\Http\Controllers\Controller;
 use App\Jobs\ComputeMatchesForInvestor;
 use App\Models\MatchModel;
@@ -35,7 +36,7 @@ class MatchController extends Controller
         $this->authorize('view', $match);
 
         if ($match->status->value === 'pending') {
-            $match->update(['status' => \App\Enums\MatchStatus::Viewed->value]);
+            $match->update(['status' => MatchStatus::Viewed->value]);
         }
 
         return back();
@@ -45,7 +46,7 @@ class MatchController extends Controller
     {
         $this->authorize('view', $match);
 
-        $match->update(['status' => \App\Enums\MatchStatus::Dismissed->value]);
+        $match->update(['status' => MatchStatus::Dismissed->value]);
 
         return back()->with('success', 'Match ignoré.');
     }

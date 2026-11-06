@@ -13,7 +13,8 @@ export const stripeAppearance: Appearance = {
     variables: {
         borderRadius: '0px',
         colorPrimary: '#0f172a',
-        fontFamily: "'Anonymous Pro', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
+        fontFamily:
+            "'Anonymous Pro', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
     },
 };
 

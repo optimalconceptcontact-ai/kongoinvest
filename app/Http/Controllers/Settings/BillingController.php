@@ -58,6 +58,14 @@ class BillingController extends Controller
     }
 
     /**
+     * Every paid plan gets a 30-day trial — the user still goes through
+     * this exact same checkout (SetupIntent, saved card) rather than a
+     * separate no-payment-info "start trial" flow; Stripe just doesn't
+     * charge the saved card until the trial ends.
+     */
+    private const TRIAL_DAYS = 30;
+
+    /**
      * Creates the actual Cashier subscription once the SetupIntent above
      * confirmed and yielded a reusable payment method. Mirrors the result
      * into the app's own plan_subscriptions table immediately (rather than
@@ -86,16 +94,20 @@ class BillingController extends Controller
         try {
             $request->user()
                 ->newSubscription('default', $stripePriceId)
+                ->trialDays(self::TRIAL_DAYS)
                 ->create($data['payment_method']);
         } catch (IncompletePayment $e) {
             return response()->json(['requiresAction' => true, 'paymentId' => $e->payment->id]);
         }
 
+        $cashierSubscription = $request->user()->subscription('default');
+
         $subscriptions->syncPlanFromCashierSubscription(
             $request->user(),
             $plan,
-            $request->user()->subscription('default')->stripe_id,
+            $cashierSubscription->stripe_id,
             $data['billing_period'],
+            $cashierSubscription->trial_ends_at,
         );
 
         return response()->json(['status' => 'active']);

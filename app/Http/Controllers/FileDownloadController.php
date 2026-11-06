@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Document;
+use App\Models\KycProfile;
+use App\Models\Project;
 use App\Services\AuditLogger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -23,7 +26,7 @@ class FileDownloadController extends Controller
 {
     public function kycDocument(Request $request, Media $media, AuditLogger $audit): StreamedResponse
     {
-        /** @var \App\Models\KycProfile $kycProfile */
+        /** @var KycProfile $kycProfile */
         $kycProfile = $media->model;
 
         Gate::authorize('view', $kycProfile);
@@ -35,7 +38,7 @@ class FileDownloadController extends Controller
 
     public function dealDocument(Request $request, Media $media, AuditLogger $audit): StreamedResponse
     {
-        /** @var \App\Models\Document $document */
+        /** @var Document $document */
         $document = $media->model;
 
         Gate::authorize('view', $document);
@@ -47,7 +50,7 @@ class FileDownloadController extends Controller
 
     public function projectDocument(Request $request, Media $media, AuditLogger $audit): StreamedResponse
     {
-        /** @var \App\Models\Project $project */
+        /** @var Project $project */
         $project = $media->model;
 
         Gate::authorize('view', $project);

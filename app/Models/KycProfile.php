@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\KycStatus;
+use Database\Factories\KycProfileFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -11,7 +12,7 @@ use Spatie\MediaLibrary\InteractsWithMedia;
 
 class KycProfile extends Model implements HasMedia
 {
-    /** @use HasFactory<\Database\Factories\KycProfileFactory> */
+    /** @use HasFactory<KycProfileFactory> */
     use HasFactory, InteractsWithMedia;
 
     protected $fillable = ['user_id']; // status/timestamps are set only via SubmitKyc / ReviewKyc actions

@@ -2,7 +2,9 @@
 
 use App\Actions\Escrow\RaiseDispute;
 use App\Actions\Escrow\ResolveDispute;
+use App\Models\Dispute;
 use App\Models\Escrow;
+use App\Models\Payment;
 use App\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Database\Seeders\SubscriptionPlansSeeder;
@@ -17,8 +19,8 @@ it('never lets a non-admin resolve a dispute', function () {
     $escrow = Escrow::factory()->held()->create();
     app(RaiseDispute::class)->handle($escrow->investor, $escrow, 'Issue.');
 
-    expect($escrow->investor->can('resolve', \App\Models\Dispute::class))->toBeFalse();
-    expect($escrow->entrepreneur->can('resolve', \App\Models\Dispute::class))->toBeFalse();
+    expect($escrow->investor->can('resolve', Dispute::class))->toBeFalse();
+    expect($escrow->entrepreneur->can('resolve', Dispute::class))->toBeFalse();
 });
 
 it('rejecting a dispute returns the escrow to Held, not to any terminal state', function () {
@@ -49,12 +51,12 @@ it('resolving a dispute in favor of release actually releases the funds', functi
 
 it('resolving a dispute in favor of refund actually calls the provider and refunds', function () {
     $escrow = Escrow::factory()->held()->create();
-    $payment = \App\Models\Payment::factory()->create([
+    $payment = Payment::factory()->create([
         'payer_id' => $escrow->investor_user_id,
         'provider' => 'stripe',
         'provider_reference' => 'pi_dispute_refund',
     ]);
-    $escrow->update(['payment_id' => $payment->id]);
+    $escrow->forceFill(['payment_id' => $payment->id])->save();
 
     $dispute = app(RaiseDispute::class)->handle($escrow->investor, $escrow->fresh(), 'Project never delivered.');
 

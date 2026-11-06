@@ -27,7 +27,7 @@ class StripePaymentProvider implements PaymentProviderInterface
                 // with our idempotency_key column (spec §41): even if
                 // our app retried the HTTP call itself, Stripe dedupes.
                 'metadata' => [
-                    'kongoinvestment_payment_id' => (string) $payment->id,
+                    'KongoInvest_payment_id' => (string) $payment->id,
                     'idempotency_key' => $payment->idempotency_key,
                 ],
             ], [

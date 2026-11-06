@@ -28,13 +28,11 @@ export function EmptyState({
             variants={fadeUp}
             initial="initial"
             animate="animate"
-            className="flex flex-col items-center gap-3 border border-dashed border-slate-300 py-16 text-center"
+            className="flex flex-col items-start gap-3 border border-rule-strong bg-paper p-6 text-left"
         >
-            {Icon && <Icon size={28} className="text-slate-400" />}
-            <p className="text-sm font-medium text-slate-700">{title}</p>
-            {description && (
-                <p className="max-w-sm text-caption">{description}</p>
-            )}
+            {Icon && <Icon size={24} className="text-ink-muted" />}
+            <p className="text-item-title">{title}</p>
+            {description && <p className="text-body">{description}</p>}
             {action}
         </motion.div>
     );

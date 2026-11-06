@@ -4,11 +4,9 @@ import { PublicLayout } from '@/layouts/PublicLayout';
 
 function Block({ title, children }: { title: string; children: ReactNode }) {
     return (
-        <div className="border-t border-slate-300 py-8">
-            <h2 className="mb-3 text-xl font-extrabold text-slate-900">
-                {title}
-            </h2>
-            <div className="max-w-2xl space-y-4 text-lg leading-relaxed text-slate-700">
+        <div className="border-t border-rule py-8">
+            <h2 className="mb-3 text-section-title">{title}</h2>
+            <div className="max-w-2xl space-y-4 text-xl leading-[1.6] text-ink-muted">
                 {children}
             </div>
         </div>
@@ -20,15 +18,15 @@ export default function About() {
         <PublicLayout>
             <SeoHead
                 title="À propos"
-                description="La mission de KongoInvestment : connecter les entrepreneurs de la RDC à des investisseurs qualifiés grâce à un matching transparent et explicable."
+                description="La mission de KongoInvest : connecter les entrepreneurs de la RDC à des investisseurs qualifiés grâce à un matching transparent et explicable."
             />
-            <div className="mx-auto max-w-3xl px-6 py-16">
+            <div className="mx-auto max-w-3xl px-4 py-16 md:px-6">
                 <p className="text-eyebrow">À propos</p>
                 <h1 className="mt-2 mb-6 text-page-title-lg">
-                    Pourquoi KongoInvestment existe.
+                    Pourquoi KongoInvest existe.
                 </h1>
-                <p className="mb-10 max-w-2xl text-lg leading-relaxed text-slate-500">
-                    KongoInvestment est née d'un constat simple : le capital
+                <p className="mb-10 max-w-[620px] text-xl leading-[1.6] text-ink-muted">
+                    KongoInvest est née d'un constat simple : le capital
                     existe, les projets existent, mais les deux mondes ne se
                     rencontrent presque jamais. Cette page explique ce que nous
                     construisons, comment nous le construisons, et pourquoi nous
@@ -124,7 +122,7 @@ export default function About() {
                         d'investissement.
                     </p>
                     <p>
-                        KongoInvestment choisit d'y ancrer structurellement sa
+                        KongoInvest choisit d'y ancrer structurellement sa
                         base d'entrepreneurs : c'est une règle fondamentale de
                         la plateforme, inscrite jusque dans la base de données —
                         un projet entrepreneurial ne peut pas exister hors de la

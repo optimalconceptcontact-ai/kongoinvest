@@ -4,8 +4,9 @@ import { cn } from '@/lib/utils';
 type BadgeVariant = 'filled' | 'outline';
 
 const variantClasses: Record<BadgeVariant, string> = {
-    filled: 'px-2 py-0.5 font-mono text-[11px] uppercase',
-    outline: 'border border-slate-200 px-2 py-0.5 font-mono text-[10px] uppercase text-slate-500',
+    filled: 'inline-flex items-center px-2 py-1 font-mono text-lg tracking-[0.06em] uppercase',
+    outline:
+        'inline-flex items-center border border-rule-strong px-2 py-1 font-mono text-lg tracking-[0.06em] uppercase text-ink-muted',
 };
 
 type BadgeProps = HTMLAttributes<HTMLSpanElement> & {
@@ -19,5 +20,7 @@ type BadgeProps = HTMLAttributes<HTMLSpanElement> & {
  * neutral variant) has a fixed color.
  */
 export function Badge({ variant = 'filled', className, ...props }: BadgeProps) {
-    return <span className={cn(variantClasses[variant], className)} {...props} />;
+    return (
+        <span className={cn(variantClasses[variant], className)} {...props} />
+    );
 }

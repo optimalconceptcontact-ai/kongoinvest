@@ -1,5 +1,7 @@
 <?php
 
+use App\Models\Connection;
+use App\Models\DealRoom;
 use App\Models\Project;
 use App\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
@@ -17,10 +19,10 @@ function acceptedDealRoom(): array
     $project = Project::factory()->for($entrepreneur)->published()->withTaxonomy()->create();
 
     test()->actingAs($investor)->post("/investor/projects/{$project->id}/connections");
-    $connection = \App\Models\Connection::firstOrFail();
+    $connection = Connection::firstOrFail();
     test()->actingAs($entrepreneur)->post("/entrepreneur/connections/{$connection->id}/accept");
 
-    $dealRoom = \App\Models\DealRoom::where('connection_id', $connection->id)->firstOrFail();
+    $dealRoom = DealRoom::where('connection_id', $connection->id)->firstOrFail();
 
     return [$dealRoom, $entrepreneur, $investor];
 }
@@ -58,9 +60,9 @@ it('never lets a rejected connection produce a deal room at all', function () {
     $project = Project::factory()->for($entrepreneur)->published()->withTaxonomy()->create();
 
     $this->actingAs($investor)->post("/investor/projects/{$project->id}/connections");
-    $connection = \App\Models\Connection::firstOrFail();
+    $connection = Connection::firstOrFail();
 
     $this->actingAs($entrepreneur)->post("/entrepreneur/connections/{$connection->id}/reject");
 
-    expect(\App\Models\DealRoom::count())->toBe(0);
+    expect(DealRoom::count())->toBe(0);
 });

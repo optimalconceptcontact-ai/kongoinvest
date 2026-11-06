@@ -5,16 +5,20 @@ namespace Database\Factories;
 use App\Enums\DrcProvince;
 use App\Enums\ProjectStatus;
 use App\Enums\ProjectVisibility;
+use App\Models\Project;
+use App\Models\Sector;
+use App\Models\Stage;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class ProjectFactory extends Factory
 {
-    protected $model = \App\Models\Project::class;
+    protected $model = Project::class;
 
     public function definition(): array
     {
         return [
-            'user_id' => \App\Models\User::factory()->entrepreneur(),
+            'user_id' => User::factory()->entrepreneur(),
             'title' => fake()->catchPhrase(),
             'description' => fake()->paragraph(),
             'provinces' => [fake()->randomElement(DrcProvince::cases())->value],
@@ -46,9 +50,9 @@ class ProjectFactory extends Factory
     /** Attaches one random active sector + stage after creation, so a factory project is always matchable/publishable out of the box. */
     public function withTaxonomy(): static
     {
-        return $this->afterCreating(function (\App\Models\Project $project) {
-            $sector = \App\Models\Sector::inRandomOrder()->first() ?? \App\Models\Sector::factory()->create();
-            $stage = \App\Models\Stage::inRandomOrder()->first() ?? \App\Models\Stage::factory()->create();
+        return $this->afterCreating(function (Project $project) {
+            $sector = Sector::inRandomOrder()->first() ?? Sector::factory()->create();
+            $stage = Stage::inRandomOrder()->first() ?? Stage::factory()->create();
             $project->sectors()->syncWithoutDetaching([$sector->id]);
             $project->stages()->syncWithoutDetaching([$stage->id]);
         });

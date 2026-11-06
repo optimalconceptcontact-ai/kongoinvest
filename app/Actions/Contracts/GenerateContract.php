@@ -56,6 +56,9 @@ class GenerateContract
      * document created by an AI or algorithm alone — the disclaimer
      * embedded here is not optional and is also shown verbatim in the
      * React contract view.
+     *
+     * @param  array<string, mixed>  $terms
+     * @return array<string, mixed>
      */
     private function buildContent(DealRoom $dealRoom, array $terms): array
     {

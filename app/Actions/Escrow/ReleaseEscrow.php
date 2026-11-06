@@ -15,7 +15,7 @@ class ReleaseEscrow
     public function __construct(private AuditLogger $audit) {}
 
     /**
-     * Spec §147 is explicit: KongoInvestment is not itself a financial
+     * Spec §147 is explicit: KongoInvest is not itself a financial
      * institution, and must respect each payment provider's own rules
      * for moving money to a beneficiary. Our PaymentProviderInterface
      * (spec §96) deliberately has no "payout" method — it only defines
@@ -23,7 +23,7 @@ class ReleaseEscrow
      * Stripe Connect–funded escrow, the funds already moved toward the
      * entrepreneur's connected account at funding time via
      * `transfer_data.destination` (see StripeConnectProvider); "release"
-     * here is KongoInvestment's own authorization record confirming the investor
+     * here is KongoInvest's own authorization record confirming the investor
      * is satisfied, not a second money-movement API call. For every
      * other rail (plain Stripe, PayPal, Mobile Money), actually paying
      * the entrepreneur is a real operational step — a bank transfer, a

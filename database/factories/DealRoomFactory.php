@@ -2,18 +2,22 @@
 
 namespace Database\Factories;
 
+use App\Models\Connection;
+use App\Models\DealRoom;
+use App\Models\Project;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class DealRoomFactory extends Factory
 {
-    protected $model = \App\Models\DealRoom::class;
+    protected $model = DealRoom::class;
 
     public function definition(): array
     {
-        $entrepreneur = \App\Models\User::factory()->create();
-        $investor = \App\Models\User::factory()->create();
-        $project = \App\Models\Project::factory()->for($entrepreneur)->published()->withTaxonomy()->create();
-        $connection = \App\Models\Connection::factory()->accepted()->create([
+        $entrepreneur = User::factory()->create();
+        $investor = User::factory()->create();
+        $project = Project::factory()->for($entrepreneur)->published()->withTaxonomy()->create();
+        $connection = Connection::factory()->accepted()->create([
             'project_id' => $project->id,
         ]);
 

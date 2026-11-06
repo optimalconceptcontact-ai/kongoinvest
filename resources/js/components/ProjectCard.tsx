@@ -54,9 +54,9 @@ export function ProjectCard({ project }: { project: ProjectCardData }) {
         >
             <Link
                 href={`/projects/${project.slug}`}
-                className="group flex h-full flex-col border border-slate-300 bg-white transition hover:border-slate-900"
+                className="group flex h-full flex-col border border-rule-strong bg-paper transition-colors hover:border-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-action"
             >
-                <div className="aspect-[16/10] w-full overflow-hidden bg-slate-100">
+                <div className="aspect-[16/10] w-full overflow-hidden border-b border-rule bg-surface-2">
                     {project.coverImageUrl ? (
                         <img
                             src={project.coverImageUrl}
@@ -64,29 +64,29 @@ export function ProjectCard({ project }: { project: ProjectCardData }) {
                             className="h-full w-full object-cover"
                         />
                     ) : (
-                        <div className="flex h-full w-full items-center justify-center font-mono text-xs text-slate-400">
+                        <div className="flex h-full w-full items-center justify-center font-mono text-lg text-ink-muted">
                             Pas de visuel
                         </div>
                     )}
                 </div>
                 <div className="flex flex-1 flex-col p-5">
                     {project.sectors[0] && (
-                        <div className="mb-2 font-mono text-[11px] tracking-wide text-orange-600 uppercase">
+                        <div className="mb-2 font-mono text-sm tracking-[0.1em] text-ink-muted uppercase">
                             {project.sectors[0].name}
                         </div>
                     )}
-                    <h3 className="mb-2 text-item-title-lg group-hover:text-blue-700">
+                    <h3 className="mb-2 text-item-title group-hover:underline">
                         {project.title}
                     </h3>
-                    <p className="mb-4 line-clamp-2 text-body">
+                    <p className="mb-4 line-clamp-2 text-lg leading-6 text-ink-muted">
                         {project.description}
                     </p>
 
                     {target && (
                         <div className="mb-3">
-                            <div className="h-1.5 w-full bg-slate-100">
+                            <div className="h-1 w-full bg-surface-2">
                                 <motion.div
-                                    className="h-full origin-left bg-blue-500"
+                                    className="h-full origin-left bg-action"
                                     style={{ width: `${progress}%` }}
                                     initial={{ scaleX: 0 }}
                                     whileInView={{ scaleX: 1 }}
@@ -97,14 +97,14 @@ export function ProjectCard({ project }: { project: ProjectCardData }) {
                                     }}
                                 />
                             </div>
-                            <div className="mt-1 flex justify-between font-mono text-[11px] text-slate-500">
+                            <div className="mt-1.5 flex justify-between font-mono text-base text-ink-muted">
                                 <span>{raised ?? '0'} levés</span>
                                 <span>Objectif {target}</span>
                             </div>
                         </div>
                     )}
 
-                    <div className="mt-auto flex items-center gap-1 border-t border-slate-100 pt-3 text-caption">
+                    <div className="mt-auto flex items-center gap-1 border-t border-rule pt-3 text-caption">
                         <RiMapPinLine size={14} />
                         {[
                             project.cities.join(' / '),

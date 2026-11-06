@@ -2,11 +2,12 @@
 
 namespace Database\Factories;
 
+use App\Models\Stage;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class StageFactory extends Factory
 {
-    protected $model = \App\Models\Stage::class;
+    protected $model = Stage::class;
 
     public function definition(): array
     {

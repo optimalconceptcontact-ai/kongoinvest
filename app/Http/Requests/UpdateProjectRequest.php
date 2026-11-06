@@ -5,6 +5,8 @@ namespace App\Http\Requests;
 use App\Enums\DrcProvince;
 use App\Enums\FundingType;
 use App\Models\Project;
+use App\Models\Stage;
+use App\Rules\WithinFundingLimits;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -52,7 +54,12 @@ class UpdateProjectRequest extends FormRequest
             'impact' => ['nullable', 'string', 'max:3000'],
             'risks' => ['nullable', 'string', 'max:3000'],
 
-            'funding_target_minor' => ['nullable', 'integer', 'min:0'],
+            'funding_target_minor' => [
+                'nullable',
+                'integer',
+                'min:0',
+                new WithinFundingLimits($this->input('funding_currency', 'USD')),
+            ],
             'funding_min_minor' => ['nullable', 'integer', 'min:0'],
             'funding_max_minor' => ['nullable', 'integer', 'min:0', 'gte:funding_min_minor'],
             'funding_currency' => ['required', 'string', 'size:3'],
@@ -87,7 +94,7 @@ class UpdateProjectRequest extends FormRequest
     {
         return function (string $attribute, $value, \Closure $fail) {
             $stageId = $this->input('stages.0');
-            $isIdea = $stageId && \App\Models\Stage::where('id', $stageId)->value('key') === 'idea';
+            $isIdea = $stageId && Stage::where('id', $stageId)->value('key') === 'idea';
             $max = $isIdea ? 3 : 1;
 
             if (count($value) > $max) {

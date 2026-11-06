@@ -2,6 +2,9 @@
 
 use App\Actions\Contracts\GenerateContract;
 use App\Actions\Contracts\RespondToContract;
+use App\Models\Contract;
+use App\Models\DealRoom;
+use App\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Database\Seeders\SubscriptionPlansSeeder;
 
@@ -11,7 +14,7 @@ beforeEach(function () {
 });
 
 it('generates a contract with an immutable first version and the required legal disclaimer', function () {
-    $dealRoom = \App\Models\DealRoom::factory()->create();
+    $dealRoom = DealRoom::factory()->create();
 
     $contract = app(GenerateContract::class)->handle($dealRoom->entrepreneur, $dealRoom, [
         'investment_type' => 'equity',
@@ -27,7 +30,7 @@ it('generates a contract with an immutable first version and the required legal 
 });
 
 it('only reaches Accepted once BOTH the entrepreneur and the investor have accepted', function () {
-    $dealRoom = \App\Models\DealRoom::factory()->create();
+    $dealRoom = DealRoom::factory()->create();
     $contract = app(GenerateContract::class)->handle($dealRoom->entrepreneur, $dealRoom, [
         'investment_type' => 'equity', 'amount_minor' => 10_000_00, 'currency' => 'USD',
     ]);
@@ -42,14 +45,14 @@ it('only reaches Accepted once BOTH the entrepreneur and the investor have accep
 });
 
 it('never lets someone outside the deal room generate, accept, or reject its contract', function () {
-    $dealRoom = \App\Models\DealRoom::factory()->create();
-    $outsider = \App\Models\User::factory()->investor()->create();
+    $dealRoom = DealRoom::factory()->create();
+    $outsider = User::factory()->investor()->create();
 
     $contract = app(GenerateContract::class)->handle($dealRoom->entrepreneur, $dealRoom, [
         'investment_type' => 'equity', 'amount_minor' => 10_000_00, 'currency' => 'USD',
     ]);
 
-    expect($outsider->can('generate', [\App\Models\Contract::class, $dealRoom]))->toBeFalse();
+    expect($outsider->can('generate', [Contract::class, $dealRoom]))->toBeFalse();
     expect($outsider->can('accept', $contract))->toBeFalse();
     expect($outsider->can('reject', $contract))->toBeFalse();
 });

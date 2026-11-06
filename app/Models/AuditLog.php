@@ -10,7 +10,7 @@ class AuditLog extends Model
 {
     public $timestamps = false; // only created_at, set explicitly — no updated_at, rows are never modified
 
-    protected $fillable = ['actor_id', 'action', 'metadata', 'ip_address', 'user_agent', 'created_at'];
+    protected $fillable = ['actor_id', 'action', 'subject_type', 'subject_id', 'metadata', 'ip_address', 'user_agent', 'created_at'];
 
     protected function casts(): array
     {

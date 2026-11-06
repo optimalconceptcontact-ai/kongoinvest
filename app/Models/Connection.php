@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\ConnectionStatus;
+use Database\Factories\ConnectionFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -10,7 +11,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Connection extends Model
 {
-    /** @use HasFactory<\Database\Factories\ConnectionFactory> */
+    /** @use HasFactory<ConnectionFactory> */
     use HasFactory;
 
     protected $fillable = ['message'];

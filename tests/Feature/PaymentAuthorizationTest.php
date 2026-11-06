@@ -1,7 +1,9 @@
 <?php
 
 use App\Models\Payment;
+use App\Models\SubscriptionPlan;
 use App\Models\User;
+use App\Services\Payments\Providers\StripePaymentProvider;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Database\Seeders\SubscriptionPlansSeeder;
 
@@ -24,13 +26,13 @@ it('fails cleanly with a clear exception when a provider has no API key configur
 
     $payment = Payment::factory()->create(['provider' => 'stripe']);
 
-    expect(fn () => (new \App\Services\Payments\Providers\StripePaymentProvider)->createPayment($payment))
-        ->toThrow(\RuntimeException::class, 'Stripe is not configured');
+    expect(fn () => (new StripePaymentProvider)->createPayment($payment))
+        ->toThrow(RuntimeException::class, 'Stripe is not configured');
 });
 
 it('never lets checkout be reached for the Free plan', function () {
     $user = User::factory()->entrepreneur()->create();
-    $free = \App\Models\SubscriptionPlan::where('key', 'free')->firstOrFail();
+    $free = SubscriptionPlan::where('key', 'free')->firstOrFail();
 
     $this->actingAs($user)
         ->get("/settings/subscription/{$free->id}/checkout")

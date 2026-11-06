@@ -8,6 +8,7 @@ use App\Models\Payment;
 use App\Models\PaymentTransaction;
 use App\Services\AuditLogger;
 use App\Services\Payments\WebhookEvent;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -50,7 +51,7 @@ class ProcessWebhookEvent
                     'payload' => $event->rawPayload,
                     'processed_at' => now(),
                 ]);
-            } catch (\Illuminate\Database\UniqueConstraintViolationException) {
+            } catch (UniqueConstraintViolationException) {
                 Log::info('Duplicate webhook event ignored', ['payment_id' => $payment->id, 'event_id' => $event->providerEventId]);
 
                 return $payment;

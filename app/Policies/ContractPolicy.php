@@ -3,6 +3,7 @@
 namespace App\Policies;
 
 use App\Models\Contract;
+use App\Models\DealRoom;
 use App\Models\User;
 
 class ContractPolicy
@@ -17,7 +18,7 @@ class ContractPolicy
      * it from what was discussed, so the entrepreneur reviews/accepts or
      * rejects, but never initiates it themselves.
      */
-    public function generate(User $user, \App\Models\DealRoom $dealRoom): bool
+    public function generate(User $user, DealRoom $dealRoom): bool
     {
         return $user->id === $dealRoom->investor_user_id && $user->can('contracts.view');
     }

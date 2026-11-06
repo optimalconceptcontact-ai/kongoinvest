@@ -3,7 +3,9 @@
 namespace App\Data;
 
 use App\Models\DealRoom;
+use App\Models\Escrow;
 use App\Models\User;
+use Illuminate\Support\Facades\URL;
 use Spatie\LaravelData\Data;
 
 class DealRoomData extends Data
@@ -23,6 +25,7 @@ class DealRoomData extends Data
         public array $documents,
         /** @var array<int, array> */
         public array $contracts,
+        public ?int $contractWorkspaceId,
         /** @var array<string, mixed>|null */
         public ?array $escrow,
     ) {}
@@ -58,7 +61,7 @@ class DealRoomData extends Data
                     'ownerName' => $d->owner->name,
                     'requestedByUserId' => $d->requested_by_user_id,
                     'downloadUrl' => $d->getFirstMedia('deal-documents')
-                        ? \Illuminate\Support\Facades\URL::temporarySignedRoute('deal-rooms.documents.download', now()->addMinutes(10), ['media' => $d->getFirstMedia('deal-documents')->id])
+                        ? URL::temporarySignedRoute('deal-rooms.documents.download', now()->addMinutes(10), ['media' => $d->getFirstMedia('deal-documents')->id])
                         : null,
                 ])->values()->all(),
             contracts: $dealRoom->contracts()->latest()->get()->map(fn ($c) => [
@@ -72,6 +75,9 @@ class DealRoomData extends Data
                 'investorAcceptedAt' => $c->investor_accepted_at?->toIso8601String(),
                 'latestVersionContent' => $c->latestVersion()?->content,
             ])->all(),
+            // Une salle = une opération (prompt §2) : le lien direct
+            // vers l'espace contractuel existant, null sinon.
+            contractWorkspaceId: $dealRoom->contractWorkspace?->id,
             escrow: self::escrowPayload($dealRoom),
         );
     }
@@ -81,7 +87,7 @@ class DealRoomData extends Data
         // hasOneThrough(Escrow, Contract) — a deal room may have generated
         // several Contract rows over time (one per version/negotiation
         // round), so this always reflects the most recently created escrow.
-        $escrow = \App\Models\Escrow::where('deal_room_id', $dealRoom->id)->latest()->first();
+        $escrow = Escrow::where('deal_room_id', $dealRoom->id)->latest()->first();
 
         if (! $escrow) {
             return null;

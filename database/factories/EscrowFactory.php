@@ -3,16 +3,19 @@
 namespace Database\Factories;
 
 use App\Enums\EscrowStatus;
+use App\Models\Contract;
+use App\Models\DealRoom;
+use App\Models\Escrow;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class EscrowFactory extends Factory
 {
-    protected $model = \App\Models\Escrow::class;
+    protected $model = Escrow::class;
 
     public function definition(): array
     {
-        $dealRoom = \App\Models\DealRoom::factory()->create();
-        $contract = \App\Models\Contract::factory()->create([
+        $dealRoom = DealRoom::factory()->create();
+        $contract = Contract::factory()->create([
             'deal_room_id' => $dealRoom->id,
             'status' => 'accepted',
         ]);

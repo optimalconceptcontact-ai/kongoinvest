@@ -1,8 +1,9 @@
 import { router } from '@inertiajs/react';
-import type { FormEvent} from 'react';
+import type { FormEvent } from 'react';
 import { useState } from 'react';
+import { RiSearchLine } from '@remixicon/react';
 import { SeoHead } from '@/components/SeoHead';
-import { Input } from '@/components/Ui/Input';
+import { Input } from '@/components/ui/input';
 import { PublicLayout } from '@/layouts/PublicLayout';
 
 type FaqItem = {
@@ -55,16 +56,16 @@ export default function Faq({
         <PublicLayout>
             <SeoHead
                 title="FAQ"
-                description="Questions fréquentes sur KongoInvestment : entrepreneurs, investisseurs, matching, abonnements, paiements, Escrow, KYC, contrats et sécurité."
+                description="Questions fréquentes sur KongoInvest : entrepreneurs, investisseurs, matching, abonnements, paiements, Escrow, KYC, contrats et sécurité."
             />
-            <div className="mx-auto max-w-3xl px-6 py-20">
+            <div className="mx-auto max-w-3xl px-4 py-16 md:px-6">
                 <p className="text-eyebrow">FAQ</p>
                 <h1 className="mt-2 mb-4 text-page-title-lg">
                     Questions fréquentes.
                 </h1>
-                <p className="mb-8 max-w-2xl text-lg leading-relaxed text-slate-500">
+                <p className="mb-8 max-w-2xl text-xl leading-7 text-ink-muted">
                     Tout ce qu'il faut savoir sur le fonctionnement de
-                    KongoInvestment : comptes et profils, publication de
+                    KongoInvest : comptes et profils, publication de
                     projets, moteur de matching, abonnements, paiements,
                     séquestre (Escrow), KYC, contrats et sécurité. Utilisez la
                     recherche pour retrouver une question précise, ou filtrez
@@ -73,6 +74,7 @@ export default function Faq({
 
                 <form onSubmit={submit} className="mb-6">
                     <Input
+                        icon={<RiSearchLine size={18} />}
                         value={q}
                         onChange={(e) => setQ(e.target.value)}
                         placeholder="Rechercher dans la FAQ..."
@@ -83,7 +85,7 @@ export default function Faq({
                 <div className="mb-10 flex flex-wrap gap-2">
                     <button
                         onClick={() => setActiveCategory(null)}
-                        className={`border px-3 py-1.5 text-base font-semibold ${!activeCategory ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-400 text-slate-700'}`}
+                        className={`min-h-11 border px-3 py-1.5 text-btn ${!activeCategory ? 'border-ink bg-ink text-paper' : 'border-rule-strong text-ink hover:border-ink'}`}
                     >
                         Tout
                     </button>
@@ -91,7 +93,7 @@ export default function Faq({
                         <button
                             key={c}
                             onClick={() => setActiveCategory(c)}
-                            className={`border px-3 py-1.5 text-base font-semibold ${activeCategory === c ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-400 text-slate-700'}`}
+                            className={`min-h-11 border px-3 py-1.5 text-btn ${activeCategory === c ? 'border-ink bg-ink text-paper' : 'border-rule-strong text-ink hover:border-ink'}`}
                         >
                             {categoryLabels[c] ?? c}
                         </button>
@@ -99,8 +101,8 @@ export default function Faq({
                 </div>
 
                 {visible.length === 0 ? (
-                    <div className="border border-dashed border-slate-400 py-16 text-center text-body">
-                        <p className="mb-2 font-semibold text-slate-700">
+                    <div className="border border-rule-strong bg-paper p-6 text-left text-body">
+                        <p className="mb-2 font-semibold text-ink">
                             Aucun résultat pour cette recherche.
                         </p>
                         <p className="mx-auto max-w-sm text-caption">
@@ -112,23 +114,28 @@ export default function Faq({
                 ) : (
                     Object.entries(grouped).map(([category, items]) => (
                         <div key={category} className="mb-10">
-                            <h2 className="mb-3 font-mono text-lg tracking-widest text-slate-400 uppercase">
+                            <h2 className="mb-3 text-section-label">
                                 {categoryLabels[category] ?? category}
                             </h2>
                             {items.map((faq) => (
                                 <details
                                     key={faq.id}
-                                    className="border-b border-slate-300"
+                                    className="border-b border-rule"
                                 >
-                                    <summary className="flex cursor-pointer list-none items-center justify-between py-4 text-btn text-slate-900">
-                                        {faq.question}
-                                        <span className="font-mono text-orange-500">
+                                    
+                                    <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between py-5 text-item-title select-none">
+                                        <span className="pr-4">
+                                            {faq.question}
+                                        </span>
+                                        <span className="font-mono text-2xl font-semibold text-ink transition-transform duration-200 group-open:rotate-45">
                                             +
                                         </span>
                                     </summary>
                                     <p className="max-w-xl pb-4 text-body">
                                         {faq.answer}
                                     </p>
+
+                                    
                                 </details>
                             ))}
                         </div>

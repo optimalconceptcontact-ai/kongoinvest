@@ -1,12 +1,19 @@
 import { useForm } from '@inertiajs/react';
-import { FormEvent } from 'react';
+import { RiLockPasswordLine } from '@remixicon/react';
+import type { FormEvent } from 'react';
 import { Modal } from '@/components/Modal';
-import { Button } from '@/components/Ui/Button';
-import { FieldError } from '@/components/Ui/FieldError';
-import { Input } from '@/components/Ui/Input';
-import { Label } from '@/components/Ui/Label';
+import { Button } from '@/components/ui/button';
+import { Field } from '@/components/ui/Field';
+import { FieldError } from '@/components/ui/FieldError';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/Label';
 
-type Props = { open: boolean; onClose: () => void; token?: string; email?: string };
+type Props = {
+    open: boolean;
+    onClose: () => void;
+    token?: string;
+    email?: string;
+};
 
 export function ResetPasswordModal({ open, onClose, token, email }: Props) {
     const { data, setData, post, processing, errors } = useForm({
@@ -22,27 +29,39 @@ export function ResetPasswordModal({ open, onClose, token, email }: Props) {
     }
 
     return (
-        <Modal open={open} onClose={onClose} title="Réinitialiser le mot de passe">
+        <Modal
+            open={open}
+            onClose={onClose}
+            title="Réinitialiser le mot de passe"
+        >
             <form onSubmit={submit} className="flex flex-col gap-4">
-                <div>
+                <Field error={!!errors.password}>
                     <Label>Nouveau mot de passe</Label>
                     <Input
                         type="password"
+                        icon={<RiLockPasswordLine size={18} />}
+                        autoComplete="new-password"
                         autoFocus
+                        required
                         value={data.password}
                         onChange={(e) => setData('password', e.target.value)}
                         error={!!errors.password}
                     />
                     <FieldError>{errors.password}</FieldError>
-                </div>
-                <div>
+                </Field>
+                <Field>
                     <Label>Confirmer</Label>
                     <Input
                         type="password"
+                        icon={<RiLockPasswordLine size={18} />}
+                        autoComplete="new-password"
+                        required
                         value={data.password_confirmation}
-                        onChange={(e) => setData('password_confirmation', e.target.value)}
+                        onChange={(e) =>
+                            setData('password_confirmation', e.target.value)
+                        }
                     />
-                </div>
+                </Field>
                 <Button type="submit" disabled={processing} className="py-3">
                     {processing ? 'Enregistrement...' : 'Réinitialiser'}
                 </Button>

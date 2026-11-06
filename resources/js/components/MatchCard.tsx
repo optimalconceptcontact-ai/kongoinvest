@@ -27,10 +27,16 @@ const sourceLabels: Record<string, string> = {
     fallback: 'Estimation',
 };
 
-function scoreColor(score: number) {
-    if (score >= 75) return 'text-blue-600 border-blue-200 bg-blue-50';
-    if (score >= 50) return 'text-orange-600 border-orange-200 bg-orange-50';
-    return 'text-slate-500 border-slate-200 bg-slate-50';
+function tierForScore(score: number) {
+    if (score >= 75) {
+        return 'Forte';
+    }
+
+    if (score >= 50) {
+        return 'Moyenne';
+    }
+
+    return 'Faible';
 }
 
 export function MatchCard({
@@ -46,42 +52,108 @@ export function MatchCard({
     href?: string;
     actions?: ReactNode;
 }) {
+    const criteria = [...match.breakdown].sort(
+        (a, b) => b.weightedContribution - a.weightedContribution,
+    );
+    const topCriteria = criteria.slice(0, 3);
+    const otherCount = criteria.length - topCriteria.length;
+    const hasOutOfRange = criteria.some((item) => item.score < 50);
+
     return (
-        <div className="border border-slate-200 bg-white p-5">
-            <div className="mb-4 flex items-start justify-between gap-4">
-                <div>
-                    {href ? (
-                        <Link href={href} className="text-item-title hover:text-blue-700">
-                            {title}
-                        </Link>
-                    ) : (
-                        <div className="text-item-title">{title}</div>
-                    )}
-                    <div className="text-caption">{subtitle}</div>
+        <article className="flex flex-col gap-3.5 border border-rule-strong bg-paper p-[18px]">
+            <div className="flex items-start justify-between gap-4">
+                <div className="min-w-0">
+                    <h3 className="text-item-title">{title}</h3>
+                    <p className="mt-1 text-lg leading-5 text-ink-muted">
+                        {subtitle}
+                    </p>
                 </div>
-                <div className={`flex h-14 w-14 flex-shrink-0 items-center justify-center border font-mono text-lg font-bold ${scoreColor(match.score)}`}>
-                    {match.score}
-                </div>
-            </div>
-
-            <div className="flex flex-col gap-2">
-                {match.breakdown.map((item) => (
-                    <div key={item.key} className="flex items-center gap-3">
-                        <div className="w-28 flex-shrink-0 text-xs text-slate-700">{item.label}</div>
-                        <div className="h-1.5 flex-1 bg-slate-100">
-                            <div
-                                className={`h-full ${item.source === 'ai' ? 'bg-orange-500' : item.source === 'fallback' ? 'bg-slate-300' : 'bg-blue-500'}`}
-                                style={{ width: `${item.score}%` }}
-                            />
-                        </div>
-                        <div className="w-16 flex-shrink-0 text-right font-mono text-[11px] text-slate-400">
-                            {item.score} · {sourceLabels[item.source]}
-                        </div>
+                <div className="flex-shrink-0 text-right">
+                    <div className="font-mono text-7xl font-bold tracking-[-0.03em] text-ink tabular-nums">
+                        {match.score}
                     </div>
-                ))}
+                    <div className="my-1.5 ml-auto h-[3px] w-7 bg-signal" />
+                    <span className="block font-mono text-lg font-medium tracking-[0.06em] text-ink-muted uppercase">
+                        {tierForScore(match.score)}
+                    </span>
+                </div>
             </div>
 
-            {actions && <div className="mt-4 flex gap-2 border-t border-slate-100 pt-4">{actions}</div>}
-        </div>
+            <table className="w-full border-collapse">
+                <caption className="sr-only">
+                    Principaux critères de correspondance
+                </caption>
+                <thead>
+                    <tr>
+                        <th
+                            scope="col"
+                            className="border-b border-rule-strong pb-1.5 text-left font-mono text-lg font-medium tracking-[0.08em] text-ink-muted uppercase"
+                        >
+                            Critère
+                        </th>
+                        <th
+                            scope="col"
+                            className="border-b border-rule-strong pb-1.5 text-right font-mono text-lg font-medium tracking-[0.08em] text-ink-muted uppercase"
+                        >
+                            Note
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {topCriteria.map((item) => (
+                        <tr
+                            key={item.key}
+                            className="border-b border-rule last:border-b-0"
+                        >
+                            <th
+                                scope="row"
+                                className="py-2 text-left align-top font-normal"
+                            >
+                                <span className="block font-mono text-[16px] leading-5 text-ink">
+                                    {item.label}
+                                </span>
+                                <span className="mt-0.5 block text-lg leading-4 text-ink-muted">
+                                    {sourceLabels[item.source]}
+                                </span>
+                            </th>
+                            <td className="py-2 text-right align-top font-mono text-[16px] leading-5 text-ink tabular-nums">
+                                {item.score}
+                            </td>
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
+
+            <div className="mt-auto flex flex-wrap items-center justify-between gap-3 border-t border-rule pt-3">
+                {hasOutOfRange ? (
+                    <span className="inline-flex items-center gap-1.5 font-mono text-lg leading-5 text-danger">
+                        <span className="h-[7px] w-[7px] flex-shrink-0 bg-danger" />
+                        1 critère hors fourchette
+                    </span>
+                ) : otherCount > 0 ? (
+                    <span className="font-mono text-lg leading-5 text-ink-muted">
+                        + {otherCount} autres critères
+                    </span>
+                ) : (
+                    <span className="font-mono text-lg leading-5 text-ink-muted">
+                        Score sur 100
+                    </span>
+                )}
+                {href && (
+                    <Link
+                        href={href}
+                        className="inline-flex min-h-11 items-center font-mono text-lg font-medium text-action underline decoration-1 underline-offset-4 hover:decoration-2"
+                    >
+                        Voir la fiche
+                    </Link>
+                )}
+            </div>
+
+            {actions && (
+                <div className="flex flex-wrap gap-2 border-t border-rule pt-3">
+                    {actions}
+                </div>
+            )}
+        </article>
     );
 }

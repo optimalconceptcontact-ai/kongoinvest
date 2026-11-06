@@ -2,13 +2,14 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Subscription;
 use Illuminate\Foundation\Http\FormRequest;
 
 class SwitchSubscriptionPlanRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()?->can('manage', \App\Models\Subscription::class) ?? false;
+        return $this->user()?->can('manage', Subscription::class) ?? false;
     }
 
     public function rules(): array

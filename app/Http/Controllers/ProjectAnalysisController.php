@@ -2,11 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\AiRequestStatus;
 use App\Models\AiAnalysis;
 use App\Models\Project;
 use App\Services\Ai\ProjectAnalysisService;
-use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
@@ -25,7 +26,7 @@ class ProjectAnalysisController extends Controller
         $this->authorize('create', AiAnalysis::class);
 
         try {
-            $service->analyze($request->user(), $project);
+            $analysis = $service->analyze($request->user(), $project);
         } catch (ValidationException $e) {
             return back()->withErrors($e->errors());
         } catch (\Throwable $e) {
@@ -34,6 +35,12 @@ class ProjectAnalysisController extends Controller
             Log::error('Project analysis request failed unexpectedly', ['project_id' => $project->id, 'message' => $e->getMessage()]);
 
             return back()->with('error', "L'analyse n'a pas pu être générée. Réessayez dans quelques instants.");
+        }
+
+        // The service persists a Failed row instead of throwing when the
+        // provider is unavailable/misconfigured — don't flash success over it.
+        if ($analysis->status === AiRequestStatus::Failed) {
+            return back()->with('error', $analysis->failure_reason ?? "L'analyse IA n'a pas pu être générée.");
         }
 
         return back()->with('success', 'Analyse IA générée.');

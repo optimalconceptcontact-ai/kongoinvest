@@ -16,12 +16,11 @@
         "cashier-stripe-development",
         "fortify-development",
         "laravel-best-practices",
+        "testing-best-practices",
         "octane-development",
+        "socialite-development",
         "wayfinder-development",
-        "pest-testing",
         "inertia-react-development",
-        "tailwindcss-development",
-        "echo-react-development",
-        "echo-development"
+        "tailwindcss-development"
     ]
 }

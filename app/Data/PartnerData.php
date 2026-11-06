@@ -2,9 +2,7 @@
 
 namespace App\Data;
 
-use App\Models\Faq;
 use App\Models\Partner;
-use App\Models\Testimonial;
 use Spatie\LaravelData\Data;
 
 class PartnerData extends Data

@@ -27,7 +27,7 @@ it('frees the project slot once the existing project is archived', function () {
     $entrepreneur = User::factory()->entrepreneur()->create();
     $project = Project::factory()->for($entrepreneur)->create();
 
-    $this->actingAs($entrepreneur)->post("/entrepreneur/projects/{$project->id}/archive");
+    $this->actingAs($entrepreneur)->post("/entrepreneur/projects/{$project->slug}/archive");
 
     $this->actingAs($entrepreneur)
         ->get('/entrepreneur/projects/create')

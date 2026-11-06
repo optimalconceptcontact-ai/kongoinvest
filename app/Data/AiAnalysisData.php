@@ -3,6 +3,7 @@
 namespace App\Data;
 
 use App\Models\AiAnalysis;
+use App\Services\Ai\ProjectAnalysisService;
 use Spatie\LaravelData\Data;
 
 /**
@@ -70,7 +71,7 @@ class AiAnalysisData extends Data
             dueDiligenceQuestions: $c['dueDiligenceQuestions'] ?? [],
             fundingAssessment: $c['fundingAssessment'] ?? null,
             recommendation: $c['recommendation'] ?? null,
-            disclaimer: $c['disclaimer'] ?? ($analysis->status->value === 'completed' ? \App\Services\Ai\ProjectAnalysisService::DISCLAIMER : null),
+            disclaimer: $c['disclaimer'] ?? ($analysis->status->value === 'completed' ? ProjectAnalysisService::DISCLAIMER : null),
             failureReason: $analysis->failure_reason,
             createdAt: $analysis->created_at->toIso8601String(),
         );

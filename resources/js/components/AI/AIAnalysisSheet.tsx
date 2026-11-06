@@ -7,7 +7,7 @@ import {
 } from '@remixicon/react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useState } from 'react';
-import { Button } from '@/components/Ui/Button';
+import { Button } from '@/components/ui/button';
 import { fadeIn, slideInRight } from '@/lib/animations';
 
 export type AiAnalysisData = {
@@ -47,15 +47,13 @@ const subScoreLabels: Record<string, string> = {
 
 function Section({ title, body }: { title: string; body: string | null }) {
     if (!body) {
-return null;
-}
+        return null;
+    }
 
     return (
-        <div className="border-b border-slate-100 py-4">
-            <h4 className="mb-1.5 text-xs font-bold tracking-wide text-slate-900 uppercase">
-                {title}
-            </h4>
-            <p className="text-sm leading-relaxed text-slate-700">{body}</p>
+        <div className="border-b border-rule py-4">
+            <h4 className="mb-1.5 text-section-label">{title}</h4>
+            <p className="text-xl leading-6 text-ink">{body}</p>
         </div>
     );
 }
@@ -70,25 +68,21 @@ function ListSection({
     tone?: 'default' | 'warning';
 }) {
     if (items.length === 0) {
-return null;
-}
+        return null;
+    }
 
     return (
-        <div className="border-b border-slate-100 py-4">
-            <h4 className="mb-2 text-xs font-bold tracking-wide text-slate-900 uppercase">
-                {title}
-            </h4>
+        <div className="border-b border-rule py-4">
+            <h4 className="mb-2 text-section-label">{title}</h4>
             <ul className="flex flex-col gap-1.5">
                 {items.map((item, i) => (
                     <li
                         key={i}
-                        className={`flex gap-2 text-sm ${tone === 'warning' ? 'text-orange-700' : 'text-slate-700'}`}
+                        className={`flex gap-2 text-xl leading-6 ${tone === 'warning' ? 'text-danger' : 'text-ink'}`}
                     >
                         <span
                             className={
-                                tone === 'warning'
-                                    ? 'text-orange-500'
-                                    : 'text-blue-500'
+                                tone === 'warning' ? 'text-danger' : 'text-ink'
                             }
                         >
                             —
@@ -134,20 +128,20 @@ export function AIAnalysisSheet({
                     initial="initial"
                     animate="animate"
                     exit="exit"
-                    className="fixed inset-0 z-[100] flex justify-end bg-slate-900/40"
+                    className="fixed inset-0 z-[100] flex justify-end bg-black/50"
                     onMouseDown={(e) =>
                         e.target === e.currentTarget && onClose()
                     }
                 >
                     <motion.div
                         variants={slideInRight}
-                        className="flex h-full w-full max-w-md flex-col bg-white sm:max-w-lg"
+                        className="flex h-full w-full max-w-md flex-col bg-paper sm:max-w-lg"
                     >
-                        <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
+                        <div className="flex items-center justify-between border-b border-rule px-6 py-4">
                             <div className="flex items-center gap-2">
                                 <RiSparklingLine
                                     size={18}
-                                    className="text-orange-500"
+                                    className="text-ink"
                                 />
                                 <h2 className="text-section-label">
                                     Analyse IA
@@ -156,7 +150,7 @@ export function AIAnalysisSheet({
                             <button
                                 onClick={onClose}
                                 aria-label="Fermer"
-                                className="text-slate-400 hover:text-slate-900"
+                                className="text-ink-muted hover:text-ink"
                             >
                                 <RiCloseLine size={20} />
                             </button>
@@ -167,7 +161,7 @@ export function AIAnalysisSheet({
                                 <div className="flex flex-col items-center gap-4 py-16 text-center">
                                     <RiSparklingLine
                                         size={28}
-                                        className="text-orange-300"
+                                        className="text-ink"
                                     />
                                     <p className="text-body">
                                         Aucune analyse n'a encore été générée
@@ -189,7 +183,7 @@ export function AIAnalysisSheet({
                                 <div className="flex flex-col items-center gap-4 py-16 text-center">
                                     <RiAlertLine
                                         size={28}
-                                        className="text-orange-500"
+                                        className="text-danger"
                                     />
                                     <p className="text-body">
                                         {analysis.failureReason ??
@@ -199,7 +193,7 @@ export function AIAnalysisSheet({
                                         variant="outline"
                                         onClick={requestAnalysis}
                                         disabled={requesting}
-                                        className="flex items-center gap-1.5 text-xs"
+                                        className="flex items-center gap-1.5 text-lg"
                                     >
                                         <RiRefreshLine size={14} /> Réessayer
                                     </Button>
@@ -208,14 +202,14 @@ export function AIAnalysisSheet({
 
                             {analysis?.status === 'completed' && (
                                 <>
-                                    <div className="mb-6 flex items-center justify-between border border-slate-200 bg-slate-50 p-4">
+                                    <div className="mb-6 flex items-center justify-between border border-rule bg-surface-2 p-4">
                                         <div>
-                                            <div className="font-mono text-[11px] text-slate-500 uppercase">
+                                            <div className="font-mono text-lg text-ink-muted uppercase">
                                                 Investment Score
                                             </div>
                                             <div className="text-stat-lg">
                                                 {analysis.investmentScore}
-                                                <span className="text-base text-slate-400">
+                                                <span className="text-xl text-ink-muted">
                                                     /100
                                                 </span>
                                             </div>
@@ -223,7 +217,7 @@ export function AIAnalysisSheet({
                                         <button
                                             onClick={requestAnalysis}
                                             disabled={requesting}
-                                            className="flex items-center gap-1 font-mono text-[11px] text-blue-600 hover:text-blue-700 disabled:opacity-50"
+                                            className="flex items-center gap-1 font-mono text-lg text-action hover:text-action disabled:opacity-50"
                                         >
                                             <RiRefreshLine size={12} />{' '}
                                             Régénérer
@@ -239,19 +233,19 @@ export function AIAnalysisSheet({
                                                     key={key}
                                                     className="flex items-center gap-3"
                                                 >
-                                                    <div className="w-32 flex-shrink-0 text-xs text-slate-700">
+                                                    <div className="w-32 flex-shrink-0 text-lg text-ink">
                                                         {subScoreLabels[key] ??
                                                             key}
                                                     </div>
-                                                    <div className="h-1.5 flex-1 bg-slate-100">
+                                                    <div className="h-1.5 flex-1 bg-surface-2">
                                                         <div
-                                                            className="h-full bg-blue-500"
+                                                            className="bg-surface-20 h-full"
                                                             style={{
                                                                 width: `${value}%`,
                                                             }}
                                                         />
                                                     </div>
-                                                    <div className="w-8 flex-shrink-0 text-right font-mono text-[11px] text-slate-500">
+                                                    <div className="w-8 flex-shrink-0 text-right font-mono text-lg text-ink-muted">
                                                         {value}
                                                     </div>
                                                 </div>
@@ -331,7 +325,7 @@ export function AIAnalysisSheet({
 
                         {analysis?.status === 'completed' &&
                             analysis.disclaimer && (
-                                <div className="border-t border-slate-200 px-6 py-3 text-[11px] leading-relaxed text-slate-400">
+                                <div className="border-t border-rule px-6 py-3 text-lg leading-relaxed text-ink-muted">
                                     {analysis.disclaimer}
                                 </div>
                             )}

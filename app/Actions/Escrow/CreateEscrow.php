@@ -16,7 +16,7 @@ class CreateEscrow
     {
         if ($contract->status->value !== 'accepted') {
             throw ValidationException::withMessages([
-                'contract' => "Le contrat doit être accepté par les deux parties avant de créer un séquestre.",
+                'contract' => 'Le contrat doit être accepté par les deux parties avant de créer un séquestre.',
             ]);
         }
 

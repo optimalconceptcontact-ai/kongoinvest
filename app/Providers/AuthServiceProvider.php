@@ -2,32 +2,34 @@
 
 namespace App\Providers;
 
-use App\Models\User;
+use App\Models\AiAnalysis;
+use App\Models\Connection;
+use App\Models\Contract;
+use App\Models\DealRoom;
+use App\Models\Dispute;
+use App\Models\Document;
+use App\Models\Escrow;
+use App\Models\InvestmentContractWorkspace;
+use App\Models\KycProfile;
+use App\Models\MatchModel;
+use App\Models\Payment;
 use App\Models\Project;
 use App\Models\Subscription;
-use App\Models\MatchModel;
-use App\Models\Connection;
-use App\Models\DealRoom;
-use App\Models\Document;
-use App\Models\KycProfile;
-use App\Models\Contract;
-use App\Models\Payment;
-use App\Models\Escrow;
-use App\Models\Dispute;
-use App\Models\AiAnalysis;
-use App\Policies\UserPolicy;
+use App\Models\User;
+use App\Policies\AiAnalysisPolicy;
+use App\Policies\ConnectionPolicy;
+use App\Policies\ContractPolicy;
+use App\Policies\DealRoomPolicy;
+use App\Policies\DisputePolicy;
+use App\Policies\DocumentPolicy;
+use App\Policies\EscrowPolicy;
+use App\Policies\InvestmentContractWorkspacePolicy;
+use App\Policies\KycPolicy;
+use App\Policies\MatchPolicy;
+use App\Policies\PaymentPolicy;
 use App\Policies\ProjectPolicy;
 use App\Policies\SubscriptionPolicy;
-use App\Policies\MatchPolicy;
-use App\Policies\ConnectionPolicy;
-use App\Policies\DealRoomPolicy;
-use App\Policies\DocumentPolicy;
-use App\Policies\KycPolicy;
-use App\Policies\ContractPolicy;
-use App\Policies\PaymentPolicy;
-use App\Policies\EscrowPolicy;
-use App\Policies\DisputePolicy;
-use App\Policies\AiAnalysisPolicy;
+use App\Policies\UserPolicy;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 
 class AuthServiceProvider extends ServiceProvider
@@ -54,6 +56,7 @@ class AuthServiceProvider extends ServiceProvider
         Escrow::class => EscrowPolicy::class,
         Dispute::class => DisputePolicy::class,
         AiAnalysis::class => AiAnalysisPolicy::class,
+        InvestmentContractWorkspace::class => InvestmentContractWorkspacePolicy::class,
         // Conversation/Message access is enforced through DealRoomPolicy
         // (a conversation's only participants are its deal room's) —
         // no separate Policy needed for either.

@@ -24,7 +24,10 @@ export function AuthModalProvider({ children }: { children: ReactNode }) {
     const page = usePage<SharedProps>();
     const [activeModal, setActiveModal] = useState<AuthModalName>(null);
     const [pendingIntent, setPendingIntent] = useState<PendingIntent>(null);
-    const [resetToken, setResetToken] = useState<{ token: string; email: string } | null>(null);
+    const [resetToken, setResetToken] = useState<{
+        token: string;
+        email: string;
+    } | null>(null);
 
     // Resume state from a server-driven redirect (spec §7).
     useEffect(() => {
@@ -60,7 +63,8 @@ export function AuthModalProvider({ children }: { children: ReactNode }) {
                     open('resetPassword');
                 },
                 openVerifyEmail: () => open('verifyEmail'),
-                openConfirmPassword: (intent) => open('confirmPassword', intent),
+                openConfirmPassword: (intent) =>
+                    open('confirmPassword', intent),
                 openTwoFactorChallenge: () => open('twoFactorChallenge'),
                 close,
                 consumeIntent,
@@ -74,16 +78,28 @@ export function AuthModalProvider({ children }: { children: ReactNode }) {
                 exactly once, then clears it via consumeIntent(). */}
             <LoginModal open={activeModal === 'login'} onClose={close} />
             <RegisterModal open={activeModal === 'register'} onClose={close} />
-            <ForgotPasswordModal open={activeModal === 'forgotPassword'} onClose={close} />
+            <ForgotPasswordModal
+                open={activeModal === 'forgotPassword'}
+                onClose={close}
+            />
             <ResetPasswordModal
                 open={activeModal === 'resetPassword'}
                 onClose={close}
                 token={resetToken?.token}
                 email={resetToken?.email}
             />
-            <VerifyEmailModal open={activeModal === 'verifyEmail'} onClose={close} />
-            <ConfirmPasswordModal open={activeModal === 'confirmPassword'} onClose={close} />
-            <TwoFactorChallengeModal open={activeModal === 'twoFactorChallenge'} onClose={close} />
+            <VerifyEmailModal
+                open={activeModal === 'verifyEmail'}
+                onClose={close}
+            />
+            <ConfirmPasswordModal
+                open={activeModal === 'confirmPassword'}
+                onClose={close}
+            />
+            <TwoFactorChallengeModal
+                open={activeModal === 'twoFactorChallenge'}
+                onClose={close}
+            />
         </AuthModalContext.Provider>
     );
 }

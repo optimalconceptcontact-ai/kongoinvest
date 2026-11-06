@@ -4,14 +4,16 @@ namespace App\Models;
 
 use App\Enums\ContractStatus;
 use App\Enums\FundingType;
+use Database\Factories\ContractFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Contract extends Model
 {
-    /** @use HasFactory<\Database\Factories\ContractFactory> */
+    /** @use HasFactory<ContractFactory> */
     use HasFactory;
 
     protected $fillable = []; // every field is set exclusively via Actions — see app/Actions/Contracts/*
@@ -28,22 +30,26 @@ class Contract extends Model
         ];
     }
 
+    /** @return BelongsTo<DealRoom, $this> */
     public function dealRoom(): BelongsTo
     {
         return $this->belongsTo(DealRoom::class);
     }
 
+    /** @return BelongsTo<User, $this> */
     public function generatedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'generated_by_user_id');
     }
 
+    /** @return HasMany<ContractVersion, $this> */
     public function versions(): HasMany
     {
         return $this->hasMany(ContractVersion::class)->orderByDesc('version');
     }
 
-    public function escrow(): \Illuminate\Database\Eloquent\Relations\HasOne
+    /** @return HasOne<Escrow, $this> */
+    public function escrow(): HasOne
     {
         return $this->hasOne(Escrow::class);
     }

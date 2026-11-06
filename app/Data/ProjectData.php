@@ -48,6 +48,8 @@ class ProjectData extends Data
         public string|Lazy|null $financialInformation = null,
         public string|Lazy|null $impact = null,
         public string|Lazy|null $risks = null,
+        /** @var array<string, mixed>|null */
+        public ?array $fundingLimitWarning = null,
     ) {}
 
     public static function fromModel(Project $project, bool $full = false): self

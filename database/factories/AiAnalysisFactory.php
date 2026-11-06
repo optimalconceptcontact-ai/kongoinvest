@@ -3,17 +3,21 @@
 namespace Database\Factories;
 
 use App\Enums\AiRequestStatus;
+use App\Models\AiAnalysis;
+use App\Models\Project;
+use App\Models\User;
+use App\Services\Ai\ProjectAnalysisService;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class AiAnalysisFactory extends Factory
 {
-    protected $model = \App\Models\AiAnalysis::class;
+    protected $model = AiAnalysis::class;
 
     public function definition(): array
     {
         return [
-            'project_id' => \App\Models\Project::factory(),
-            'requested_by_user_id' => \App\Models\User::factory(),
+            'project_id' => Project::factory(),
+            'requested_by_user_id' => User::factory(),
             'status' => AiRequestStatus::Completed->value,
             'provider' => 'anthropic',
             'investment_score' => fake()->numberBetween(40, 90),
@@ -26,7 +30,7 @@ class AiAnalysisFactory extends Factory
                 'redFlags' => [],
                 'dueDiligenceQuestions' => [fake()->sentence()],
                 'recommendation' => fake()->sentence(),
-                'disclaimer' => \App\Services\Ai\ProjectAnalysisService::DISCLAIMER,
+                'disclaimer' => ProjectAnalysisService::DISCLAIMER,
             ],
         ];
     }

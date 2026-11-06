@@ -3,18 +3,21 @@
 namespace Database\Factories;
 
 use App\Enums\ConnectionStatus;
+use App\Models\Connection;
+use App\Models\InvestorProfile;
+use App\Models\Project;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class ConnectionFactory extends Factory
 {
-    protected $model = \App\Models\Connection::class;
+    protected $model = Connection::class;
 
     public function definition(): array
     {
-        $investorProfile = \App\Models\InvestorProfile::factory()->create();
+        $investorProfile = InvestorProfile::factory()->create();
 
         return [
-            'project_id' => \App\Models\Project::factory()->published()->withTaxonomy(),
+            'project_id' => Project::factory()->published()->withTaxonomy(),
             'investor_profile_id' => $investorProfile->id,
             'requested_by_user_id' => $investorProfile->user_id,
             'status' => ConnectionStatus::Pending->value,

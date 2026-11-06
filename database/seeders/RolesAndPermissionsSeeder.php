@@ -34,12 +34,12 @@ class RolesAndPermissionsSeeder extends Seeder
             'entrepreneur' => [
                 'projects.view', 'projects.create', 'projects.update', 'projects.delete',
                 'projects.publish', 'matches.view', 'connections.accept', 'messages.view',
-                'messages.send', 'payments.view', 'escrow.view', 'kyc.submit',
+                'messages.send', 'escrow.view', 'kyc.submit',
                 'contracts.view', 'contracts.accept', 'subscriptions.view', 'subscriptions.manage',
             ],
             'investor' => [
                 'projects.view', 'matches.view', 'connections.create', 'messages.view',
-                'messages.send', 'payments.view', 'payments.create', 'escrow.view',
+                'messages.send', 'payments.create', 'escrow.view',
                 'escrow.create', 'escrow.release', 'escrow.refund', 'kyc.submit',
                 'contracts.view', 'contracts.accept', 'subscriptions.view', 'subscriptions.manage',
             ],

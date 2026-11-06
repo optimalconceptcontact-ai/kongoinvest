@@ -30,10 +30,17 @@ it('assigns the Free plan automatically at registration', function () {
 it('never lets an entrepreneur switch to the Investor plan, even via a direct request', function () {
     $entrepreneur = User::factory()->entrepreneur()->create();
     app(SubscriptionService::class)->assignFreePlan($entrepreneur);
+    $investorPlan = SubscriptionPlan::where('key', 'investor')->firstOrFail();
 
-    $response = $this->actingAs($entrepreneur)->put('/settings/subscription', ['plan' => 'investor']);
+    // Paid plans route through checkout instead of switching instantly —
+    // nothing switches here.
+    $this->actingAs($entrepreneur)->put('/settings/subscription', ['plan' => 'investor'])
+        ->assertRedirect(route('settings.billing.checkout', $investorPlan));
 
-    $response->assertSessionHasErrors('plan');
+    // ...and checkout itself refuses the role-incompatible plan.
+    $this->actingAs($entrepreneur)->get(route('settings.billing.checkout', $investorPlan))
+        ->assertForbidden();
+
     expect(app(SubscriptionService::class)->currentPlanFor($entrepreneur)->key)->toBe('free');
 });
 

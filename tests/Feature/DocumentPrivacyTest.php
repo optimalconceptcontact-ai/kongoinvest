@@ -1,6 +1,10 @@
 <?php
 
+use App\Actions\Documents\RequestDocumentAccess;
+use App\Actions\Documents\RespondToDocumentRequest;
+use App\Data\DealRoomData;
 use App\Enums\DocumentVisibility;
+use App\Models\DealRoom;
 use App\Models\Document;
 use App\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
@@ -13,7 +17,7 @@ beforeEach(function () {
 
 function dealRoomWithParticipants(): array
 {
-    $dealRoom = \App\Models\DealRoom::factory()->create();
+    $dealRoom = DealRoom::factory()->create();
     $entrepreneur = $dealRoom->entrepreneur;
     $investor = $dealRoom->investor;
 
@@ -34,7 +38,7 @@ it('never shows a private document to the other participant until it is shared',
 
     // The deal room's own data payload must also omit it — not just the
     // policy check (spec §46's visibility states enforced server-side).
-    $data = \App\Data\DealRoomData::fromModel($dealRoom->load(['documents', 'entrepreneur', 'investor', 'project']), $investor);
+    $data = DealRoomData::fromModel($dealRoom->load(['documents', 'entrepreneur', 'investor', 'project']), $investor);
     expect($data->documents)->toBeEmpty();
 });
 
@@ -47,10 +51,10 @@ it('reveals a document to both participants once the owner approves a share requ
         'visibility' => DocumentVisibility::Private->value,
     ]);
 
-    app(\App\Actions\Documents\RequestDocumentAccess::class)->handle($investor, $document);
+    app(RequestDocumentAccess::class)->handle($investor, $document);
     expect($document->fresh()->visibility->value)->toBe('requested');
 
-    app(\App\Actions\Documents\RespondToDocumentRequest::class)->approve($entrepreneur, $document);
+    app(RespondToDocumentRequest::class)->approve($entrepreneur, $document);
 
     $document->refresh();
     expect($document->visibility->value)->toBe('shared');

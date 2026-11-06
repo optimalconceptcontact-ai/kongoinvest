@@ -1,6 +1,6 @@
 import { Head } from '@inertiajs/react';
+import { Link } from '@/components/ui/Link';
 import { InvestorLayout } from '@/layouts/InvestorLayout';
-import { Link } from '@/components/Ui/Link';
 
 type ContractRow = {
     id: number;
@@ -16,14 +16,14 @@ type ContractRow = {
 };
 
 const statusStyles: Record<string, string> = {
-    draft: 'bg-slate-100 text-slate-400',
-    generated: 'bg-blue-50 text-blue-700',
-    sent: 'bg-blue-50 text-blue-700',
-    viewed: 'bg-blue-50 text-blue-700',
-    accepted: 'bg-emerald-50 text-emerald-700',
-    rejected: 'bg-slate-100 text-slate-400',
-    expired: 'bg-slate-100 text-slate-400',
-    cancelled: 'bg-slate-100 text-slate-400',
+    draft: 'bg-surface-2 text-ink-muted ',
+    generated: 'bg-surface-2 text-ink ',
+    sent: 'bg-surface-2 text-ink ',
+    viewed: 'bg-surface-2 text-ink ',
+    accepted: 'bg-success/10 text-success',
+    rejected: 'bg-surface-2 text-ink-muted ',
+    expired: 'bg-surface-2 text-ink-muted ',
+    cancelled: 'bg-surface-2 text-ink-muted ',
 };
 
 function formatAmount(minor: number, currency: string) {
@@ -36,28 +36,44 @@ export default function Index({ contracts }: { contracts: ContractRow[] }) {
             <Head title="Contrats" />
 
             {contracts.length === 0 ? (
-                <div className="border border-dashed border-slate-400 py-16 text-center text-body">
-                    Aucun contrat pour l'instant — les contrats sont générés depuis une Deal Room.
+                <div className="border border-rule-strong bg-paper p-6 text-body">
+                    Aucun contrat pour l'instant — les contrats sont générés
+                    depuis une Deal Room.
                 </div>
             ) : (
-                <div className="border border-slate-200">
+                <div className="border border-rule">
                     {contracts.map((c) => (
-                        <div key={c.id} className="flex items-center justify-between border-b border-slate-200 p-5 last:border-b-0">
+                        <div
+                            key={c.id}
+                            className="flex items-center justify-between border-b border-rule p-5 last:border-b-0"
+                        >
                             <div>
                                 <div className="mb-1 flex items-center gap-2">
-                                    <span className={`px-2 py-0.5 font-mono text-[11px] uppercase ${statusStyles[c.status] ?? 'bg-slate-100 text-slate-400'}`}>
+                                    <span
+                                        className={`px-2 py-0.5 font-mono text-lg uppercase ${statusStyles[c.status] ?? 'bg-surface-2 text-ink-muted'}`}
+                                    >
                                         {c.statusLabel}
                                     </span>
-                                    <span className="font-mono text-[11px] text-slate-400">
-                                        {new Date(c.createdAt).toLocaleDateString('fr-FR')}
+                                    <span className="font-mono text-lg text-ink-muted">
+                                        {new Date(
+                                            c.createdAt,
+                                        ).toLocaleDateString('fr-FR')}
                                     </span>
                                 </div>
-                                <div className="text-item-title">{c.projectTitle}</div>
+                                <div className="text-item-title">
+                                    {c.projectTitle}
+                                </div>
                                 <p className="text-caption">
-                                    {c.otherPartyName} · {c.investmentTypeLabel} · {formatAmount(c.amountMinor, c.currency)}
+                                    {c.otherPartyName} · {c.investmentTypeLabel}{' '}
+                                    · {formatAmount(c.amountMinor, c.currency)}
                                 </p>
                             </div>
-                            <Link href={`/deal-rooms/${c.dealRoomId}`} variant="secondary" size="sm" className="py-2">
+                            <Link
+                                href={`/deal-rooms/${c.dealRoomId}`}
+                                variant="secondary"
+                                size="sm"
+                                className="py-2"
+                            >
                                 Ouvrir la Deal Room
                             </Link>
                         </div>

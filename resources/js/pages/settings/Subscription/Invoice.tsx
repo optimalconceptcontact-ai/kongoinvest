@@ -1,7 +1,7 @@
 import { Head } from '@inertiajs/react';
-import { Badge } from '@/components/Ui/Badge';
-import { Button } from '@/components/Ui/Button';
-import { Link } from '@/components/Ui/Link';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Link } from '@/components/ui/Link';
 
 type SubscriptionDetail = {
     id: number;
@@ -22,11 +22,11 @@ type SubscriptionDetail = {
 type Customer = { name: string; email: string };
 
 const statusClasses: Record<string, string> = {
-    active: 'bg-blue-50 text-blue-700',
-    trialing: 'bg-blue-50 text-blue-700',
-    past_due: 'bg-orange-50 text-orange-700',
-    canceled: 'bg-slate-100 text-slate-500',
-    expired: 'bg-slate-100 text-slate-500',
+    active: 'bg-surface-2 text-ink ',
+    trialing: 'bg-surface-2 text-ink ',
+    past_due: 'bg-surface-2 text-ink ',
+    canceled: 'bg-surface-2 text-ink-muted ',
+    expired: 'bg-surface-2 text-ink-muted ',
 };
 
 const providerLabels: Record<string, string> = {
@@ -38,97 +38,174 @@ const providerLabels: Record<string, string> = {
 };
 
 function formatAmount(amountMinor: number, currency: string) {
-    if (amountMinor === 0) return 'Gratuit';
+    if (amountMinor === 0) {
+        return 'Gratuit';
+    }
+
     return `${(amountMinor / 100).toLocaleString('fr-FR', { minimumFractionDigits: 2 })} ${currency}`;
 }
 
 function formatDate(iso: string | null) {
-    if (!iso) return '—';
-    return new Date(iso).toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric' });
+    if (!iso) {
+        return '—';
+    }
+
+    return new Date(iso).toLocaleDateString('fr-FR', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+    });
 }
 
-export default function Invoice({ subscription, customer }: { subscription: SubscriptionDetail; customer: Customer }) {
+export default function Invoice({
+    subscription,
+    customer,
+}: {
+    subscription: SubscriptionDetail;
+    customer: Customer;
+}) {
     return (
         <div className="mx-auto max-w-2xl px-6 py-12">
             <Head title={`Facture #${subscription.id}`} />
 
             <div className="mb-6 flex items-center justify-between print:hidden">
-                <Link href="/settings/subscription/history">← Retour à l'historique</Link>
-                <Button variant="outline" size="sm" onClick={() => window.print()}>
+                <Link href="/settings/subscription/history">
+                    ← Retour à l'historique
+                </Link>
+                <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => window.print()}
+                >
                     Imprimer
                 </Button>
             </div>
 
-            <div className="border border-slate-300 p-8 print:border-0 print:p-0">
-                <div className="mb-8 flex items-start justify-between border-b border-slate-300 pb-6">
+            <div className="border border-rule-strong bg-paper p-8 print:border-0 print:p-0">
+                <div className="mb-8 flex items-start justify-between border-b border-rule pb-6">
                     <div>
-                        <div className="font-mono text-lg font-bold text-slate-900">KongoInvestment</div>
-                        <p className="text-caption">La plateforme d'investissement propulsée par l'IA, entre la RDC et le monde.</p>
+                        <div className="font-mono text-2xl font-bold text-ink">
+                            KongoInvest
+                        </div>
+                        <p className="text-caption">
+                            La plateforme d'investissement propulsée par l'IA,
+                            entre la RDC et le monde.
+                        </p>
                     </div>
                     <div className="text-right">
                         <div className="text-eyebrow">Facture</div>
-                        <div className="font-mono text-sm text-slate-500">#{subscription.id}</div>
+                        <div className="font-mono text-lg text-ink-muted">
+                            #{subscription.id}
+                        </div>
                     </div>
                 </div>
 
                 <div className="mb-8 grid grid-cols-2 gap-6">
                     <div>
-                        <div className="mb-1 font-mono text-[11px] uppercase tracking-wide text-slate-500">Facturé à</div>
-                        <div className="font-semibold text-slate-900">{customer.name}</div>
-                        <div className="text-sm text-slate-600">{customer.email}</div>
+                        <div className="mb-1 font-mono text-lg tracking-wide text-ink-muted uppercase">
+                            Facturé à
+                        </div>
+                        <div className="font-semibold text-ink">
+                            {customer.name}
+                        </div>
+                        <div className="text-lg text-ink-muted">
+                            {customer.email}
+                        </div>
                     </div>
                     <div className="text-right">
-                        <div className="mb-1 font-mono text-[11px] uppercase tracking-wide text-slate-500">Statut</div>
-                        <Badge className={statusClasses[subscription.status] ?? 'bg-slate-100 text-slate-500'}>{subscription.statusLabel}</Badge>
+                        <div className="mb-1 font-mono text-lg tracking-wide text-ink-muted uppercase">
+                            Statut
+                        </div>
+                        <Badge
+                            className={
+                                statusClasses[subscription.status] ??
+                                'bg-surface-2 text-ink-muted'
+                            }
+                        >
+                            {subscription.statusLabel}
+                        </Badge>
                     </div>
                 </div>
 
-                <table className="mb-8 w-full text-sm">
+                <table className="mb-8 w-full text-lg">
                     <thead>
-                        <tr className="border-b border-slate-300 text-left font-mono text-[11px] uppercase tracking-wide text-slate-500">
+                        <tr className="border-b border-rule text-left font-mono text-lg tracking-wide text-ink-muted uppercase">
                             <th className="pb-2 font-normal">Description</th>
-                            <th className="pb-2 text-right font-normal">Montant</th>
+                            <th className="pb-2 text-right font-normal">
+                                Montant
+                            </th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr className="border-b border-slate-200">
+                        <tr className="border-b border-rule">
                             <td className="py-3">
-                                Abonnement {subscription.planName} — {subscription.billingPeriod === 'annual' ? 'facturation annuelle' : 'facturation mensuelle'}
+                                Abonnement {subscription.planName} —{' '}
+                                {subscription.billingPeriod === 'annual'
+                                    ? 'facturation annuelle'
+                                    : 'facturation mensuelle'}
                             </td>
-                            <td className="py-3 text-right font-mono">{formatAmount(subscription.amountMinor, subscription.currency)}</td>
+                            <td className="py-3 text-right font-mono">
+                                {formatAmount(
+                                    subscription.amountMinor,
+                                    subscription.currency,
+                                )}
+                            </td>
                         </tr>
                     </tbody>
                     <tfoot>
                         <tr>
-                            <td className="pt-3 text-right font-semibold">Total</td>
-                            <td className="pt-3 text-right font-mono font-bold text-slate-900">
-                                {formatAmount(subscription.amountMinor, subscription.currency)}
+                            <td className="pt-3 text-right font-semibold">
+                                Total
+                            </td>
+                            <td className="pt-3 text-right font-mono font-bold text-ink">
+                                {formatAmount(
+                                    subscription.amountMinor,
+                                    subscription.currency,
+                                )}
                             </td>
                         </tr>
                     </tfoot>
                 </table>
 
-                <div className="grid grid-cols-2 gap-6 border-t border-slate-300 pt-6 text-sm">
+                <div className="grid grid-cols-2 gap-6 border-t border-rule pt-6 text-lg">
                     <div>
-                        <div className="mb-1 font-mono text-[11px] uppercase tracking-wide text-slate-500">Date de début</div>
-                        <div className="text-slate-900">{formatDate(subscription.startsAt)}</div>
+                        <div className="mb-1 font-mono text-lg tracking-wide text-ink-muted uppercase">
+                            Date de début
+                        </div>
+                        <div className="text-ink">
+                            {formatDate(subscription.startsAt)}
+                        </div>
                     </div>
                     <div>
-                        <div className="mb-1 font-mono text-[11px] uppercase tracking-wide text-slate-500">Moyen de paiement</div>
-                        <div className="text-slate-900">
-                            {subscription.paymentProvider ? (providerLabels[subscription.paymentProvider] ?? subscription.paymentProvider) : '—'}
+                        <div className="mb-1 font-mono text-lg tracking-wide text-ink-muted uppercase">
+                            Moyen de paiement
+                        </div>
+                        <div className="text-ink">
+                            {subscription.paymentProvider
+                                ? (providerLabels[
+                                      subscription.paymentProvider
+                                  ] ?? subscription.paymentProvider)
+                                : '—'}
                         </div>
                     </div>
                     {subscription.endsAt && (
                         <div>
-                            <div className="mb-1 font-mono text-[11px] uppercase tracking-wide text-slate-500">Date de fin</div>
-                            <div className="text-slate-900">{formatDate(subscription.endsAt)}</div>
+                            <div className="mb-1 font-mono text-lg tracking-wide text-ink-muted uppercase">
+                                Date de fin
+                            </div>
+                            <div className="text-ink">
+                                {formatDate(subscription.endsAt)}
+                            </div>
                         </div>
                     )}
                     {subscription.canceledAt && (
                         <div>
-                            <div className="mb-1 font-mono text-[11px] uppercase tracking-wide text-slate-500">Annulé le</div>
-                            <div className="text-slate-900">{formatDate(subscription.canceledAt)}</div>
+                            <div className="mb-1 font-mono text-lg tracking-wide text-ink-muted uppercase">
+                                Annulé le
+                            </div>
+                            <div className="text-ink">
+                                {formatDate(subscription.canceledAt)}
+                            </div>
                         </div>
                     )}
                 </div>

@@ -2,6 +2,10 @@
 
 namespace App\Providers;
 
+use App\Actions\Fortify\CreateNewUser;
+use App\Actions\Fortify\ResetUserPassword;
+use App\Actions\Fortify\UpdateUserPassword;
+use App\Actions\Fortify\UpdateUserProfileInformation;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
@@ -36,10 +40,10 @@ class FortifyServiceProvider extends ServiceProvider
         $this->bindResponse(TwoFactorLoginResponse::class, fn () => redirect()->intended(route('dashboard', absolute: false)));
         $this->bindResponse(LogoutResponse::class, fn () => redirect('/'));
 
-        Fortify::createUsersUsing(\App\Actions\Fortify\CreateNewUser::class);
-        Fortify::updateUserProfileInformationUsing(\App\Actions\Fortify\UpdateUserProfileInformation::class);
-        Fortify::updateUserPasswordsUsing(\App\Actions\Fortify\UpdateUserPassword::class);
-        Fortify::resetUserPasswordsUsing(\App\Actions\Fortify\ResetUserPassword::class);
+        Fortify::createUsersUsing(CreateNewUser::class);
+        Fortify::updateUserProfileInformationUsing(UpdateUserProfileInformation::class);
+        Fortify::updateUserPasswordsUsing(UpdateUserPassword::class);
+        Fortify::resetUserPasswordsUsing(ResetUserPassword::class);
 
         RateLimiter::for('login', function (Request $request) {
             $throttleKey = strtolower($request->input(Fortify::username())).'|'.$request->ip();
@@ -57,11 +61,8 @@ class FortifyServiceProvider extends ServiceProvider
      */
     protected function bindResponse(string $contract, \Closure $handler): void
     {
-        $this->app->singleton($contract, fn () => new class($handler) implements
-            LoginResponse,
-            LogoutResponse,
-            RegisterResponse,
-            TwoFactorLoginResponse {
+        $this->app->singleton($contract, fn () => new class($handler) implements LoginResponse, LogoutResponse, RegisterResponse, TwoFactorLoginResponse
+        {
             public function __construct(private \Closure $handler) {}
 
             public function toResponse($request)

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\EscrowStatus;
+use Database\Factories\EscrowFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -11,7 +12,7 @@ use Illuminate\Database\Eloquent\Relations\MorphOne;
 
 class Escrow extends Model
 {
-    /** @use HasFactory<\Database\Factories\EscrowFactory> */
+    /** @use HasFactory<EscrowFactory> */
     use HasFactory;
 
     protected $fillable = []; // every field set exclusively via app/Actions/Escrow/* — never from request input

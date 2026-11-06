@@ -6,14 +6,16 @@ use App\Enums\FundingType;
 use App\Enums\InvestmentHorizon;
 use App\Enums\InvestorType;
 use App\Enums\RiskAppetite;
+use Database\Factories\InvestorProfileFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class InvestorProfile extends Model
 {
-    /** @use HasFactory<\Database\Factories\InvestorProfileFactory> */
+    /** @use HasFactory<InvestorProfileFactory> */
     use HasFactory;
 
     protected $fillable = [
@@ -64,7 +66,7 @@ class InvestorProfile extends Model
         return $this->belongsToMany(Stage::class, 'investor_stage');
     }
 
-    public function matches(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function matches(): HasMany
     {
         return $this->hasMany(MatchModel::class);
     }

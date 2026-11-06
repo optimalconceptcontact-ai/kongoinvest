@@ -1,17 +1,39 @@
 import { Head, router, useForm } from '@inertiajs/react';
-import { RiCloseLine, RiDeleteBinLine, RiPencilLine } from '@remixicon/react';
+import {
+    RiCloseLine,
+    RiDeleteBinLine,
+    RiPagesLine,
+    RiPencilLine,
+    RiRadarLine,
+    RiShape2Line,
+} from '@remixicon/react';
 import { FormEvent, useState } from 'react';
 import { AdminLayout } from '@/layouts/AdminLayout';
-import { Button } from '@/components/Ui/Button';
-import { Checkbox } from '@/components/Ui/Checkbox';
-import { FieldError } from '@/components/Ui/FieldError';
-import { Input } from '@/components/Ui/Input';
-import { Label } from '@/components/Ui/Label';
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Field } from '@/components/ui/Field';
+import { FieldError } from '@/components/ui/FieldError';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/Label';
 import { useConfirm } from '@/hooks/useConfirm';
 
-type Sector = { id: number; name: string; icon: string | null; description: string | null; is_active: boolean; order: number; projects_count: number };
+type Sector = {
+    id: number;
+    name: string;
+    icon: string | null;
+    description: string | null;
+    is_active: boolean;
+    order: number;
+    projects_count: number;
+};
 
-function SectorForm({ sector, onDone }: { sector?: Sector; onDone: () => void }) {
+function SectorForm({
+    sector,
+    onDone,
+}: {
+    sector?: Sector;
+    onDone: () => void;
+}) {
     const { data, setData, post, put, processing, errors } = useForm({
         name: sector?.name ?? '',
         icon: sector?.icon ?? '',
@@ -30,28 +52,65 @@ function SectorForm({ sector, onDone }: { sector?: Sector; onDone: () => void })
     }
 
     return (
-        <form onSubmit={submit} className="flex flex-wrap items-end gap-3 border border-slate-300 bg-slate-50 p-4">
-            <div>
+        <form
+            onSubmit={submit}
+            className="flex flex-wrap items-end gap-3 border border-rule bg-surface-2 p-4"
+        >
+            <Field className="w-48" error={!!errors.name}>
                 <Label>Nom</Label>
-                <Input size="sm" className="w-48" value={data.name} onChange={(e) => setData('name', e.target.value)} />
+                <Input
+                    size="sm"
+                    icon={<RiRadarLine size={18} />}
+                    value={data.name}
+                    onChange={(e) => setData('name', e.target.value)}
+                    required
+                />
                 <FieldError>{errors.name}</FieldError>
-            </div>
-            <div>
+            </Field>
+            <Field className="w-36" error={!!errors.icon}>
                 <Label>Icône (RemixIcon)</Label>
-                <Input size="sm" className="w-36" value={data.icon} onChange={(e) => setData('icon', e.target.value)} placeholder="RiPlantLine" />
-            </div>
-            <div className="flex-1">
+                <Input
+                    size="sm"
+                    icon={<RiShape2Line size={18} />}
+                    value={data.icon}
+                    onChange={(e) => setData('icon', e.target.value)}
+                    placeholder="RiPlantLine"
+                />
+                <FieldError>{errors.icon}</FieldError>
+            </Field>
+            <Field className="min-w-48 flex-1" error={!!errors.description}>
                 <Label>Description</Label>
-                <Input size="sm" value={data.description} onChange={(e) => setData('description', e.target.value)} />
-            </div>
+                <Input
+                    size="sm"
+                    icon={<RiPagesLine size={18} />}
+                    value={data.description}
+                    onChange={(e) => setData('description', e.target.value)}
+                />
+                <FieldError>{errors.description}</FieldError>
+            </Field>
             {sector && (
-                <Checkbox size="sm" label="Actif" checked={data.is_active} onChange={(e) => setData('is_active', e.target.checked)} />
+                <Checkbox
+                    size="sm"
+                    label="Actif"
+                    checked={data.is_active}
+                    onChange={(e) => setData('is_active', e.target.checked)}
+                />
             )}
-            <Button type="submit" disabled={processing} size="sm" className="px-4">
+            <Button
+                type="submit"
+                disabled={processing}
+                size="sm"
+                className="px-4"
+            >
                 {sector ? 'Enregistrer' : 'Ajouter'}
             </Button>
             {sector && (
-                <button type="button" onClick={onDone} className="px-2 py-1.5 text-caption" aria-label="Annuler la modification">
+                <button
+                    type="button"
+                    onClick={onDone}
+                    className="px-2 py-1.5 text-caption"
+                    aria-label="Annuler la modification"
+                >
                     <RiCloseLine size={16} />
                 </button>
             )}
@@ -64,11 +123,18 @@ export default function Index({ sectors }: { sectors: Sector[] }) {
     const { confirm, ConfirmDialog } = useConfirm();
 
     async function destroy(sector: Sector) {
-        const description = sector.projects_count > 0
-            ? `Supprimer ce secteur ? ${sector.projects_count} projet(s) l'utilisent actuellement.`
-            : 'Supprimer ce secteur ?';
+        const description =
+            sector.projects_count > 0
+                ? `Supprimer ce secteur ? ${sector.projects_count} projet(s) l'utilisent actuellement.`
+                : 'Supprimer ce secteur ?';
 
-        if (await confirm({ description, danger: true, confirmLabel: 'Supprimer' })) {
+        if (
+            await confirm({
+                description,
+                danger: true,
+                confirmLabel: 'Supprimer',
+            })
+        ) {
             router.delete(`/admin/sectors/${sector.id}`);
         }
     }
@@ -81,26 +147,54 @@ export default function Index({ sectors }: { sectors: Sector[] }) {
                 <SectorForm onDone={() => {}} />
             </div>
 
-            <div className="border border-slate-300">
+            <div className="border border-rule">
                 {sectors.map((sector) =>
                     editing === sector.id ? (
-                        <div key={sector.id} className="border-b border-slate-300 last:border-b-0">
-                            <SectorForm sector={sector} onDone={() => setEditing(null)} />
+                        <div
+                            key={sector.id}
+                            className="border-b border-rule last:border-b-0"
+                        >
+                            <SectorForm
+                                sector={sector}
+                                onDone={() => setEditing(null)}
+                            />
                         </div>
                     ) : (
-                        <div key={sector.id} className="flex items-center justify-between border-b border-slate-300 p-4 last:border-b-0">
+                        <div
+                            key={sector.id}
+                            className="flex items-center justify-between border-b border-rule p-4 last:border-b-0"
+                        >
                             <div>
                                 <div className="flex items-center gap-2">
-                                    <span className="text-item-title">{sector.name}</span>
-                                    {!sector.is_active && <span className="font-mono text-[10px] uppercase text-slate-400">Inactif</span>}
+                                    <span className="text-item-title">
+                                        {sector.name}
+                                    </span>
+                                    {!sector.is_active && (
+                                        <span className="font-mono text-lg text-ink-muted uppercase">
+                                            Inactif
+                                        </span>
+                                    )}
                                 </div>
-                                <div className="text-caption">{sector.projects_count} projet(s) · {sector.description}</div>
+                                <div className="text-caption">
+                                    {sector.projects_count} projet(s) ·{' '}
+                                    {sector.description}
+                                </div>
                             </div>
                             <div className="flex gap-2">
-                                <button onClick={() => setEditing(sector.id)} className="border border-slate-400 p-2 hover:border-slate-900">
+                                <button
+                                    type="button"
+                                    onClick={() => setEditing(sector.id)}
+                                    aria-label={`Modifier ${sector.name}`}
+                                    className="flex h-10 w-10 items-center justify-center border border-rule-strong hover:border-ink"
+                                >
                                     <RiPencilLine size={14} />
                                 </button>
-                                <button onClick={() => destroy(sector)} className="border border-slate-400 p-2 text-orange-600 hover:border-orange-600">
+                                <button
+                                    type="button"
+                                    onClick={() => destroy(sector)}
+                                    aria-label={`Supprimer ${sector.name}`}
+                                    className="flex h-10 w-10 items-center justify-center border border-danger/60 text-danger hover:border-danger"
+                                >
                                     <RiDeleteBinLine size={14} />
                                 </button>
                             </div>

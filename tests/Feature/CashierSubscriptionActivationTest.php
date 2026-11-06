@@ -7,6 +7,7 @@ use App\Services\SubscriptionService;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Database\Seeders\SubscriptionPlansSeeder;
 use Laravel\Cashier\Events\WebhookHandled;
+use Laravel\Cashier\Exceptions\IncompletePayment;
 
 /**
  * The subscribe()/IncompletePayment cases below hit the real Stripe test
@@ -56,9 +57,33 @@ it('surfaces IncompletePayment for a card requiring 3DS instead of silently acti
     try {
         $entrepreneur->newSubscription('default', $plan->stripe_price_id)->create('pm_card_threeDSecure2Required');
         expect(false)->toBeTrue('Expected IncompletePayment to be thrown.');
-    } catch (\Laravel\Cashier\Exceptions\IncompletePayment) {
+    } catch (IncompletePayment) {
         expect($entrepreneur->subscription('default')->incomplete())->toBeTrue();
     }
+});
+
+it('starts a 30-day trial that still requires a saved card, and records it as "trialing"', function () {
+    skipWithoutStripeTestSetup();
+
+    $entrepreneur = User::factory()->entrepreneur()->create();
+    app(SubscriptionService::class)->assignFreePlan($entrepreneur);
+    $plan = SubscriptionPlan::where('key', 'entrepreneur')->firstOrFail();
+
+    $entrepreneur->newSubscription('default', $plan->stripe_price_id)
+        ->trialDays(30)
+        ->create('pm_card_visa');
+
+    expect($entrepreneur->subscription('default')->onTrial())->toBeTrue();
+    expect($entrepreneur->subscribed('default'))->toBeTrue(); // still "subscribed" during trial, not a separate free tier
+
+    $subscription = app(SubscriptionService::class)->syncPlanFromCashierSubscription(
+        $entrepreneur, $plan, $entrepreneur->subscription('default')->stripe_id,
+        'monthly', $entrepreneur->subscription('default')->trial_ends_at,
+    );
+
+    expect($subscription->status->value)->toBe('trialing');
+    expect($subscription->trial_ends_at)->not->toBeNull();
+    expect(app(SubscriptionService::class)->currentPlanFor($entrepreneur->fresh())->key)->toBe('entrepreneur');
 });
 
 it('mirrors a Cashier subscription into plan_subscriptions when a webhook is handled', function () {

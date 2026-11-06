@@ -42,13 +42,13 @@ class ProjectAnalysisService
             ]);
         }
 
-        $this->usage->record($requester, AiInteractionType::ProjectAnalysis, AiRequestStatus::Completed, $project, 'anthropic', $result->tokensUsed);
+        $this->usage->record($requester, AiInteractionType::ProjectAnalysis, AiRequestStatus::Completed, $project, config('ai.features.provider'), $result->tokensUsed);
 
         $analysis = AiAnalysis::create([
             'project_id' => $project->id,
             'requested_by_user_id' => $requester->id,
             'status' => AiRequestStatus::Completed->value,
-            'provider' => 'anthropic',
+            'provider' => config('ai.features.provider'),
             'investment_score' => $result->investmentScore,
             'tokens_used' => $result->tokensUsed,
             'content' => [

@@ -42,4 +42,6 @@ export type AuthModalContextValue = {
     consumeIntent: () => PendingIntent;
 };
 
-export const AuthModalContext = createContext<AuthModalContextValue | null>(null);
+export const AuthModalContext = createContext<AuthModalContextValue | null>(
+    null,
+);

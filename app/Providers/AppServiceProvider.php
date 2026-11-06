@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Contracts\AiConversationProviderInterface;
 use App\Contracts\ContractDraftProviderInterface;
+use App\Contracts\NegotiationAnalysisProviderInterface;
 use App\Contracts\ProjectAnalysisProviderInterface;
 use App\Events\ConnectionAccepted;
 use App\Events\ConnectionRequested;
@@ -27,17 +28,20 @@ use App\Listeners\SendKycNotification;
 use App\Listeners\SendMatchNotification;
 use App\Listeners\SendPaymentNotification;
 use App\Listeners\SyncPlanSubscriptionFromCashier;
-use App\Services\Ai\Providers\AnthropicContractDraftProvider;
-use App\Services\Ai\Providers\AnthropicConversationProvider;
-use App\Services\Ai\Providers\AnthropicProjectAnalysisProvider;
+use App\Services\Ai\Providers\LaravelAiContractDraftProvider;
+use App\Services\Ai\Providers\LaravelAiConversationProvider;
+use App\Services\Ai\Providers\LaravelAiNegotiationAnalysisProvider;
+use App\Services\Ai\Providers\LaravelAiProjectAnalysisProvider;
 use App\Services\Ai\Providers\NullAiConversationProvider;
 use App\Services\Ai\Providers\NullContractDraftProvider;
+use App\Services\Ai\Providers\NullNegotiationAnalysisProvider;
 use App\Services\Ai\Providers\NullProjectAnalysisProvider;
 use App\Services\Matching\AiSemanticAnalyzer;
-use App\Services\Matching\AnthropicSemanticAnalyzer;
+use App\Services\Matching\LaravelAiSemanticAnalyzer;
 use App\Services\Matching\NullSemanticAnalyzer;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Auth\Events\Logout;
+use Illuminate\Foundation\Support\Providers\EventServiceProvider;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
@@ -47,13 +51,22 @@ class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
+        // Every listener in this app is registered explicitly in boot()
+        // below. Laravel's framework EventServiceProvider would ALSO
+        // auto-discover app/Listeners by handle() type-hint and register
+        // each of them a second time — every notification, escrow
+        // transition, and audit event would fire twice. Disable that
+        // discovery so the explicit list stays the single source of truth.
+        EventServiceProvider::disableEventDiscovery();
+
         // The one place that decides which AiSemanticAnalyzer
         // implementation the rest of the app gets — MatchScoringService
         // depends on the interface only, so flipping MATCHING_AI_ENABLED
-        // never requires touching matching logic.
+        // never requires touching matching logic. The concrete class
+        // drives a laravel/ai Agent (App\Ai\Agents\MatchCompatibilityAgent).
         $this->app->bind(AiSemanticAnalyzer::class, function () {
             return config('matching.ai_enabled')
-                ? $this->app->make(AnthropicSemanticAnalyzer::class)
+                ? $this->app->make(LaravelAiSemanticAnalyzer::class)
                 : $this->app->make(NullSemanticAnalyzer::class);
         });
 
@@ -61,22 +74,31 @@ class AppServiceProvider extends ServiceProvider
         // deployment might want matching AI off while project
         // analysis/coach/advisor are on, or vice versa — these are
         // product decisions, not one on/off switch for "AI" as a whole.
+        // Each concrete provider drives a laravel/ai Agent in App\Ai\Agents
+        // and still returns null (never throws) when the feature is off or
+        // the provider has no API key.
         $this->app->bind(ProjectAnalysisProviderInterface::class, function () {
-            return config('ai.enabled')
-                ? $this->app->make(AnthropicProjectAnalysisProvider::class)
+            return config('ai.features.enabled')
+                ? $this->app->make(LaravelAiProjectAnalysisProvider::class)
                 : $this->app->make(NullProjectAnalysisProvider::class);
         });
 
         $this->app->bind(AiConversationProviderInterface::class, function () {
-            return config('ai.enabled')
-                ? $this->app->make(AnthropicConversationProvider::class)
+            return config('ai.features.enabled')
+                ? $this->app->make(LaravelAiConversationProvider::class)
                 : $this->app->make(NullAiConversationProvider::class);
         });
 
         $this->app->bind(ContractDraftProviderInterface::class, function () {
-            return config('ai.enabled')
-                ? $this->app->make(AnthropicContractDraftProvider::class)
+            return config('ai.features.enabled')
+                ? $this->app->make(LaravelAiContractDraftProvider::class)
                 : $this->app->make(NullContractDraftProvider::class);
+        });
+
+        $this->app->bind(NegotiationAnalysisProviderInterface::class, function () {
+            return config('ai.features.enabled')
+                ? $this->app->make(LaravelAiNegotiationAnalysisProvider::class)
+                : $this->app->make(NullNegotiationAnalysisProvider::class);
         });
     }
 

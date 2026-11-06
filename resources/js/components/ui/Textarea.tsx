@@ -1,11 +1,17 @@
-import { useLayoutEffect, useRef, useState, type TextareaHTMLAttributes } from 'react';
+import {
+    useLayoutEffect,
+    useRef,
+    useState,
+    type TextareaHTMLAttributes,
+} from 'react';
+import { useField } from '@/components/ui/Field';
 import { cn } from '@/lib/utils';
 
 type TextareaSize = 'default' | 'sm';
 
 const sizeClasses: Record<TextareaSize, string> = {
-    default: 'px-3 py-2 text-sm',
-    sm: 'px-2 py-1.5 text-sm',
+    default: 'min-h-24 px-3 py-2 text-2xl sm:text-xl',
+    sm: 'min-h-20 px-2 py-1.5 text-2xl sm:text-xl',
 };
 
 type TextareaProps = TextareaHTMLAttributes<HTMLTextAreaElement> & {
@@ -25,9 +31,23 @@ function resize(el: HTMLTextAreaElement) {
  * N caractères minimum" while under minLength, then "N caractères
  * restants" counting down to maxLength.
  */
-export function Textarea({ size = 'default', error, className, minLength, maxLength, onInput, ...props }: TextareaProps) {
+export function Textarea({
+    size = 'default',
+    error,
+    className,
+    minLength,
+    maxLength,
+    onInput,
+    id,
+    'aria-describedby': ariaDescribedBy,
+    'aria-invalid': ariaInvalid,
+    ...props
+}: TextareaProps) {
+    const field = useField();
     const ref = useRef<HTMLTextAreaElement>(null);
-    const [length, setLength] = useState(() => String(props.value ?? props.defaultValue ?? '').length);
+    const [length, setLength] = useState(
+        () => String(props.value ?? props.defaultValue ?? '').length,
+    );
 
     useLayoutEffect(() => {
         if (!ref.current) return;
@@ -37,6 +57,11 @@ export function Textarea({ size = 'default', error, className, minLength, maxLen
 
     const belowMin = typeof minLength === 'number' && length < minLength;
     const remaining = typeof maxLength === 'number' ? maxLength - length : null;
+    const showError = error || field?.hasError;
+    const describedBy =
+        [showError ? field?.errorId : null, ariaDescribedBy]
+            .filter(Boolean)
+            .join(' ') || undefined;
 
     const message = belowMin
         ? (() => {
@@ -51,12 +76,17 @@ export function Textarea({ size = 'default', error, className, minLength, maxLen
         <div className="w-full">
             <textarea
                 ref={ref}
+                id={id ?? field?.controlId}
+                aria-describedby={describedBy}
+                aria-invalid={ariaInvalid ?? (showError || undefined)}
                 minLength={minLength}
                 maxLength={maxLength}
                 className={cn(
-                    'w-full resize-none overflow-hidden border focus:outline-none',
+                    'w-full resize-none overflow-hidden rounded-none border bg-paper text-ink placeholder:text-ink-muted/70 focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-action disabled:cursor-not-allowed disabled:bg-surface-2 disabled:text-ink-muted',
                     sizeClasses[size],
-                    error ? 'border-orange-600 focus:border-orange-600' : 'border-slate-400 focus:border-blue-600',
+                    showError
+                        ? 'border-danger focus:border-danger focus-visible:outline-danger'
+                        : 'border-rule-strong focus:border-action',
                     className,
                 )}
                 onInput={(e) => {
@@ -67,7 +97,13 @@ export function Textarea({ size = 'default', error, className, minLength, maxLen
                 {...props}
             />
             {message && (
-                <p className={cn('mt-1 text-right text-caption', (belowMin || (remaining !== null && remaining < 0)) && 'text-orange-600')}>
+                <p
+                    className={cn(
+                        'mt-1 text-right text-caption',
+                        (belowMin || (remaining !== null && remaining < 0)) &&
+                            'text-danger',
+                    )}
+                >
                     {message}
                 </p>
             )}
