@@ -6,11 +6,15 @@ use App\Enums\EscrowStatus;
 use App\Models\Contract;
 use App\Models\Escrow;
 use App\Services\AuditLogger;
+use App\Services\Compliance\InvestmentComplianceGateService;
 use Illuminate\Validation\ValidationException;
 
 class CreateEscrow
 {
-    public function __construct(private AuditLogger $audit) {}
+    public function __construct(
+        private AuditLogger $audit,
+        private InvestmentComplianceGateService $compliance,
+    ) {}
 
     public function handle(Contract $contract): Escrow
     {
@@ -25,6 +29,14 @@ class CreateEscrow
                 'contract' => 'Un séquestre existe déjà pour ce contrat.',
             ]);
         }
+
+        $this->compliance->assertAllows(
+            $this->compliance->evaluateContract(
+                $contract,
+                InvestmentComplianceGateService::STAGE_ESCROW_CREATION,
+            ),
+            'contract',
+        );
 
         // Escrow::$fillable is deliberately empty — create() would
         // silently drop every field, so forceCreate() bypasses that

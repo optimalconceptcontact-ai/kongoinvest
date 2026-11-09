@@ -3,7 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Enums\DrcProvince;
-use App\Enums\FundingType;
+use App\Models\FinancialInstrument;
 use App\Models\Project;
 use App\Models\Stage;
 use App\Rules\WithinFundingLimits;
@@ -21,6 +21,30 @@ class UpdateProjectRequest extends FormRequest
         // anything the client sent — a request can never claim to own a
         // project it doesn't (spec §12, §100).
         return $this->user()?->can('update', $project) ?? false;
+    }
+
+    protected function prepareForValidation(): void
+    {
+        $investmentTypes = $this->input('investment_types');
+        $instrumentIds = $this->input('financial_instruments') ?? collect($this->input('financing_components', []))->pluck('financial_instrument_id')->filter()->all();
+
+        if (empty($investmentTypes) && ! empty($instrumentIds)) {
+            $instruments = FinancialInstrument::whereIn('id', $instrumentIds)->get();
+            $derived = $instruments->map(function ($inst) {
+                return match ($inst->instrument_category) {
+                    'equity' => 'equity',
+                    'debt' => 'debt',
+                    'hybrid' => 'convertible_note',
+                    'grant' => 'grant',
+                    'revenue_share' => 'revenue_share',
+                    default => 'other',
+                };
+            })->unique()->values()->all();
+
+            $this->merge([
+                'investment_types' => ! empty($derived) ? $derived : ['equity'],
+            ]);
+        }
     }
 
     public function rules(): array
@@ -64,11 +88,18 @@ class UpdateProjectRequest extends FormRequest
             'funding_max_minor' => ['nullable', 'integer', 'min:0', 'gte:funding_min_minor'],
             'funding_currency' => ['required', 'string', 'size:3'],
 
-            // Exactly 3 financing types the entrepreneur is open to —
-            // the investor later picks one of these three when
-            // requesting AI contract generation in the Deal Room.
-            'investment_types' => ['required', 'array', 'size:3'],
-            'investment_types.*' => [Rule::enum(FundingType::class)],
+            // Backward compatibility and dynamic instruments
+            'investment_types' => ['nullable', 'array', 'min:1', 'max:6'],
+            'investment_types.*' => ['string'],
+
+            'financial_instruments' => ['nullable', 'array'],
+            'financial_instruments.*' => ['integer', 'exists:financial_instruments,id'],
+            'financing_components' => ['nullable', 'array'],
+            'financing_components.*.financial_instrument_id' => ['required_with:financing_components', 'integer', 'exists:financial_instruments,id'],
+            'financing_components.*.target_amount_minor' => ['nullable', 'integer', 'min:0'],
+            'financing_components.*.min_amount_minor' => ['nullable', 'integer', 'min:0'],
+            'financing_components.*.is_mandatory' => ['nullable', 'boolean'],
+            'financing_request' => ['nullable', 'array'],
 
             'provinces' => ['nullable', 'array', $this->maxProvincesRule()],
             'provinces.*' => [Rule::enum(DrcProvince::class)],

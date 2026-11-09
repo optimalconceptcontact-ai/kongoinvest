@@ -10,7 +10,19 @@ class ContractPolicy
 {
     public function view(User $user, Contract $contract): bool
     {
-        return $contract->dealRoom->isParticipant($user) || $user->can('users.manage');
+        if ($user->can('users.manage')) {
+            return true;
+        }
+
+        $dealRoom = $contract->dealRoom;
+
+        if ($user->hasBlockedComplianceCase()
+            || $dealRoom->investor?->hasBlockedComplianceCase()
+            || $dealRoom->entrepreneur?->hasBlockedComplianceCase()) {
+            return false;
+        }
+
+        return $dealRoom->isParticipant($user);
     }
 
     /**
@@ -20,13 +32,16 @@ class ContractPolicy
      */
     public function generate(User $user, DealRoom $dealRoom): bool
     {
-        return $user->id === $dealRoom->investor_user_id && $user->can('contracts.view');
+        return $user->id === $dealRoom->investor_user_id
+            && ! $user->hasBlockedComplianceCase()
+            && $user->can('contracts.view');
     }
 
     public function accept(User $user, Contract $contract): bool
     {
         return $contract->dealRoom->isParticipant($user)
             && ! $contract->hasAccepted($user)
+            && ! $user->hasBlockedComplianceCase()
             && $user->can('contracts.accept');
     }
 

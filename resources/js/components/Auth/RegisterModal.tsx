@@ -93,7 +93,7 @@ export function RegisterModal({
                             role="radio"
                             aria-checked={data.role === r.value}
                             onClick={() => setData('role', r.value)}
-                            className={`border px-3 py-3 text-left text-lg transition ${
+                            className={`border px-3 py-3 text-left text-sm transition ${
                                 data.role === r.value
                                     ? 'border-ink bg-ink text-paper'
                                     : 'border-rule-strong text-ink hover:border-ink'

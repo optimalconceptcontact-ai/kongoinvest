@@ -2,6 +2,8 @@
 
 namespace App\Actions\Kyc;
 
+use App\Enums\AmlAlertStatus;
+use App\Enums\AmlAlertType;
 use App\Enums\KycStatus;
 use App\Events\KycApproved;
 use App\Events\KycRejected;
@@ -61,6 +63,23 @@ class ReviewKyc
 
     private function assertReviewable(KycProfile $kycProfile): void
     {
+        $case = $kycProfile->complianceCase;
+
+        if ($case?->isBlockedOrSuspended()) {
+            throw ValidationException::withMessages([
+                'kyc' => 'Ce dossier fait l\'objet d\'un blocage ou d\'une suspension : il doit être traité par le service conformité.',
+            ]);
+        }
+
+        if ($case && $case->alerts()
+            ->where('status', AmlAlertStatus::Open)
+            ->where('alert_type', AmlAlertType::SanctionsMatch)
+            ->exists()) {
+            throw ValidationException::withMessages([
+                'kyc' => 'Une alerte sanctions reste ouverte : elle doit être traitée avant toute décision KYC.',
+            ]);
+        }
+
         if (! in_array($kycProfile->status, [KycStatus::Submitted, KycStatus::UnderReview], true)) {
             throw ValidationException::withMessages([
                 'kyc' => "Ce dossier n'est pas en attente de vérification.",

@@ -7,12 +7,16 @@ use App\Events\EscrowReleased;
 use App\Models\Escrow;
 use App\Models\User;
 use App\Services\AuditLogger;
+use App\Services\Compliance\InvestmentComplianceGateService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class ReleaseEscrow
 {
-    public function __construct(private AuditLogger $audit) {}
+    public function __construct(
+        private AuditLogger $audit,
+        private InvestmentComplianceGateService $compliance,
+    ) {}
 
     /**
      * Spec §147 is explicit: KongoInvest is not itself a financial
@@ -47,6 +51,17 @@ class ReleaseEscrow
                     'escrow' => 'Ce séquestre ne peut pas être libéré dans son état actuel.',
                 ]);
             }
+
+            // Compliance freeze: never release funds while either party
+            // has a blocked/suspended case, an open sanctions alert, a
+            // rejected KYC or an unapproved compliance checkpoint.
+            $this->compliance->assertAllows(
+                $this->compliance->evaluateEscrow(
+                    $locked,
+                    InvestmentComplianceGateService::STAGE_ESCROW_RELEASE,
+                ),
+                'escrow',
+            );
 
             // Escrow::$fillable is deliberately empty — update() would
             // silently drop these.

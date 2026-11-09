@@ -65,6 +65,11 @@ class ProjectPolicy
         return $project->isOwnedBy($user) && $user->can('projects.publish');
     }
 
+    public function moderate(User $user, Project $project): bool
+    {
+        return $user->can('projects.moderate');
+    }
+
     public function archive(User $user, Project $project): bool
     {
         return $project->isOwnedBy($user) && $user->can('projects.update');

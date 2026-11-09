@@ -11,7 +11,17 @@ class InvestmentContractWorkspacePolicy
 {
     public function view(User $user, InvestmentContractWorkspace $workspace): bool
     {
-        return $workspace->isParticipant($user) || $user->can('users.manage');
+        if ($user->can('users.manage')) {
+            return true;
+        }
+
+        if ($user->hasBlockedComplianceCase()
+            || $workspace->founder()?->hasBlockedComplianceCase()
+            || $workspace->investor()?->hasBlockedComplianceCase()) {
+            return false;
+        }
+
+        return $workspace->isParticipant($user);
     }
 
     /**
@@ -22,7 +32,9 @@ class InvestmentContractWorkspacePolicy
      */
     public function create(User $user, DealRoom $dealRoom): bool
     {
-        return $dealRoom->isParticipant($user) && $user->can('contracts.view');
+        return $dealRoom->isParticipant($user)
+            && ! $user->hasBlockedComplianceCase()
+            && $user->can('contracts.view');
     }
 
     /**
@@ -33,6 +45,7 @@ class InvestmentContractWorkspacePolicy
     public function consent(User $user, InvestmentContractWorkspace $workspace): bool
     {
         return $workspace->isParticipant($user)
+            && ! $user->hasBlockedComplianceCase()
             && $user->can('contracts.view')
             && ! $workspace->isClosed()
             && $workspace->status !== WorkspaceStatus::Cancelled;
@@ -45,6 +58,7 @@ class InvestmentContractWorkspacePolicy
     public function update(User $user, InvestmentContractWorkspace $workspace): bool
     {
         return $workspace->isParticipant($user)
+            && ! $user->hasBlockedComplianceCase()
             && ! $workspace->isClosed()
             && $workspace->status !== WorkspaceStatus::Cancelled;
     }

@@ -2,18 +2,22 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Actions\Projects\PublishProject;
+use App\Actions\Projects\RejectProject;
+use App\Enums\ProjectStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Project;
+use App\Notifications\ProjectModerationNotification;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class ProjectController extends Controller
 {
-    /** Read-only — see App\Http\Controllers\Admin\UserController for why (spec §89's sensitive-action reasoning applies the same way here). */
     public function index(Request $request): Response
     {
-        $query = Project::query()->with(['sectors', 'user']);
+        $query = Project::query()->with(['sectors', 'user', 'moderatedBy']);
 
         if ($status = $request->string('status')->trim()->value()) {
             $query->where('status', $status);
@@ -33,8 +37,50 @@ class ProjectController extends Controller
                 'fundingTargetMinor' => $p->funding_target_minor,
                 'fundingCurrency' => $p->funding_currency,
                 'createdAt' => $p->created_at->toIso8601String(),
+                'submittedAt' => $p->submitted_at?->toIso8601String(),
+                'moderatedAt' => $p->moderated_at?->toIso8601String(),
+                'moderationNotes' => $p->moderation_notes,
+                'moderatorName' => $p->moderatedBy?->name,
             ]),
             'filters' => $request->only('status'),
+            'statuses' => collect(ProjectStatus::cases())
+                ->map(fn (ProjectStatus $status) => [
+                    'value' => $status->value,
+                    'label' => $status->label(),
+                ])
+                ->all(),
+            'counts' => collect(ProjectStatus::cases())
+                ->mapWithKeys(fn (ProjectStatus $status) => [
+                    $status->value => Project::where('status', $status->value)->count(),
+                ])
+                ->all(),
+            'canModerate' => (bool) $request->user()?->can('projects.moderate'),
         ]);
+    }
+
+    public function approve(Request $request, Project $project, PublishProject $action): RedirectResponse
+    {
+        $this->authorize('moderate', $project);
+
+        $action->handle($project, $request->user());
+
+        $project->user?->notify(new ProjectModerationNotification($project, true));
+
+        return back()->with('success', 'Projet approuvé et publié.');
+    }
+
+    public function reject(Request $request, Project $project, RejectProject $action): RedirectResponse
+    {
+        $this->authorize('moderate', $project);
+
+        $validated = $request->validate([
+            'reason' => ['required', 'string', 'max:2000'],
+        ]);
+
+        $action->handle($project, $request->user(), $validated['reason']);
+
+        $project->user?->notify(new ProjectModerationNotification($project, false, $validated['reason']));
+
+        return back()->with('success', 'Projet rejeté, l\'entrepreneur a été notifié.');
     }
 }

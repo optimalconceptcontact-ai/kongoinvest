@@ -13,6 +13,7 @@ use App\Models\ContractSignature;
 use App\Models\InvestmentContractWorkspace;
 use App\Models\User;
 use App\Services\AuditLogger;
+use App\Services\Compliance\InvestmentComplianceGateService;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
@@ -26,7 +27,10 @@ use Illuminate\Validation\ValidationException;
  */
 class RequestContractSignatures
 {
-    public function __construct(private AuditLogger $audit) {}
+    public function __construct(
+        private AuditLogger $audit,
+        private InvestmentComplianceGateService $compliance,
+    ) {}
 
     /**
      * @param  array<string, mixed>  $input
@@ -51,6 +55,14 @@ class RequestContractSignatures
                 'workspace' => 'L\'opération est clôturée ou annulée : plus de demande possible.',
             ]);
         }
+
+        $this->compliance->assertAllows(
+            $this->compliance->evaluateWorkspace(
+                $workspace,
+                InvestmentComplianceGateService::STAGE_SIGNATURE,
+            ),
+            'workspace',
+        );
 
         $data = Validator::make($input, [
             'method' => ['sometimes', Rule::enum(SignatureMethod::class)],

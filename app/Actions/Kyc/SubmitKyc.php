@@ -28,6 +28,12 @@ class SubmitKyc
             ]);
         }
 
+        if ($kycProfile->complianceCase?->isBlockedOrSuspended()) {
+            throw ValidationException::withMessages([
+                'kyc' => 'Ce dossier fait l\'objet d\'un blocage ou d\'une suspension : il doit être traité par le service conformité.',
+            ]);
+        }
+
         return DB::transaction(function () use ($kycProfile, $files) {
             foreach ($files as $file) {
                 $kycProfile->addMedia($file)->toMediaCollection('kyc-documents');

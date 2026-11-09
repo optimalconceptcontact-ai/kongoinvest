@@ -63,7 +63,7 @@ export default function Index({
                 ))}
             </div>
 
-            <div className="border border-rule">
+            <div className="border border-rule-strong bg-paper">
                 {subscriptions.data.length === 0 && (
                     <p className="p-6 text-center text-caption">
                         Aucun abonnement.

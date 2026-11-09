@@ -1,5 +1,7 @@
 import { usePage } from '@inertiajs/react';
 import {
+    RiBarChartLine,
+    RiBookOpenLine,
     RiBriefcase4Line,
     RiContractLine,
     RiDashboardLine,
@@ -17,13 +19,20 @@ import {
 } from '@remixicon/react';
 import type { ReactNode } from 'react';
 import { DashboardLayout } from '@/layouts/DashboardLayout';
+import type { DashboardBreadcrumb } from '@/layouts/DashboardLayout';
 
 export function AdminLayout({
     children,
     title,
+    breadcrumbs,
+    description,
+    actions,
 }: {
     children: ReactNode;
     title: string;
+    breadcrumbs?: DashboardBreadcrumb[];
+    description?: string;
+    actions?: ReactNode;
 }) {
     const { url } = usePage();
     const is = (path: string) => url.startsWith(path);
@@ -33,12 +42,21 @@ export function AdminLayout({
             title={title}
             roleLabel="Admin"
             maxWidth="7xl"
+            breadcrumbs={breadcrumbs}
+            description={description}
+            actions={actions}
             navItems={[
                 {
                     href: '/admin',
                     icon: RiDashboardLine,
                     label: 'Dashboard',
                     active: url === '/admin',
+                },
+                {
+                    href: '/admin/statistics/users',
+                    icon: RiBarChartLine,
+                    label: 'Statistiques',
+                    active: is('/admin/statistics'),
                 },
                 {
                     href: '/admin/users',
@@ -51,7 +69,7 @@ export function AdminLayout({
                     icon: RiBriefcase4Line,
                     label: 'Projets',
                     active: is('/admin/projects'),
-                    badge: 'lecture seule',
+                    badge: 'modération',
                 },
                 {
                     href: '/admin/matching-weights',
@@ -76,6 +94,12 @@ export function AdminLayout({
                     icon: RiHandCoinLine,
                     label: 'Escrow',
                     active: is('/admin/escrow'),
+                },
+                {
+                    href: '/admin/compliance',
+                    icon: RiShieldCheckLine,
+                    label: 'Conformité & AML',
+                    active: is('/admin/compliance'),
                 },
                 {
                     href: '/admin/kyc',
@@ -125,6 +149,12 @@ export function AdminLayout({
                     icon: RiQuestionLine,
                     label: 'FAQ',
                     active: is('/admin/faqs'),
+                },
+                {
+                    href: '/admin/guides',
+                    icon: RiBookOpenLine,
+                    label: 'Guide',
+                    active: is('/admin/guides'),
                 },
                 {
                     href: '/settings/profile',

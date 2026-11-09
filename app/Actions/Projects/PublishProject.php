@@ -6,18 +6,24 @@ use App\Enums\ProjectStatus;
 use App\Enums\ProjectVisibility;
 use App\Jobs\ComputeMatchesForProject;
 use App\Models\Project;
+use App\Models\User;
 use Illuminate\Validation\ValidationException;
 
 class PublishProject
 {
     /**
-     * A project can't be published half-empty — this is server-side, not
-     * a disabled button (spec §100). Kept intentionally minimal for
-     * Phase 3; Phase 5 (AI analysis) may add its own pre-publish checks
-     * later without this action needing to change shape.
+     * Administrator approval of a project that is waiting for review.
+     * The moderation fields are excluded from Project::$fillable, so they
+     * are assigned directly here and nowhere else.
      */
-    public function handle(Project $project): Project
+    public function handle(Project $project, ?User $moderator = null): Project
     {
+        if ($project->status !== ProjectStatus::PendingReview) {
+            throw ValidationException::withMessages([
+                'publish' => 'Seul un projet en attente de validation peut être approuvé.',
+            ]);
+        }
+
         if ($project->sectors()->count() === 0 || $project->stages()->count() === 0) {
             throw ValidationException::withMessages([
                 'publish' => 'Sélectionnez au moins un secteur et un stade avant de publier.',
@@ -30,14 +36,14 @@ class PublishProject
             ]);
         }
 
-        // status/visibility/published_at are deliberately excluded from
-        // Project::$fillable (only this action may set them) — update()
-        // would silently no-op on them, so set the attributes directly.
         $project->status = ProjectStatus::Published;
         if ($project->visibility === ProjectVisibility::Private) {
             $project->visibility = ProjectVisibility::Public;
         }
         $project->published_at = now();
+        $project->moderated_at = now();
+        $project->moderated_by_id = $moderator?->id;
+        $project->moderation_notes = null;
         $project->save();
 
         // Spec §22-24: publishing is what triggers matching. Queued —

@@ -22,8 +22,8 @@ class MatchScoringService
     {
         // Step 1: normalize — eager-load what the rule scorers need so
         // they never trigger N+1s (spec §83).
-        $project->loadMissing(['sectors', 'stages']);
-        $investor->loadMissing(['sectors', 'stages']);
+        $project->loadMissing(['sectors', 'stages', 'latestFinancingRequest.components.instrument']);
+        $investor->loadMissing(['sectors', 'stages', 'preferredInstruments']);
 
         // Step 2 + 3: rule matching + weighted score, for the 5
         // objective criteria.

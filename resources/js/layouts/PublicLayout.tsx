@@ -20,6 +20,7 @@ type SharedAuth = {
 };
 
 const infoLinks = [
+    { href: '/guides', label: 'Guides' },
     { href: '/faq', label: 'FAQ' },
     { href: '/about', label: 'À propos' },
     { href: '/terms', label: 'Conditions' },
@@ -88,7 +89,11 @@ export function PublicLayout({ children }: { children: ReactNode }) {
                 <nav className="mx-auto flex h-[72px] max-w-[1160px] items-center justify-between px-5 md:px-8">
                     <Link
                         href="/"
-                        className="flex items-center gap-2.5 font-mono text-lg font-bold tracking-[0.04em] whitespace-nowrap text-ink uppercase"
+                        className={`flex items-center gap-2.5 border-b-4 py-5 font-mono text-lg font-bold tracking-[0.04em] whitespace-nowrap text-ink uppercase ${
+                            isActive('/')
+                            ? 'border-signal'
+                            : 'border-transparent'
+                        }`}
                     >
                         <span className="h-2.5 w-2.5 flex-shrink-0 bg-signal" />
                         KongoInvest
@@ -107,7 +112,7 @@ export function PublicLayout({ children }: { children: ReactNode }) {
                                     isActive('/how-it-works') ||
                                     isActive('/projects') ||
                                     isActive('/pricing') 
-                                        ? 'font-bold border-signal text-ink'
+                                        ? 'font-bold text-ink'
                                         : 'border-transparent text-ink-muted hover:text-ink'
                                 }`}
                             >
@@ -204,7 +209,7 @@ export function PublicLayout({ children }: { children: ReactNode }) {
                                 aria-label="Menu info"
                                 aria-expanded={isMenuOpen('info')}
                                 className={`flex items-center gap-1 border-b-4 py-6 font-mono text-basa font-medium tracking-[0.12em] whitespace-nowrap transition-colors ${
-                                    isMenuOpen('info') || isActive('/faq') || isActive('/about') || isActive('/terms') || isActive('/privacy')
+                                    isMenuOpen('info') || isActive('/faq') || isActive('/guides') || isActive('/about') || isActive('/terms') || isActive('/privacy')
                                         ? 'font-bold border-signal text-ink'
                                         : 'border-transparent text-ink-muted hover:text-ink'
                                 }`}
@@ -462,7 +467,7 @@ export function PublicLayout({ children }: { children: ReactNode }) {
                             </nav>
                             <div className="mt-auto flex flex-col gap-2 border-t border-rule p-4">
                                 <div className="px-1 py-1">
-                                    <ThemeSwitcher />
+                                    <ThemeSwitcher variant="icon" />
                                 </div>
                                 {props.auth.user ? (
                                     <>
@@ -575,6 +580,7 @@ function Footer() {
                     <FooterColumn
                         title="Infos"
                         links={[
+                            ['/guides', 'Guides'],
                             ['/about', 'À propos'],
                             ['/faq', 'FAQ'],
                             ['/terms', 'Conditions'],

@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Entrepreneur;
 
 use App\Actions\Projects\ArchiveProject;
 use App\Actions\Projects\CreateProject;
-use App\Actions\Projects\PublishProject;
+use App\Actions\Projects\SubmitProjectForReview;
 use App\Actions\Projects\UpdateProject;
 use App\Data\AiConversationData;
 use App\Data\ProjectData;
@@ -16,6 +16,9 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreProjectRequest;
 use App\Http\Requests\UpdateProjectRequest;
 use App\Models\AiConversation;
+use App\Models\FinancingChannel;
+use App\Models\FinancingSource;
+use App\Models\FinancingType;
 use App\Models\Project;
 use App\Models\Sector;
 use App\Models\Stage;
@@ -78,6 +81,12 @@ class ProjectController extends Controller
             'project' => null,
             'sectors' => Sector::where('is_active', true)->orderBy('order')->get()->map(fn ($s) => SectorData::fromModel($s)),
             'stages' => Stage::where('is_active', true)->orderBy('order')->get()->map(fn ($s) => StageData::fromModel($s)),
+            'financingTypes' => FinancingType::where('is_active', true)
+                ->orderBy('sort_order')
+                ->with(['instruments' => fn ($q) => $q->where('is_active', true)->with('jurisdictionRules')])
+                ->get(),
+            'financingSources' => FinancingSource::where('is_active', true)->orderBy('sort_order')->get(),
+            'financingChannels' => FinancingChannel::where('is_active', true)->orderBy('sort_order')->get(),
         ]);
     }
 
@@ -87,7 +96,7 @@ class ProjectController extends Controller
 
         return redirect()
             ->route('entrepreneur.projects.edit', $project)
-            ->with('success', 'Projet créé. Ajoutez des médias puis publiez-le quand vous êtes prêt.');
+            ->with('success', 'Projet créé. Ajoutez des médias puis soumettez-le à validation quand vous êtes prêt.');
     }
 
     public function edit(Request $request, Project $project, SubscriptionService $subscriptions): Response
@@ -108,6 +117,12 @@ class ProjectController extends Controller
             'project' => ProjectData::fromModel($project, full: true),
             'sectors' => Sector::where('is_active', true)->orderBy('order')->get()->map(fn ($s) => SectorData::fromModel($s)),
             'stages' => Stage::where('is_active', true)->orderBy('order')->get()->map(fn ($s) => StageData::fromModel($s)),
+            'financingTypes' => FinancingType::where('is_active', true)
+                ->orderBy('sort_order')
+                ->with(['instruments' => fn ($q) => $q->where('is_active', true)->with('jurisdictionRules')])
+                ->get(),
+            'financingSources' => FinancingSource::where('is_active', true)->orderBy('sort_order')->get(),
+            'financingChannels' => FinancingChannel::where('is_active', true)->orderBy('sort_order')->get(),
             'hasCoachFeature' => $hasCoach,
             'coachConversation' => $coachConversation ? AiConversationData::fromModel($coachConversation) : null,
             'media' => [
@@ -145,13 +160,13 @@ class ProjectController extends Controller
         return redirect()->route('entrepreneur.projects.index')->with('success', 'Projet supprimé.');
     }
 
-    public function publish(Request $request, Project $project, PublishProject $action): RedirectResponse
+    public function submit(Request $request, Project $project, SubmitProjectForReview $action): RedirectResponse
     {
         $this->authorize('publish', $project);
 
         $action->handle($project);
 
-        return back()->with('success', 'Projet publié.');
+        return back()->with('success', 'Projet soumis à validation.');
     }
 
     public function archive(Request $request, Project $project, ArchiveProject $action): RedirectResponse

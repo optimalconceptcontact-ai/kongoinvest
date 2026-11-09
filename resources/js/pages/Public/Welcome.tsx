@@ -67,7 +67,7 @@ type SharedAuth = {
 function StatBlock({ value, label }: { value: number; label: string }) {
     return (
         <div>
-            <div className="text-stat">{value.toLocaleString('fr-FR')}</div>
+            <div className="text-4xl font-semibold">{value.toLocaleString('fr-FR')}</div>
             <div className="mt-1 text-eyebrow">{label}</div>
         </div>
     );
@@ -774,7 +774,7 @@ export default function Welcome({
             {/* CTA */}
             <section className="border-t-4 border-t-signal bg-ink py-16 text-center text-paper md:py-24">
                 <div className="mx-auto max-w-3xl px-4 md:px-6">
-                    <h2 className="mb-4 font-mono text-4xl font-bold tracking-[-0.03em] md:text-7xl">
+                    <h2 className="mb-4 font-mono text-4xl font-bold tracking-[-0.03em] md:text-6xl">
                         Prêt à faire avancer votre projet ?
                     </h2>
                     <p className="mb-8 text-body">

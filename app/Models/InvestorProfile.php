@@ -66,6 +66,18 @@ class InvestorProfile extends Model
         return $this->belongsToMany(Stage::class, 'investor_stage');
     }
 
+    public function preferredInstruments(): BelongsToMany
+    {
+        return $this->belongsToMany(FinancialInstrument::class, 'investor_profile_instruments')
+            ->withPivot('ticket_min_minor', 'ticket_max_minor')
+            ->withTimestamps();
+    }
+
+    public function financingOffers(): HasMany
+    {
+        return $this->hasMany(FinancingOffer::class);
+    }
+
     public function matches(): HasMany
     {
         return $this->hasMany(MatchModel::class);

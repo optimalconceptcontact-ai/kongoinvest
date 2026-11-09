@@ -19,6 +19,8 @@ type ProjectRow = {
     fundingTargetMinor: number | null;
     fundingCurrency: string;
     sectors: { id: number; name: string }[];
+    moderationNotes?: string | null;
+    submittedAt?: string | null;
     fundingLimitWarning?: {
         shouldShow: boolean;
         currentAmount: string;
@@ -31,14 +33,18 @@ type ProjectRow = {
 
 const statusStyles: Record<string, string> = {
     draft: 'bg-surface-2  text-ink ',
+    pending_review: 'bg-surface-2 text-ink',
     published: 'bg-surface-2 text-ink',
+    rejected: 'bg-danger/10 text-danger',
     archived: 'bg-surface-2  text-ink-muted ',
     closed: 'bg-surface-2 text-ink',
 };
 
 const statusLabels: Record<string, string> = {
     draft: 'Brouillon',
+    pending_review: 'En attente de validation',
     published: 'Publié',
+    rejected: 'Rejeté',
     archived: 'Archivé',
     closed: 'Clôturé',
 };
@@ -56,8 +62,8 @@ export default function Index({
 }) {
     const { confirm, ConfirmDialog } = useConfirm();
 
-    function publish(slug: string) {
-        router.post(`/entrepreneur/projects/${slug}/publish`);
+    function submit(slug: string) {
+        router.post(`/entrepreneur/projects/${slug}/submit`);
     }
 
     async function archive(slug: string) {
@@ -104,7 +110,7 @@ export default function Index({
                         Vous n'avez encore aucun projet.
                     </div>
                 ) : (
-                    <div className="border border-rule">
+                    <div className="border border-rule-strong bg-paper">
                         {projects.map((project) => (
                             <div key={project.id}>
                                 {project.fundingLimitWarning?.shouldShow && (
@@ -163,17 +169,18 @@ export default function Index({
                                         >
                                             <RiEditLine size={14} /> Modifier
                                         </Link>
-                                        {project.status === 'draft' && (
+                                        {(project.status === 'draft' ||
+                                            project.status === 'rejected') && (
                                             <Button
                                                 variant="secondary"
                                                 size="sm"
                                                 onClick={() =>
-                                                    publish(project.slug)
+                                                    submit(project.slug)
                                                 }
                                                 className="flex items-center gap-1.5 py-2"
                                             >
                                                 <RiRocketLine size={14} />{' '}
-                                                Publier
+                                                Soumettre
                                             </Button>
                                         )}
                                         {project.status !== 'archived' && (
@@ -189,6 +196,21 @@ export default function Index({
                                         )}
                                     </div>
                                 </div>
+                                {project.status === 'rejected' &&
+                                    project.moderationNotes && (
+                                        <div className="border-t border-rule bg-surface-2 px-5 py-3 text-caption">
+                                            <strong className="text-ink">
+                                                Motif du rejet :
+                                            </strong>{' '}
+                                            {project.moderationNotes}
+                                        </div>
+                                    )}
+                                {project.status === 'pending_review' && (
+                                    <div className="border-t border-rule bg-surface-2 px-5 py-3 text-caption">
+                                        En attente de validation par un
+                                        administrateur.
+                                    </div>
+                                )}
                             </div>
                         ))}
                     </div>

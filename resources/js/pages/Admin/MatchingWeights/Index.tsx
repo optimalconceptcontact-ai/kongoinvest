@@ -71,7 +71,7 @@ export default function Index({ weights }: { weights: Weight[] }) {
                 </div>
             )}
 
-            <form onSubmit={submit} className="border border-rule">
+            <form onSubmit={submit} className="border border-rule-strong bg-paper">
                 {weights.map((w) => {
                     const current = data.weights.find(
                         (x) => x.criterion === w.criterion,

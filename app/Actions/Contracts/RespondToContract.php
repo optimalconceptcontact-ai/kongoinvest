@@ -7,13 +7,28 @@ use App\Events\ContractAccepted;
 use App\Models\Contract;
 use App\Models\User;
 use App\Services\AuditLogger;
+use App\Services\Compliance\InvestmentComplianceGateService;
 
 class RespondToContract
 {
-    public function __construct(private AuditLogger $audit) {}
+    public function __construct(
+        private AuditLogger $audit,
+        private InvestmentComplianceGateService $compliance,
+    ) {}
 
     public function accept(User $user, Contract $contract): Contract
     {
+        // Compliance freeze applies to both sides of the deal: a
+        // blocked participant or an open sanctions alert freezes
+        // acceptance until the compliance team decides.
+        $this->compliance->assertAllows(
+            $this->compliance->evaluateContract(
+                $contract,
+                InvestmentComplianceGateService::STAGE_CONTRACT_ACCEPTANCE,
+            ),
+            'contract',
+        );
+
         $field = $user->id === $contract->dealRoom->entrepreneur_user_id
             ? 'entrepreneur_accepted_at'
             : 'investor_accepted_at';

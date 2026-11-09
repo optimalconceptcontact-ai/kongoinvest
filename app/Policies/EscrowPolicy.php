@@ -10,13 +10,24 @@ class EscrowPolicy
 {
     public function view(User $user, Escrow $escrow): bool
     {
-        return $escrow->isParticipant($user) || $user->can('users.manage');
+        if ($user->can('users.manage')) {
+            return true;
+        }
+
+        if ($user->hasBlockedComplianceCase()
+            || $escrow->investor?->hasBlockedComplianceCase()
+            || $escrow->entrepreneur?->hasBlockedComplianceCase()) {
+            return false;
+        }
+
+        return $escrow->isParticipant($user);
     }
 
     public function fund(User $user, Escrow $escrow): bool
     {
         return $user->id === $escrow->investor_user_id
             && $escrow->status === EscrowStatus::Pending
+            && ! $user->hasBlockedComplianceCase()
             && $user->can('escrow.create');
     }
 
@@ -25,6 +36,7 @@ class EscrowPolicy
     {
         return $user->id === $escrow->investor_user_id
             && $escrow->status === EscrowStatus::Held
+            && ! $user->hasBlockedComplianceCase()
             && $user->can('escrow.release');
     }
 

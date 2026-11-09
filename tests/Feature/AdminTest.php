@@ -1,6 +1,9 @@
 <?php
 
 use App\Enums\MatchCriterion;
+use App\Enums\PaymentPurpose;
+use App\Enums\PaymentStatus;
+use App\Models\Payment;
 use App\Models\Sector;
 use App\Models\User;
 use App\Services\Matching\MatchingWeightsService;
@@ -33,7 +36,56 @@ it('lets an admin reach the admin dashboard with real stats', function () {
     $response = $this->actingAs($admin)->get('/admin');
 
     $response->assertOk();
-    $response->assertInertia(fn ($page) => $page->has('stats.usersByRole'));
+    $response->assertInertia(fn ($page) => $page
+        ->has('stats.usersByRole')
+        ->has('stats.investments')
+        ->has('stats.revenue.byCurrency')
+        ->where('stats.canViewStatistics', true));
+});
+
+it('counts only subscription revenue on the dashboard, never escrow investments', function () {
+    $admin = User::factory()->create();
+    $admin->assignRole('admin');
+    $payer = User::factory()->investor()->create();
+
+    Payment::factory()->create([
+        'payer_id' => $payer->id,
+        'purpose' => PaymentPurpose::Subscription->value,
+        'status' => PaymentStatus::Succeeded->value,
+        'amount_minor' => 2_900,
+        'currency' => 'USD',
+    ]);
+
+    Payment::factory()->create([
+        'payer_id' => $payer->id,
+        'purpose' => PaymentPurpose::Subscription->value,
+        'status' => PaymentStatus::Succeeded->value,
+        'amount_minor' => 1_000,
+        'currency' => 'CDF',
+    ]);
+
+    Payment::factory()->create([
+        'payer_id' => $payer->id,
+        'purpose' => PaymentPurpose::Subscription->value,
+        'status' => PaymentStatus::Failed->value,
+        'amount_minor' => 2_900,
+        'currency' => 'USD',
+    ]);
+
+    Payment::factory()->create([
+        'payer_id' => $payer->id,
+        'purpose' => PaymentPurpose::Investment->value,
+        'status' => PaymentStatus::Succeeded->value,
+        'amount_minor' => 50_000,
+        'currency' => 'USD',
+    ]);
+
+    $this->actingAs($admin)->get('/admin')
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('stats.revenue.succeededPayments', 2)
+            ->where('stats.revenue.byCurrency.USD', fn ($value) => (float) $value === 29.0)
+            ->where('stats.revenue.byCurrency.CDF', fn ($value) => (float) $value === 10.0));
 });
 
 it('lets an admin manage sectors through the CRUD routes', function () {

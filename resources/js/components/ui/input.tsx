@@ -84,7 +84,7 @@ export function Input({
                     id={id ?? field?.controlId}
                     aria-describedby={describedBy}
                     aria-invalid={ariaInvalid ?? (showError || undefined)}
-                    className="w-full min-w-0 flex-1 self-stretch bg-transparent py-2 text-inherit placeholder:text-ink-muted/70 focus:outline-none disabled:cursor-not-allowed"
+                    className="w-full min-w-0 flex-1 self-stretch bg-transparent py-1 text-inherit placeholder:text-ink-muted/70 focus:outline-none disabled:cursor-not-allowed"
                     {...props}
                 />
                 {suffix && <span aria-hidden className={tokenClasses}>{suffix}</span>}

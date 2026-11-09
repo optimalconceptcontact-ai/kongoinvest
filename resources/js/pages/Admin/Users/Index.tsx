@@ -51,7 +51,7 @@ export default function Index({
                 ))}
             </div>
 
-            <div className="border border-rule">
+            <div className="border border-rule-strong bg-paper">
                 {users.data.map((u) => (
                     <div
                         key={u.id}
@@ -67,7 +67,7 @@ export default function Index({
                                     {r}
                                 </Badge>
                             ))}
-                            <span className="font-mono text-lg text-ink-muted">
+                            <span className="font-mono text-base text-ink-muted">
                                 {new Date(u.createdAt).toLocaleDateString(
                                     'fr-FR',
                                 )}

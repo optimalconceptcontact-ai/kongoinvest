@@ -5,8 +5,10 @@ namespace App\Actions\Payments;
 use App\Enums\PaymentProviderName;
 use App\Enums\PaymentPurpose;
 use App\Enums\PaymentStatus;
+use App\Models\Escrow;
 use App\Models\Payment;
 use App\Models\User;
+use App\Services\Compliance\InvestmentComplianceGateService;
 use App\Services\Payments\PaymentIntentResult;
 use App\Services\Payments\PaymentProviderFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -15,7 +17,10 @@ use Illuminate\Support\Str;
 
 class CreatePayment
 {
-    public function __construct(private PaymentProviderFactory $providers) {}
+    public function __construct(
+        private PaymentProviderFactory $providers,
+        private InvestmentComplianceGateService $compliance,
+    ) {}
 
     /**
      * @param  PaymentPurpose  $purpose
@@ -33,6 +38,19 @@ class CreatePayment
         ?string $idempotencyKey = null,
     ): array {
         return DB::transaction(function () use ($payer, $purpose, $provider, $amountMinor, $currency, $payable, $metadata, $idempotencyKey) {
+            if ($payable instanceof Escrow) {
+                // Funding an escrow is a funds movement: freeze it on
+                // blocked parties, open sanctions alerts or an
+                // unapproved identity checkpoint.
+                $this->compliance->assertAllows(
+                    $this->compliance->evaluateEscrow(
+                        $payable,
+                        InvestmentComplianceGateService::STAGE_ESCROW_FUNDING,
+                    ),
+                    'escrow',
+                );
+            }
+
             // payer_id/purpose/payable/provider/amount_minor/currency/
             // idempotency_key are deliberately outside Payment::$fillable
             // (only this action may set them) — create() would silently

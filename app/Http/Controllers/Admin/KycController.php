@@ -30,7 +30,7 @@ class KycController extends Controller
                 'documents' => $k->getMedia('kyc-documents')->map(fn ($m) => [
                     'id' => $m->id,
                     'name' => $m->name,
-                    'downloadUrl' => URL::temporarySignedRoute('admin.kyc.documents.download', now()->addMinutes(10), ['media' => $m->id]),
+                    'downloadUrl' => URL::temporarySignedRoute('kyc.documents.download', now()->addMinutes(10), ['media' => $m->id]),
                 ]),
             ]),
         ]);

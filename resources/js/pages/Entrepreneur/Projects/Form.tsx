@@ -1,18 +1,26 @@
 import { Head, router, useForm } from '@inertiajs/react';
 import {
+    RiAlertLine,
+    RiBankLine,
     RiBriefcaseLine,
+    RiCheckLine,
     RiCloseLine,
     RiDeleteBinLine,
     RiDownloadLine,
+    RiExchangeFundsLine,
     RiFileTextLine,
     RiFileUploadLine,
     RiImageAddLine,
+    RiInformationLine,
     RiMailLine,
+    RiPercentLine,
+    RiPieChartLine,
+    RiShieldCheckLine,
     RiUserAddLine,
     RiUserLine,
 } from '@remixicon/react';
 import type { FormEvent } from 'react';
-import { useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { CoachPanel } from '@/components/AI/CoachPanel';
 import type { AiConversationData } from '@/components/AI/InvestorAdvisorPanel';
 import { BackLink } from '@/components/ui/BackLink';
@@ -30,6 +38,57 @@ import { DRC_PROVINCES, DRC_PROVINCE_CITIES } from '@/lib/drcProvinces';
 import { FUNDING_TYPES } from '@/lib/fundingTypes';
 
 type Taxonomy = { id: number; name?: string; key?: string }[];
+
+export type InstrumentJurisdictionRule = {
+    id: number;
+    jurisdiction_code: string;
+    legal_status: string;
+    requires_incorporation: boolean;
+    regulatory_notes?: string | null;
+};
+
+export type FinancialInstrumentItem = {
+    id: number;
+    name: string;
+    slug: string;
+    code: string;
+    description: string | null;
+    instrument_category: string;
+    repayment_required: boolean;
+    ownership_dilution: boolean;
+    remuneration_type: string;
+    conversion_possible: boolean;
+    collateral_possible: boolean;
+    jurisdiction_rules?: InstrumentJurisdictionRule[];
+};
+
+export type FinancingTypeItem = {
+    id: number;
+    name: string;
+    slug: string;
+    code: string;
+    description: string | null;
+    icon: string | null;
+    color: string | null;
+    instruments?: FinancialInstrumentItem[];
+};
+
+export type FinancingChannelItem = {
+    id: number;
+    name: string;
+    slug: string;
+    code: string;
+    description: string | null;
+    requires_intermediary: boolean;
+};
+
+export type FinancingComponentFormItem = {
+    id?: number;
+    financial_instrument_id: number;
+    target_amount: number | string;
+    min_amount: number | string;
+    is_mandatory: boolean;
+};
 
 type TeamMember = {
     full_name: string;
@@ -142,7 +201,9 @@ function useMediaUpload(
 
         router.delete(
             `/entrepreneur/projects/${projectSlug}/media/${mediaId}`,
-            { preserveScroll: true },
+            {
+                preserveScroll: true,
+            },
         );
     }
 
@@ -175,12 +236,30 @@ type ProjectFormData = {
     website?: string | null;
     sectors: { id: number }[];
     stages: { id: number }[];
+    financingRequest?: {
+        id: number;
+        totalAmountMinor: number;
+        currency: string;
+        minAcceptableMinor?: number | null;
+        preferredChannelId?: number | null;
+        components: Array<{
+            id: number;
+            financialInstrumentId: number;
+            instrumentCode?: string;
+            instrumentName?: string;
+            targetAmountMinor: number;
+            minAmountMinor?: number | null;
+            isMandatory: boolean;
+        }>;
+    } | null;
 } | null;
 
 type Props = {
     project: ProjectFormData;
     sectors: Taxonomy;
     stages: Taxonomy;
+    financingTypes?: FinancingTypeItem[];
+    financingChannels?: FinancingChannelItem[];
     hasCoachFeature?: boolean;
     coachConversation?: AiConversationData | null;
     media?: ProjectMedia;
@@ -217,6 +296,8 @@ export default function Form({
     project,
     sectors,
     stages,
+    financingTypes,
+    financingChannels,
     hasCoachFeature,
     coachConversation,
     media,
@@ -236,6 +317,37 @@ export default function Form({
         remove: removeDocument,
         ConfirmDialog: documentConfirmDialog,
     } = useMediaUpload(project?.slug ?? '', 'project-documents');
+
+    const [activeFinancingTypeCode, setActiveFinancingTypeCode] =
+        useState<string>(financingTypes?.[0]?.code ?? '');
+
+    const allInstruments = useMemo(() => {
+        return (financingTypes ?? []).flatMap((t) => t.instruments ?? []);
+    }, [financingTypes]);
+
+    // Initial instrument IDs either from existing financingRequest components or mapped from investmentTypes
+    const initialInstrumentIds = useMemo(() => {
+        if (project?.financingRequest?.components?.length) {
+            return project.financingRequest.components.map(
+                (c) => c.financialInstrumentId,
+            );
+        }
+        if (project?.investmentTypes?.length && financingTypes?.length) {
+            const mapped = (financingTypes ?? [])
+                .flatMap((t) => t.instruments ?? [])
+                .filter((i) => {
+                    const legacyCat =
+                        i.instrument_category === 'hybrid'
+                            ? 'convertible_note'
+                            : i.instrument_category;
+                    return project.investmentTypes.includes(legacyCat);
+                })
+                .slice(0, 3)
+                .map((i) => i.id);
+            return mapped;
+        }
+        return [] as number[];
+    }, [project, financingTypes]);
 
     const {
         data,
@@ -270,6 +382,25 @@ export default function Form({
             : '',
         funding_currency: project?.fundingCurrency ?? 'USD',
         investment_types: project?.investmentTypes ?? ([] as string[]),
+        financial_instruments: initialInstrumentIds,
+        financing_components:
+            project?.financingRequest?.components?.map((c) => ({
+                id: c.id,
+                financial_instrument_id: c.financialInstrumentId,
+                target_amount: c.targetAmountMinor
+                    ? c.targetAmountMinor / 100
+                    : '',
+                min_amount: c.minAmountMinor ? c.minAmountMinor / 100 : '',
+                is_mandatory: c.isMandatory ?? true,
+            })) ??
+            initialInstrumentIds.map((instId) => ({
+                financial_instrument_id: instId,
+                target_amount: '',
+                min_amount: '',
+                is_mandatory: true,
+            })),
+        preferred_channel_id:
+            project?.financingRequest?.preferredChannelId ?? '',
         provinces: project?.provinces ?? ([] as string[]),
         cities: project?.cities ?? ([] as string[]),
         website: project?.website ?? '',
@@ -288,6 +419,18 @@ export default function Form({
     const availableCities = Array.from(
         new Set(data.provinces.flatMap((p) => DRC_PROVINCE_CITIES[p] ?? [])),
     );
+
+    // Blended-finance allocation summary, shared by the panel header and
+    // the balance banner so both always show the same numbers.
+    const fundingTarget = Number(data.funding_target_minor) || 0;
+    const allocatedTotal = (data.financing_components || []).reduce(
+        (sum, c) => sum + (Number(c.target_amount) || 0),
+        0,
+    );
+    const allocationGap = fundingTarget - allocatedTotal;
+    const isAllocationBalanced = fundingTarget > 0 && allocationGap === 0;
+    const allocationRatio =
+        fundingTarget > 0 ? Math.min(allocatedTotal / fundingTarget, 1) : 0;
 
     function selectStage(id: number) {
         setData((current) => {
@@ -320,6 +463,108 @@ export default function Form({
         } else if (data.investment_types.length < 3) {
             setData('investment_types', [...data.investment_types, value]);
         }
+    }
+
+    function toggleInstrument(instrument: FinancialInstrumentItem) {
+        const isSelected = data.financial_instruments.includes(instrument.id);
+        let updatedIds: number[];
+        let updatedComponents = [...data.financing_components];
+
+        if (isSelected) {
+            updatedIds = data.financial_instruments.filter(
+                (id) => id !== instrument.id,
+            );
+            updatedComponents = updatedComponents.filter(
+                (c) => c.financial_instrument_id !== instrument.id,
+            );
+        } else {
+            updatedIds = [...data.financial_instruments, instrument.id];
+            const currentTarget = Number(data.funding_target_minor) || 0;
+            const perCompAmount =
+                currentTarget > 0 && updatedIds.length > 0
+                    ? Math.round(currentTarget / updatedIds.length)
+                    : '';
+            updatedComponents.push({
+                financial_instrument_id: instrument.id,
+                target_amount: perCompAmount,
+                min_amount: perCompAmount
+                    ? Math.round(Number(perCompAmount) * 0.5)
+                    : '',
+                is_mandatory: true,
+            });
+        }
+
+        // Derive legacy investment_types for backward compatibility with Deal Room and validation
+        const selectedInstObjects = allInstruments.filter((i) =>
+            updatedIds.includes(i.id),
+        );
+        const derivedLegacy = Array.from(
+            new Set(
+                selectedInstObjects.map((i) => {
+                    switch (i.instrument_category) {
+                        case 'equity':
+                            return 'equity';
+                        case 'debt':
+                            return 'debt';
+                        case 'hybrid':
+                            return 'convertible_note';
+                        case 'grant':
+                            return 'grant';
+                        case 'revenue_share':
+                            return 'revenue_share';
+                        default:
+                            return 'other';
+                    }
+                }),
+            ),
+        );
+
+        setData((current) => ({
+            ...current,
+            financial_instruments: updatedIds,
+            financing_components: updatedComponents,
+            investment_types:
+                derivedLegacy.length > 0
+                    ? derivedLegacy
+                    : current.investment_types,
+        }));
+    }
+
+    function updateComponentField(
+        index: number,
+        field: keyof FinancingComponentFormItem,
+        value: any,
+    ) {
+        setData((current) => {
+            const next = [...current.financing_components];
+            if (next[index]) {
+                next[index] = { ...next[index], [field]: value };
+            }
+            return {
+                ...current,
+                financing_components: next,
+            };
+        });
+    }
+
+    function distributeFundingTargetEvenly() {
+        const total = Number(data.funding_target_minor) || 0;
+        if (total <= 0 || data.financing_components.length === 0) return;
+
+        const count = data.financing_components.length;
+        const perComp = Math.round(total / count);
+
+        const updated = data.financing_components.map((c, index) => {
+            const isFirst = index === 0;
+            const amount = isFirst ? total - perComp * (count - 1) : perComp;
+            return {
+                ...c,
+                target_amount: amount,
+                min_amount: Math.round(amount * 0.5),
+            };
+        });
+
+        setData('financing_components', updated);
     }
 
     function toggleSector(id: number) {
@@ -412,6 +657,45 @@ export default function Form({
             funding_max_minor: d.funding_max_minor
                 ? Math.round(Number(d.funding_max_minor) * 100)
                 : null,
+            preferred_channel_id: d.preferred_channel_id
+                ? Number(d.preferred_channel_id)
+                : null,
+            financing_components: (d.financing_components || []).map(
+                (c: FinancingComponentFormItem) => ({
+                    financial_instrument_id: c.financial_instrument_id,
+                    target_amount_minor: c.target_amount
+                        ? Math.round(Number(c.target_amount) * 100)
+                        : null,
+                    min_amount_minor: c.min_amount
+                        ? Math.round(Number(c.min_amount) * 100)
+                        : null,
+                    is_mandatory: c.is_mandatory ?? true,
+                }),
+            ),
+            financing_request: {
+                total_amount_minor: d.funding_target_minor
+                    ? Math.round(Number(d.funding_target_minor) * 100)
+                    : null,
+                currency: d.funding_currency,
+                min_acceptable_minor: d.funding_min_minor
+                    ? Math.round(Number(d.funding_min_minor) * 100)
+                    : null,
+                preferred_channel_id: d.preferred_channel_id
+                    ? Number(d.preferred_channel_id)
+                    : null,
+                components: (d.financing_components || []).map(
+                    (c: FinancingComponentFormItem) => ({
+                        financial_instrument_id: c.financial_instrument_id,
+                        target_amount_minor: c.target_amount
+                            ? Math.round(Number(c.target_amount) * 100)
+                            : null,
+                        min_amount_minor: c.min_amount
+                            ? Math.round(Number(c.min_amount) * 100)
+                            : null,
+                        is_mandatory: c.is_mandatory ?? true,
+                    }),
+                ),
+            },
         }));
 
         if (isEdit) {
@@ -467,7 +751,7 @@ export default function Form({
                                     onClick={() => toggleSector(s.id)}
                                     className={`min-h-11 border px-3 py-1.5 text-btn ${
                                         data.sectors.includes(s.id)
-                                            ? 'border-ink bg-ink text-paper'
+                                            ? 'border-ink bg-paper text-ink'
                                             : 'border-rule-strong text-ink hover:border-ink'
                                     }`}
                                 >
@@ -647,46 +931,625 @@ export default function Form({
                                 error={!!errors.funding_currency}
                             >
                                 <option value="USD">USD</option>
-                                <option value="EUR">EUR</option>
+                                {/* <option value="EUR">EUR</option> */}
                                 <option value="CDF">CDF</option>
                             </Select>
                             <FieldError>{errors.funding_currency}</FieldError>
                         </Field>
                     </div>
 
-                    <div>
-                        <Label>
-                            Types de financement acceptés (exactement 3)
-                        </Label>
-                        <div
-                            className="flex flex-wrap gap-2"
-                            role="group"
-                            aria-label="Types de financement acceptés"
-                        >
-                            {FUNDING_TYPES.map(([value, label]) => (
-                                <button
-                                    type="button"
-                                    key={value}
-                                    aria-pressed={data.investment_types.includes(
-                                        value,
-                                    )}
-                                    onClick={() => toggleInvestmentType(value)}
-                                    className={`min-h-11 border px-3 py-1.5 text-btn ${
-                                        data.investment_types.includes(value)
-                                            ? 'border-ink bg-ink text-paper'
-                                            : 'border-rule-strong text-ink hover:border-ink'
-                                    }`}
+                    {/* SECTION: CATALOGUE DYNAMIQUE DES FINANCEMENTS & INSTRUMENTS */}
+                    <section
+                        aria-labelledby="financing-heading"
+                        className="flex flex-col gap-6 pt-6"
+                    >
+                        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+                            <div className="max-w-2xl">
+                                <Label
+                                    id="financing-heading"
                                 >
-                                    {label}
-                                </button>
-                            ))}
+                                    Types et instruments financiers
+                                </Label>
+                                <p className="mt-2 text-caption">
+                                    Sélectionnez les instruments adaptés à votre
+                                    projet. Combinez-en plusieurs pour un
+                                    financement mixte (blended finance).
+                                </p>
+                            </div>
+                            <div className="flex shrink-0 items-center gap-3 self-start border border-rule bg-surface-2 px-4 py-3 sm:self-auto">
+                                <span className="text-stat">
+                                    {data.financial_instruments.length}
+                                </span>
+                                <span className="text-caption leading-tight">
+                                    instrument
+                                    {data.financial_instruments.length > 1
+                                        ? 's'
+                                        : ''}{' '}
+                                    retenu
+                                    {data.financial_instruments.length > 1
+                                        ? 's'
+                                        : ''}
+                                </span>
+                            </div>
                         </div>
-                        <p className="mt-1 text-caption">
-                            L'investisseur choisira l'un de ces 3 types lors de
-                            la génération du contrat par IA dans le Deal Room.
-                        </p>
+
+                        {financingTypes && financingTypes.length > 0 ? (
+                            <>
+                                {/* Filtre par type / catégorie */}
+                                <div
+                                    className="flex flex-wrap gap-2"
+                                    role="group"
+                                    aria-label="Filtrer par catégorie de financement"
+                                >
+                                    {financingTypes.map((type) => {
+                                        const typeCount = (
+                                            type.instruments ?? []
+                                        ).filter((i) =>
+                                            data.financial_instruments.includes(
+                                                i.id,
+                                            ),
+                                        ).length;
+
+                                        const isActive =
+                                            activeFinancingTypeCode ===
+                                            type.code;
+
+                                        return (
+                                            <button
+                                                type="button"
+                                                key={type.id}
+                                                aria-pressed={isActive}
+                                                onClick={() =>
+                                                    setActiveFinancingTypeCode(
+                                                        type.code,
+                                                    )
+                                                }
+                                                className={`inline-flex min-h-11 items-center gap-2 border px-3 py-2 text-base font-bold transition-colors ${
+                                                    isActive
+                                                        ? 'border-ink bg-ink text-paper'
+                                                        : 'border-rule-strong bg-paper text-ink-muted hover:border-ink hover:text-ink'
+                                                }`}
+                                            >
+                                                <span>{type.name}</span>
+                                                {typeCount > 0 && (
+                                                    <span
+                                                        className={`inline-flex min-w-5 items-center justify-center px-1.5 py-0.5 text-base ${
+                                                            isActive
+                                                                ? 'text-paper'
+                                                                : 'text-ink-muted'
+                                                        }`}
+                                                    >
+                                                        {typeCount}
+                                                    </span>
+                                                )}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+
+                                {/* Grille des instruments filtrés */}
+                                <div className="flex flex-col gap-4">
+                                    {financingTypes
+                                        .filter(
+                                            (t) =>
+                                                t.code ===
+                                                activeFinancingTypeCode,
+                                        )
+                                        .map((type) => {
+                                            const typeInstruments =
+                                                type.instruments ?? [];
+
+                                            if (typeInstruments.length === 0) {
+                                                return null;
+                                            }
+
+                                            const selectedCount =
+                                                typeInstruments.filter((i) =>
+                                                    data.financial_instruments.includes(
+                                                        i.id,
+                                                    ),
+                                                ).length;
+
+                                            return (
+                                                <div
+                                                    key={type.id}
+                                                >
+                                                    <div className="flex flex-wrap items-center justify-between gap-2">
+                                                        <Label>
+                                                                {type.name}
+                                                        </Label>
+                                                        <span className="font-mono text-sm text-ink-muted">
+                                                            <span className="font-bold text-ink">
+                                                                {selectedCount}
+                                                            </span>{' '}
+                                                            sur{' '}
+                                                            {
+                                                                typeInstruments.length
+                                                            }{' '}
+                                                            retenu
+                                                            {selectedCount > 1
+                                                                ? 's'
+                                                                : ''}
+                                                        </span>
+                                                    </div>
+
+                                                    <div className="grid grid-cols-1 gap-3 py-3 md:grid-cols-3">
+                                                        {typeInstruments.map(
+                                                            (instrument) => {
+                                                                const isSelected =
+                                                                    data.financial_instruments.includes(
+                                                                        instrument.id,
+                                                                    );
+                                                                const drcRule =
+                                                                    instrument.jurisdiction_rules?.find(
+                                                                        (r) =>
+                                                                            r.jurisdiction_code ===
+                                                                            'CD',
+                                                                    );
+                                                                const isRestrictedInDrc =
+                                                                    drcRule?.legal_status ===
+                                                                    'restricted';
+                                                                const requiresIncorp =
+                                                                    drcRule
+                                                                        ? drcRule.requires_incorporation
+                                                                        : true;
+                                                                const stageWarning =
+                                                                    isIdeaStage &&
+                                                                    requiresIncorp;
+                                                                const stageBonus =
+                                                                    isIdeaStage &&
+                                                                    !requiresIncorp;
+
+                                                                return (
+                                                                    <button
+                                                                        type="button"
+                                                                        key={
+                                                                            instrument.id
+                                                                        }
+                                                                        onClick={() =>
+                                                                            toggleInstrument(
+                                                                                instrument,
+                                                                            )
+                                                                        }
+                                                                        aria-pressed={
+                                                                            isSelected
+                                                                        }
+                                                                        className={`group flex w-full cursor-pointer flex-col justify-between border p-3 text-left transition-[border-color,box-shadow] hover:shadow-[4px_4px_0_0_rgba(14,23,38,0.08)] dark:hover:shadow-[4px_4px_0_0_rgba(0,0,0,0.35)] ${
+                                                                            isSelected
+                                                                                ? 'border-ink bg-paper'
+                                                                                : 'border-rule-strong bg-paper hover:border-ink'
+                                                                        }`}
+                                                                    >
+                                                                        <div>
+                                                                            <div className="flex items-start justify-between gap-3">
+                                                                                <span className="text-base leading-snug font-bold text-ink">
+                                                                                    {
+                                                                                        instrument.name
+                                                                                    }
+                                                                                </span>
+                                                                                <span
+                                                                                    aria-hidden
+                                                                                    className={`flex h-5 w-5 shrink-0 items-center justify-center border ${
+                                                                                        isSelected
+                                                                                            ? 'border-ink bg-ink text-paper'
+                                                                                            : 'border-rule-strong text-transparent'
+                                                                                    }`}
+                                                                                >
+                                                                                    <RiCheckLine
+                                                                                        size={
+                                                                                            14
+                                                                                        }
+                                                                                    />
+                                                                                </span>
+                                                                            </div>
+                                                                            {instrument.description && (
+                                                                                <p className="mt-1 line-clamp-2 text-caption text-xs leading-relaxed">
+                                                                                    {
+                                                                                        instrument.description
+                                                                                    }
+                                                                                </p>
+                                                                            )}
+                                                                        </div>
+
+                                                                        <div className="mt-4 flex flex-wrap items-center gap-1.5 pt-1">
+                                                                            {instrument.ownership_dilution && (
+                                                                                <span className="inline-flex items-center gap-1 border border-rule bg-surface-2 px-2 py-1 font-mono text-xs font-bold tracking-wide text-ink-muted">
+                                                                                    <RiPieChartLine
+                                                                                        size={
+                                                                                            12
+                                                                                        }
+                                                                                    />
+                                                                                    Dilution
+                                                                                    capital
+                                                                                </span>
+                                                                            )}
+                                                                            {instrument.repayment_required && (
+                                                                                <span className="inline-flex items-center gap-1 border border-rule bg-surface-2 px-2 py-1 font-mono text-xs font-bold tracking-wide text-ink-muted">
+                                                                                    <RiExchangeFundsLine
+                                                                                        size={
+                                                                                            12
+                                                                                        }
+                                                                                    />
+                                                                                    Remboursable
+                                                                                </span>
+                                                                            )}
+                                                                            {instrument.remuneration_type ===
+                                                                                'profit_share' && (
+                                                                                <span className="inline-flex items-center gap-1 border border-rule bg-surface-2 px-2 py-1 font-mono text-xs font-bold tracking-wide text-ink-muted">
+                                                                                    <RiPercentLine
+                                                                                        size={
+                                                                                            12
+                                                                                        }
+                                                                                    />
+                                                                                    Intéressement
+                                                                                </span>
+                                                                            )}
+                                                                            {isRestrictedInDrc && (
+                                                                                <span
+                                                                                    className="inline-flex items-center gap-1 border border-signal/60 bg-signal/15 px-2 py-1 font-mono text-xs font-bold tracking-wide text-ink"
+                                                                                    title={
+                                                                                        drcRule?.regulatory_notes ||
+                                                                                        'Réglementé OHADA / RDC'
+                                                                                    }
+                                                                                >
+                                                                                    <RiShieldCheckLine
+                                                                                        size={
+                                                                                            12
+                                                                                        }
+                                                                                    />
+                                                                                    Réglementé
+                                                                                    RDC
+                                                                                </span>
+                                                                            )}
+                                                                            {stageWarning && (
+                                                                                <span
+                                                                                    className="inline-flex items-center gap-1 border border-danger/40 bg-danger/10 px-2 py-1 font-mono text-xs font-bold tracking-wide text-danger"
+                                                                                    title="Ce type d'instrument requiert une entreprise formellement immatriculée (RCCM / NIF)"
+                                                                                >
+                                                                                    <RiAlertLine
+                                                                                        size={
+                                                                                            12
+                                                                                        }
+                                                                                    />
+                                                                                    Requiert
+                                                                                    immat.
+                                                                                </span>
+                                                                            )}
+                                                                            {stageBonus && (
+                                                                                <span className="inline-flex items-center gap-1 border border-success/40 bg-success/10 px-2 py-1 font-mono text-xs font-bold tracking-wide text-success">
+                                                                                    <RiCheckLine
+                                                                                        size={
+                                                                                            12
+                                                                                        }
+                                                                                    />
+                                                                                    Adapté
+                                                                                    stade
+                                                                                    Idée
+                                                                                </span>
+                                                                            )}
+                                                                        </div>
+                                                                    </button>
+                                                                );
+                                                            },
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                </div>
+
+                                {/* Ventilation du financement mixte (quand au moins 2 instruments sont choisis) */}
+                                {data.financial_instruments.length >= 2 && (
+                                    <div>
+                                        <div className="flex flex-col gap-3 py-3 sm:flex-row sm:items-center sm:justify-between">
+                                            <div>
+                                                <Label>
+                                                                                                      
+                                                    Ventilation du financement mixte
+                                                    
+                                                </Label>
+                                                <p className="mt-1 text-caption">
+                                                    Répartissez votre objectif
+                                                    global (
+                                                    {fundingTarget.toLocaleString(
+                                                        'fr-FR',
+                                                    )}{' '}
+                                                    {data.funding_currency})
+                                                    entre les instruments
+                                                    retenus.
+                                                </p>
+                                            </div>
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={
+                                                    distributeFundingTargetEvenly
+                                                }
+                                                className="shrink-0"
+                                            >
+                                                Répartir équitablement
+                                            </Button>
+                                        </div>
+
+                                        <div className="flex flex-col gap-2 py-4">
+                                            {data.financing_components.map(
+                                                (comp, idx) => {
+                                                    const inst =
+                                                        allInstruments.find(
+                                                            (i) =>
+                                                                i.id ===
+                                                                comp.financial_instrument_id,
+                                                        );
+
+                                                    if (!inst) {
+                                                        return null;
+                                                    }
+
+                                                    return (
+                                                        <div
+                                                            key={
+                                                                comp.financial_instrument_id
+                                                            }
+                                                            className="grid grid-cols-1 items-end gap-3 border border-rule-strong bg-paper p-3 sm:grid-cols-12"
+                                                        >
+                                                            <div className="sm:col-span-4 sm:self-center">
+                                                                <span className="block text-sm font-semibold text-ink">
+                                                                    {inst.name}
+                                                                </span>
+                                                                <span className="mt-0.5 block font-mono text-xs tracking-wide text-ink-muted uppercase">
+                                                                    {
+                                                                        inst.instrument_category
+                                                                    }
+                                                                </span>
+                                                            </div>
+                                                            <Field className="sm:col-span-4">
+                                                                <Label className="text-sm">
+                                                                    Montant cible
+                                                                </Label>
+                                                                <Input
+                                                                    size="sm"
+                                                                    type="number"
+                                                                    min={0}
+                                                                    suffix={
+                                                                        data.funding_currency
+                                                                    }
+                                                                    value={
+                                                                        comp.target_amount
+                                                                    }
+                                                                    onChange={(
+                                                                        e,
+                                                                    ) =>
+                                                                        updateComponentField(
+                                                                            idx,
+                                                                            'target_amount',
+                                                                            e
+                                                                                .target
+                                                                                .value,
+                                                                        )
+                                                                    }
+                                                                />
+                                                            </Field>
+                                                            <Field className="sm:col-span-3">
+                                                                <Label className="text-sm">
+                                                                    Min.
+                                                                    acceptable
+                                                                </Label>
+                                                                <Input
+                                                                    size="sm"
+                                                                    type="number"
+                                                                    min={0}
+                                                                    suffix={
+                                                                        data.funding_currency
+                                                                    }
+                                                                    value={
+                                                                        comp.min_amount
+                                                                    }
+                                                                    onChange={(
+                                                                        e,
+                                                                    ) =>
+                                                                        updateComponentField(
+                                                                            idx,
+                                                                            'min_amount',
+                                                                            e
+                                                                                .target
+                                                                                .value,
+                                                                        )
+                                                                    }
+                                                                />
+                                                            </Field>
+                                                            <div className="flex justify-end sm:col-span-1">
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() =>
+                                                                        toggleInstrument(
+                                                                            inst,
+                                                                        )
+                                                                    }
+                                                                    aria-label={`Retirer ${inst.name}`}
+                                                                    title="Retirer cet instrument"
+                                                                    className={`flex h-11 w-11 shrink-0 items-center justify-center border border-rule text-ink-muted transition-colors hover:border-danger hover:text-danger`}
+                                                                >
+                                                                    <RiDeleteBinLine
+                                                                        size={
+                                                                            16
+                                                                        }
+                                                                    />
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                },
+                                            )}
+                                        </div>
+
+                                        {/* Synthèse d'équilibre */}
+                                        <div
+                                            className={`mb-4 flex flex-col gap-3 border px-4 py-3 sm:flex-row sm:items-center sm:justify-between ${
+                                                isAllocationBalanced
+                                                    ? 'border-success/40 bg-success/10'
+                                                    : 'border-signal/60 bg-signal/15'
+                                            }`}
+                                        >
+                                            <div className="flex flex-wrap items-baseline gap-2">
+                                                <span className="font-mono text-lg font-bold text-ink">
+                                                    {allocatedTotal.toLocaleString(
+                                                        'fr-FR',
+                                                    )}{' '}
+                                                    {data.funding_currency}
+                                                </span>
+                                                <span className="text-caption">
+                                                    alloué aux instruments
+                                                </span>
+                                                {fundingTarget > 0 && (
+                                                    <span
+                                                        className="h-1 w-24 bg-rule"
+                                                        role="presentation"
+                                                    >
+                                                        <span
+                                                            className={`block h-full ${
+                                                                isAllocationBalanced
+                                                                    ? 'bg-success'
+                                                                    : 'bg-signal'
+                                                            }`}
+                                                            style={{
+                                                                width: `${Math.round(allocationRatio * 100)}%`,
+                                                            }}
+                                                        />
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <span
+                                                className={`flex items-center gap-1.5 text-sm font-medium ${
+                                                    isAllocationBalanced
+                                                        ? 'text-success'
+                                                        : 'text-ink'
+                                                }`}
+                                            >
+                                                {isAllocationBalanced ? (
+                                                    <>
+                                                        <RiCheckLine
+                                                            size={16}
+                                                            className="shrink-0"
+                                                        />
+                                                        Total équilibré avec
+                                                        l'objectif global
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <RiInformationLine
+                                                            size={16}
+                                                            className="shrink-0"
+                                                        />
+                                                        Écart de{' '}
+                                                        {allocationGap.toLocaleString(
+                                                            'fr-FR',
+                                                        )}{' '}
+                                                        {data.funding_currency}{' '}
+                                                        avec l'objectif global
+                                                    </>
+                                                )}
+                                            </span>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Canal de financement privilégié */}
+                                {financingChannels &&
+                                    financingChannels.length > 0 && (
+                                        <div className="pt-4">
+                                            <Field>
+                                                <Label>
+                                                    
+                                                    Canal de financement privilégié (optionnel)
+                                                </Label>
+                                                <Select
+                                                    value={
+                                                        data.preferred_channel_id
+                                                    }
+                                                    onChange={(e) =>
+                                                        setData(
+                                                            'preferred_channel_id',
+                                                            e.target.value,
+                                                        )
+                                                    }
+                                                >
+                                                    <option value="">
+                                                        Sélectionnez un canal
+                                                        (direct, bancaire,
+                                                        crowdfunding...)
+                                                    </option>
+                                                    {financingChannels.map(
+                                                        (c) => (
+                                                            <option
+                                                                key={c.id}
+                                                                value={c.id}
+                                                            >
+                                                                {c.name}{' '}
+                                                                {c.requires_intermediary
+                                                                    ? '(intermédiaire agréé requis)'
+                                                                    : ''}
+                                                            </option>
+                                                        ),
+                                                    )}
+                                                </Select>
+                                                <p className="mt-1 text-caption">
+                                                    Un canal bancaire ou
+                                                    intermédié suppose un
+                                                    partenaire agréé en RDC.
+                                                </p>
+                                            </Field>
+                                        </div>
+                                    )}
+                            </>
+                        ) : (
+                            /* Fallback legacy si le catalogue n'est pas fourni */
+                            <div>
+                                <p className="text-form-label">
+                                    Types de financement acceptés (exactement 3)
+                                </p>
+                                <div
+                                    className="flex flex-wrap gap-2"
+                                    role="group"
+                                    aria-label="Types de financement acceptés"
+                                >
+                                    {FUNDING_TYPES.map(([value, label]) => (
+                                        <button
+                                            type="button"
+                                            key={value}
+                                            aria-pressed={data.investment_types.includes(
+                                                value,
+                                            )}
+                                            onClick={() =>
+                                                toggleInvestmentType(value)
+                                            }
+                                            className={`inline-flex min-h-11 items-center gap-2 border px-3 py-1.5 text-btn transition-colors ${
+                                                data.investment_types.includes(
+                                                    value,
+                                                )
+                                                    ? 'border-ink bg-ink text-paper'
+                                                    : 'border-rule-strong text-ink hover:border-ink'
+                                            }`}
+                                        >
+                                            {data.investment_types.includes(
+                                                value,
+                                            ) && <RiCheckLine size={16} />}
+                                            {label}
+                                        </button>
+                                    ))}
+                                </div>
+                                <p className="mt-1 text-caption">
+                                    L'investisseur choisira l'un de ces 3 types
+                                    lors de la génération du contrat par IA dans
+                                    le Deal Room.
+                                </p>
+                            </div>
+                        )}
+
                         <FieldError>{errors.investment_types}</FieldError>
-                    </div>
+                        <FieldError>{errors.financial_instruments}</FieldError>
+                        <FieldError>{errors.financing_components}</FieldError>
+                    </section>
 
                     <TextArea
                         label="Résumé exécutif"
@@ -1100,3 +1963,4 @@ export default function Form({
         </>
     );
 }
+// Funding choices use app.css tokens and shared form styles; selection states stay clear, accessible, and consistent across screens and themes too..

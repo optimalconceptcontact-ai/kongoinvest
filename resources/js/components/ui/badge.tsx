@@ -4,9 +4,9 @@ import { cn } from '@/lib/utils';
 type BadgeVariant = 'filled' | 'outline';
 
 const variantClasses: Record<BadgeVariant, string> = {
-    filled: 'inline-flex items-center px-2 py-1 font-mono text-lg tracking-[0.06em] uppercase',
+    filled: 'inline-flex items-center px-2 py-1 font-mono text-base tracking-[0.06em] uppercase',
     outline:
-        'inline-flex items-center border border-rule-strong px-2 py-1 font-mono text-lg tracking-[0.06em] uppercase text-ink-muted',
+        'inline-flex items-center border border-rule-strong px-2 py-1 font-mono text-base tracking-[0.06em] uppercase text-ink-muted',
 };
 
 type BadgeProps = HTMLAttributes<HTMLSpanElement> & {

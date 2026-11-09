@@ -3,6 +3,10 @@
 namespace App\Providers;
 
 use App\Contracts\AiConversationProviderInterface;
+use App\Contracts\Compliance\AmlScreeningProviderContract;
+use App\Contracts\Compliance\BiometricProviderContract;
+use App\Contracts\Compliance\OcrProviderContract;
+use App\Contracts\Compliance\PartnerBankExchangeContract;
 use App\Contracts\ContractDraftProviderInterface;
 use App\Contracts\NegotiationAnalysisProviderInterface;
 use App\Contracts\ProjectAnalysisProviderInterface;
@@ -36,6 +40,10 @@ use App\Services\Ai\Providers\NullAiConversationProvider;
 use App\Services\Ai\Providers\NullContractDraftProvider;
 use App\Services\Ai\Providers\NullNegotiationAnalysisProvider;
 use App\Services\Ai\Providers\NullProjectAnalysisProvider;
+use App\Services\Compliance\Providers\MockAmlScreeningProvider;
+use App\Services\Compliance\Providers\MockBiometricProvider;
+use App\Services\Compliance\Providers\MockOcrProvider;
+use App\Services\Compliance\Providers\MockPartnerBankExchangeProvider;
 use App\Services\Matching\AiSemanticAnalyzer;
 use App\Services\Matching\LaravelAiSemanticAnalyzer;
 use App\Services\Matching\NullSemanticAnalyzer;
@@ -100,6 +108,12 @@ class AppServiceProvider extends ServiceProvider
                 ? $this->app->make(LaravelAiNegotiationAnalysisProvider::class)
                 : $this->app->make(NullNegotiationAnalysisProvider::class);
         });
+
+        // Compliance & KYC/AML Providers
+        $this->app->bind(OcrProviderContract::class, MockOcrProvider::class);
+        $this->app->bind(BiometricProviderContract::class, MockBiometricProvider::class);
+        $this->app->bind(AmlScreeningProviderContract::class, MockAmlScreeningProvider::class);
+        $this->app->bind(PartnerBankExchangeContract::class, MockPartnerBankExchangeProvider::class);
     }
 
     public function boot(): void

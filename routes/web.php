@@ -1,6 +1,11 @@
 <?php
 
 use App\Http\Controllers\Admin;
+use App\Http\Controllers\Compliance\BeneficialOwnerController;
+use App\Http\Controllers\Compliance\KybController;
+use App\Http\Controllers\Compliance\KycController;
+use App\Http\Controllers\Compliance\PreIncorporationReadinessController;
+use App\Http\Controllers\Compliance\SourceOfFundsController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DealRoomContractController;
 use App\Http\Controllers\DealRoomController;
@@ -23,6 +28,7 @@ Route::get('/', [PublicControllers\HomeController::class, 'index'])->name('home'
 Route::get('/about', fn () => Inertia::render('Public/About'))->name('about');
 Route::get('/pricing', [PublicControllers\PricingController::class, 'index'])->name('pricing');
 Route::get('/faq', [PublicControllers\FaqController::class, 'index'])->name('faq');
+Route::get('/guides', [PublicControllers\GuideController::class, 'index'])->name('guides');
 Route::get('/how-it-works', fn () => Inertia::render('Public/HowItWorks'))->name('how-it-works');
 
 Route::middleware('auth')->group(function () {
@@ -62,6 +68,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         Route::get('/kyc', [Settings\KycController::class, 'edit'])->name('kyc.edit');
         Route::post('/kyc', [Settings\KycController::class, 'submit'])->name('kyc.submit');
+        Route::post('/kyc/individual', [KycController::class, 'submitIndividual'])->name('kyc.individual.submit');
+
+        // Source of Funds & Source of Wealth (SOF / SOW)
+        Route::get('/source-of-funds', [SourceOfFundsController::class, 'index'])->name('sof.index');
+        Route::post('/source-of-funds', [SourceOfFundsController::class, 'store'])->name('sof.store');
+        Route::post('/source-of-wealth', [SourceOfFundsController::class, 'storeWealth'])->name('sow.store');
 
         Route::middleware('role:entrepreneur')->group(function () {
             Route::get('/entrepreneur-profile', [Settings\EntrepreneurProfileController::class, 'edit'])->name('entrepreneur-profile.edit');
@@ -80,7 +92,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // layer itself (spec §8).
     Route::middleware('role:entrepreneur')->prefix('entrepreneur')->name('entrepreneur.')->group(function () {
         Route::resource('projects', Entrepreneur\ProjectController::class)->except(['show'])->scoped(['project' => 'slug']);
-        Route::post('/projects/{project:slug}/publish', [Entrepreneur\ProjectController::class, 'publish'])->name('projects.publish');
+        Route::post('/projects/{project:slug}/submit', [Entrepreneur\ProjectController::class, 'submit'])->name('projects.submit');
         Route::post('/projects/{project:slug}/archive', [Entrepreneur\ProjectController::class, 'archive'])->name('projects.archive');
         Route::post('/projects/{project:slug}/media', [Entrepreneur\ProjectMediaController::class, 'store'])->name('projects.media.store');
         Route::delete('/projects/{project:slug}/media/{media}', [Entrepreneur\ProjectMediaController::class, 'destroy'])->name('projects.media.destroy');
@@ -172,14 +184,31 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // match or has expired, before the controller even runs.
     Route::middleware('signed')->group(function () {
         Route::get('/kyc/documents/{media}/download', [FileDownloadController::class, 'kycDocument'])->name('kyc.documents.download');
+        Route::get('/kyc/identity-documents/{document}/download', [FileDownloadController::class, 'kycIdentityDocument'])->name('kyc.documents.file');
+        Route::get('/kyb/documents/{document}/download', [FileDownloadController::class, 'kybDocument'])->name('kyb.documents.download');
         Route::get('/deal-rooms/documents/{media}/download', [FileDownloadController::class, 'dealDocument'])->name('deal-rooms.documents.download');
         Route::get('/projects/documents/{media}/download', [FileDownloadController::class, 'projectDocument'])->name('projects.documents.download');
     });
+
+    // Business KYB & Beneficial Ownership (UBO)
+    Route::get('/companies/{company}/kyb', [KybController::class, 'show'])->name('kyb.show');
+    Route::post('/companies/{company}/kyb', [KybController::class, 'submit'])->name('kyb.submit');
+    Route::get('/verifications/{verification}/beneficial-owners', [BeneficialOwnerController::class, 'index'])->name('ubo.index');
+    Route::post('/verifications/{verification}/beneficial-owners', [BeneficialOwnerController::class, 'store'])->name('ubo.store');
+    Route::post('/verifications/{verification}/relationships', [BeneficialOwnerController::class, 'storeRelationship'])->name('ubo.relationships.store');
+    Route::get('/verifications/{verification}/graph', [BeneficialOwnerController::class, 'graphData'])->name('ubo.graph');
+
+    // Pre-incorporation Project Readiness (Section 19)
+    Route::get('/projects/{project}/readiness', [PreIncorporationReadinessController::class, 'show'])->name('projects.readiness.show');
+    Route::put('/projects/{project}/readiness', [PreIncorporationReadinessController::class, 'update'])->name('projects.readiness.update');
+    Route::post('/projects/{project}/convert-to-company', [PreIncorporationReadinessController::class, 'convertToCompany'])->name('projects.convert-to-company');
 
     Route::middleware(['role:admin', 'permission:admin.dashboard'])->prefix('admin')->name('admin.')->group(function () {
         Route::get('/', [Admin\DashboardController::class, 'index'])->name('dashboard');
         Route::get('/users', [Admin\UserController::class, 'index'])->name('users.index');
         Route::get('/projects', [Admin\ProjectController::class, 'index'])->name('projects.index');
+        Route::post('/projects/{project:slug}/approve', [Admin\ProjectController::class, 'approve'])->name('projects.approve');
+        Route::post('/projects/{project:slug}/reject', [Admin\ProjectController::class, 'reject'])->name('projects.reject');
         Route::get('/subscriptions', [Admin\SubscriptionController::class, 'index'])->name('subscriptions.index');
         Route::get('/payments', [Admin\PaymentController::class, 'index'])->name('payments.index');
         Route::get('/escrow', [Admin\EscrowController::class, 'index'])->name('escrow.index');
@@ -189,14 +218,73 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::resource('partners', Admin\PartnerController::class)->only(['index', 'store', 'update', 'destroy']);
         Route::resource('testimonials', Admin\TestimonialController::class)->only(['index', 'store', 'update', 'destroy']);
         Route::resource('faqs', Admin\FaqController::class)->only(['index', 'store', 'update', 'destroy']);
+        Route::resource('guides', Admin\GuideArticleController::class)->only(['index', 'store', 'update', 'destroy']);
         Route::get('/matching-weights', [Admin\MatchingWeightController::class, 'index'])->name('matching-weights.index');
         Route::put('/matching-weights', [Admin\MatchingWeightController::class, 'update'])->name('matching-weights.update');
         Route::get('/kyc', [Admin\KycController::class, 'index'])->name('kyc.index');
         Route::post('/kyc/{kycProfile}/approve', [Admin\KycController::class, 'approve'])->name('kyc.approve');
         Route::post('/kyc/{kycProfile}/reject', [Admin\KycController::class, 'reject'])->name('kyc.reject');
+
+        // Central Compliance Console (KYC/KYB/AML Case Management)
+        Route::get('/compliance', [Admin\ComplianceController::class, 'index'])->name('compliance.index');
+        Route::get('/compliance/cases/{case}', [Admin\ComplianceController::class, 'show'])->name('compliance.show');
+        Route::post('/compliance/cases/{case}/approve', [Admin\ComplianceController::class, 'approve'])->name('compliance.approve');
+        Route::post('/compliance/alerts/{alert}/resolve', [Admin\ComplianceController::class, 'resolveAlert'])->name('compliance.alerts.resolve');
+        Route::post('/compliance/cases/{case}/dos', [Admin\ComplianceController::class, 'prepareDos'])->name('compliance.dos.prepare');
+        Route::post('/compliance/cases/{case}/transmit-bank', [Admin\ComplianceController::class, 'transmitToBank'])->name('compliance.bank.transmit');
         Route::get('/disputes', [Admin\DisputeController::class, 'index'])->name('disputes.index');
         Route::post('/disputes/{dispute}/resolve', [Admin\DisputeController::class, 'resolve'])->name('disputes.resolve');
-        Route::middleware('signed')->get('/kyc/documents/{media}/download', [FileDownloadController::class, 'kycDocument'])->name('kyc.documents.download');
+
+        // Analytics & statistics. The six pages share one foundation and one
+        // report contract. Exports use the exact same service call as the
+        // page so a file can never disagree with the screen.
+        Route::get('/statistics/users', [Admin\UserStatisticsController::class, 'index'])
+            ->middleware('permission:statistics.view')
+            ->name('statistics.users');
+        Route::get('/statistics/users/export/{format}', [Admin\UserStatisticsController::class, 'export'])
+            ->middleware('permission:statistics.export')
+            ->whereIn('format', ['csv', 'xlsx', 'pdf'])
+            ->name('statistics.users.export');
+
+        Route::get('/statistics/entrepreneurs', [Admin\EntrepreneursStatisticsController::class, 'index'])
+            ->middleware('permission:statistics.view')
+            ->name('statistics.entrepreneurs');
+        Route::get('/statistics/entrepreneurs/export/{format}', [Admin\EntrepreneursStatisticsController::class, 'export'])
+            ->middleware('permission:statistics.export')
+            ->whereIn('format', ['csv', 'xlsx', 'pdf'])
+            ->name('statistics.entrepreneurs.export');
+
+        Route::get('/statistics/investors', [Admin\InvestorsStatisticsController::class, 'index'])
+            ->middleware('permission:statistics.view')
+            ->name('statistics.investors');
+        Route::get('/statistics/investors/export/{format}', [Admin\InvestorsStatisticsController::class, 'export'])
+            ->middleware('permission:statistics.export')
+            ->whereIn('format', ['csv', 'xlsx', 'pdf'])
+            ->name('statistics.investors.export');
+
+        Route::get('/statistics/projects', [Admin\ProjectsStatisticsController::class, 'index'])
+            ->middleware('permission:statistics.view')
+            ->name('statistics.projects');
+        Route::get('/statistics/projects/export/{format}', [Admin\ProjectsStatisticsController::class, 'export'])
+            ->middleware('permission:statistics.export')
+            ->whereIn('format', ['csv', 'xlsx', 'pdf'])
+            ->name('statistics.projects.export');
+
+        Route::get('/statistics/investments', [Admin\InvestmentsStatisticsController::class, 'index'])
+            ->middleware('permission:statistics.view')
+            ->name('statistics.investments');
+        Route::get('/statistics/investments/export/{format}', [Admin\InvestmentsStatisticsController::class, 'export'])
+            ->middleware('permission:statistics.export')
+            ->whereIn('format', ['csv', 'xlsx', 'pdf'])
+            ->name('statistics.investments.export');
+
+        Route::get('/statistics/revenue', [Admin\RevenueStatisticsController::class, 'index'])
+            ->middleware('permission:statistics.view')
+            ->name('statistics.revenue');
+        Route::get('/statistics/revenue/export/{format}', [Admin\RevenueStatisticsController::class, 'export'])
+            ->middleware('permission:statistics.export')
+            ->whereIn('format', ['csv', 'xlsx', 'pdf'])
+            ->name('statistics.revenue.export');
     });
 });
 

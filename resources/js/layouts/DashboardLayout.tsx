@@ -35,18 +35,29 @@ function Wordmark() {
     );
 }
 
+export type DashboardBreadcrumb = {
+    label: string;
+    href?: string;
+};
+
 export function DashboardLayout({
     children,
     title,
     roleLabel,
     navItems,
     maxWidth = '6xl',
+    breadcrumbs,
+    description,
+    actions,
 }: {
     children: ReactNode;
     title: string;
     roleLabel: string;
     navItems: DashboardNavItem[];
     maxWidth?: '6xl' | '7xl';
+    breadcrumbs?: DashboardBreadcrumb[];
+    description?: string;
+    actions?: ReactNode;
 }) {
     const { props } = usePage<SharedAuth>();
     const [mobileNavOpen, setMobileNavOpen] = useState(false);
@@ -54,7 +65,7 @@ export function DashboardLayout({
 
     return (
         <div className="min-h-screen bg-page">
-            <header className="sticky top-0 z-40 border-b border-rule bg-page/95 backdrop-blur md:hidden">
+            <header className="sticky top-0 z-40 border-b border-rule bg-page/95 backdrop-blur md:hidden print:hidden">
                 <div className="flex h-14 items-center justify-between px-4">
                     <Wordmark />
                     <div className="flex items-center gap-1">
@@ -74,7 +85,7 @@ export function DashboardLayout({
             </header>
 
             <div className={`mx-auto flex ${widthClass} md:px-6`}>
-                <aside className="sticky top-0 hidden h-screen w-56 flex-shrink-0 flex-col border-r border-rule py-8 pr-4 md:flex">
+                <aside className="sticky top-0 hidden h-screen w-56 flex-shrink-0 flex-col border-r border-rule py-8 pr-4 md:flex print:hidden">
                     <div className="mb-8 flex items-center justify-between px-3">
                         <Wordmark />
                         <NotificationBell align="left" />
@@ -115,10 +126,51 @@ export function DashboardLayout({
                     </div>
                 </aside>
 
-                <main className="min-w-0 flex-1 px-4 py-6 md:py-10 md:pl-8">
+                <main className="min-w-0 flex-1 px-4 py-6 md:py-10 md:pl-8 print:p-0">
                     <div className="mb-6 border-b border-rule pb-5 md:mb-8">
-                        <div className="text-eyebrow">{roleLabel}</div>
-                        <h1 className="mt-2 text-page-title">{title}</h1>
+                        {breadcrumbs && breadcrumbs.length > 0 && (
+                            <nav
+                                aria-label="Fil d'Ariane"
+                                className="mb-3 flex flex-wrap items-center gap-2 text-caption print:hidden"
+                            >
+                                {breadcrumbs.map((breadcrumb, index) => (
+                                    <span
+                                        key={`${breadcrumb.label}-${index}`}
+                                        className="flex items-center gap-2"
+                                    >
+                                        {index > 0 && (
+                                            <span aria-hidden>/</span>
+                                        )}
+                                        {breadcrumb.href ? (
+                                            <Link
+                                                href={breadcrumb.href}
+                                                className="underline decoration-1 underline-offset-4 hover:text-ink"
+                                            >
+                                                {breadcrumb.label}
+                                            </Link>
+                                        ) : (
+                                            <span className="text-ink">
+                                                {breadcrumb.label}
+                                            </span>
+                                        )}
+                                    </span>
+                                ))}
+                            </nav>
+                        )}
+                        <div className="flex flex-wrap items-start justify-between gap-4">
+                            <div className="min-w-0">
+                                <div className="text-eyebrow">{roleLabel}</div>
+                                <h1 className="mt-2 text-page-title">{title}</h1>
+                                {description && (
+                                    <p className="mt-2 max-w-3xl text-body">
+                                        {description}
+                                    </p>
+                                )}
+                            </div>
+                            {actions && (
+                                <div className="print:hidden">{actions}</div>
+                            )}
+                        </div>
                     </div>
                     <PageTransition>{children}</PageTransition>
                 </main>

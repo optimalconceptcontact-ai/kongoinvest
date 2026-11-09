@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\ComplianceCaseStatus;
 use App\Enums\UserRole;
 use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
@@ -84,9 +85,51 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasOne(KycProfile::class);
     }
 
+    public function complianceCases(): HasMany
+    {
+        return $this->hasMany(ComplianceCase::class);
+    }
+
+    public function sourceOfFundsDeclarations(): HasMany
+    {
+        return $this->hasMany(SourceOfFundsDeclaration::class);
+    }
+
+    /**
+     * A blocked/suspended compliance case freezes the person: no new
+     * sensitive operation may be finalized while it is unresolved.
+     */
+    public function hasBlockedComplianceCase(): bool
+    {
+        return $this->complianceCases()
+            ->whereIn('status', [
+                ComplianceCaseStatus::Blocked->value,
+                ComplianceCaseStatus::Suspended->value,
+            ])
+            ->exists();
+    }
+
     public function savedProjects(): HasMany
     {
         return $this->hasMany(SavedProject::class, 'investor_user_id');
+    }
+
+    /** Escrows where this user is the investor (statistics + portfolio). */
+    public function investments(): HasMany
+    {
+        return $this->hasMany(Escrow::class, 'investor_user_id');
+    }
+
+    /** Escrows where this user is the entrepreneur whose project was funded. */
+    public function financedProjects(): HasMany
+    {
+        return $this->hasMany(Escrow::class, 'entrepreneur_user_id');
+    }
+
+    /** Audit entries produced by this user — used for the "active" definition. */
+    public function auditLogs(): HasMany
+    {
+        return $this->hasMany(AuditLog::class, 'actor_id');
     }
 
     public function isEntrepreneur(): bool

@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Enums\BusinessStatus;
+use App\Enums\ProjectMaturityStage;
 use App\Enums\ProjectStatus;
 use App\Enums\ProjectVisibility;
 use App\Services\FundingLimitService;
@@ -11,6 +13,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
@@ -54,6 +57,8 @@ class Project extends Model implements HasMedia
             // StoreProjectRequest for the shape validated on write.
             'team' => 'array',
             'status' => ProjectStatus::class,
+            'maturity_stage' => ProjectMaturityStage::class,
+            'business_status' => BusinessStatus::class,
             'visibility' => ProjectVisibility::class,
             'social_links' => 'array',
             'funding_target_minor' => 'integer',
@@ -63,6 +68,8 @@ class Project extends Model implements HasMedia
             'funding_limit_notified_at' => 'datetime',
             'funding_limit_deadline' => 'datetime',
             'published_at' => 'datetime',
+            'submitted_at' => 'datetime',
+            'moderated_at' => 'datetime',
             'archived_at' => 'datetime',
         ];
     }
@@ -81,6 +88,21 @@ class Project extends Model implements HasMedia
         return $this->belongsTo(User::class);
     }
 
+    public function moderatedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'moderated_by_id');
+    }
+
+    public function complianceCase(): BelongsTo
+    {
+        return $this->belongsTo(ComplianceCase::class);
+    }
+
+    public function formationReadiness(): HasOne
+    {
+        return $this->hasOne(ProjectFormationReadiness::class);
+    }
+
     public function sectors(): BelongsToMany
     {
         return $this->belongsToMany(Sector::class);
@@ -89,6 +111,16 @@ class Project extends Model implements HasMedia
     public function stages(): BelongsToMany
     {
         return $this->belongsToMany(Stage::class);
+    }
+
+    public function financingRequests(): HasMany
+    {
+        return $this->hasMany(FinancingRequest::class);
+    }
+
+    public function latestFinancingRequest(): HasOne
+    {
+        return $this->hasOne(FinancingRequest::class)->latestOfMany();
     }
 
     public function matches(): HasMany

@@ -10,6 +10,7 @@ use App\Models\ContractSignature;
 use App\Models\InvestmentContractWorkspace;
 use App\Models\User;
 use App\Services\AuditLogger;
+use App\Services\Compliance\InvestmentComplianceGateService;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 
@@ -22,7 +23,10 @@ use Illuminate\Validation\ValidationException;
  */
 class RecordSignatureDeposit
 {
-    public function __construct(private AuditLogger $audit) {}
+    public function __construct(
+        private AuditLogger $audit,
+        private InvestmentComplianceGateService $compliance,
+    ) {}
 
     /**
      * @param  array<string, mixed>  $input
@@ -46,6 +50,14 @@ class RecordSignatureDeposit
                 'workspace' => 'L\'opération est clôturée ou annulée : plus d\'enregistrement possible.',
             ]);
         }
+
+        $this->compliance->assertAllows(
+            $this->compliance->evaluateWorkspace(
+                $workspace,
+                InvestmentComplianceGateService::STAGE_SIGNATURE,
+            ),
+            'workspace',
+        );
 
         $data = Validator::make($input, [
             'signature_evidence' => ['required', 'array', 'max:50'],

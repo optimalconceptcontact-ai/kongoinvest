@@ -12,7 +12,7 @@ class RolesAndPermissionsSeeder extends Seeder
     {
         $permissions = [
             'projects.view', 'projects.create', 'projects.update', 'projects.delete',
-            'projects.publish', 'projects.view-all',
+            'projects.publish', 'projects.moderate', 'projects.view-all',
             'matches.view', 'matches.create',
             'connections.create', 'connections.accept',
             'messages.view', 'messages.send',
@@ -23,6 +23,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'subscriptions.view', 'subscriptions.manage',
             'users.view', 'users.manage',
             'admin.dashboard',
+            'statistics.view', 'statistics.export',
         ];
 
         foreach ($permissions as $permission) {

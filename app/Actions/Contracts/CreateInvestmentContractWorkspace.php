@@ -9,6 +9,7 @@ use App\Models\DealRoom;
 use App\Models\InvestmentContractWorkspace;
 use App\Models\User;
 use App\Services\AuditLogger;
+use App\Services\Compliance\InvestmentComplianceGateService;
 use App\Services\SubscriptionService;
 use Illuminate\Validation\ValidationException;
 
@@ -17,6 +18,7 @@ class CreateInvestmentContractWorkspace
     public function __construct(
         private AuditLogger $audit,
         private SubscriptionService $subscriptions,
+        private InvestmentComplianceGateService $compliance,
     ) {}
 
     /**
@@ -55,6 +57,20 @@ class CreateInvestmentContractWorkspace
                 'company_id' => "L'entreprise rattachée à l'opération est introuvable.",
             ]);
         }
+
+        $company = $companyId !== null ? Company::query()->find($companyId) : null;
+
+        // Compliance freeze: a blocked/suspended participant, an open
+        // sanctions alert or a started-but-unapproved compliance file
+        // prevents opening the contractual workspace.
+        $this->compliance->assertAllows(
+            $this->compliance->evaluateDealRoom(
+                $dealRoom,
+                InvestmentComplianceGateService::STAGE_WORKSPACE_OPENING,
+                $company,
+            ),
+            'workspace',
+        );
 
         // Devise explicite à trois lettres — défaut USD (scénario de
         // référence §7), mais jamais une devise implicite non tracée

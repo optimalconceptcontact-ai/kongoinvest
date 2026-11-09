@@ -6,6 +6,7 @@ use App\Enums\WorkspaceStatus;
 use App\Models\InvestmentContractWorkspace;
 use App\Models\User;
 use App\Services\AuditLogger;
+use App\Services\Compliance\InvestmentComplianceGateService;
 use App\Services\Contracts\FinancialConsistencyService;
 use App\Services\Contracts\LegalComplianceService;
 use Illuminate\Validation\ValidationException;
@@ -26,6 +27,7 @@ class CloseOperation
         private AuditLogger $audit,
         private FinancialConsistencyService $consistency,
         private LegalComplianceService $compliance,
+        private InvestmentComplianceGateService $investmentCompliance,
     ) {}
 
     public function handle(User $user, InvestmentContractWorkspace $workspace): InvestmentContractWorkspace
@@ -41,6 +43,18 @@ class CloseOperation
                 'workspace' => 'Seuls les participants de l\'opération la clôturent.',
             ]);
         }
+
+        // Compliance freeze: a blocked/suspended case, an open sanctions
+        // alert, a rejected KYC or an unapproved identity/KYB/UBO
+        // checkpoint on either side prevents closing the operation
+        // until compliance resolves it.
+        $this->investmentCompliance->assertAllows(
+            $this->investmentCompliance->evaluateWorkspace(
+                $workspace,
+                InvestmentComplianceGateService::STAGE_CLOSING,
+            ),
+            'workspace',
+        );
 
         if ($this->consistency->hasOpenBlockingChecks($workspace)) {
             throw ValidationException::withMessages([

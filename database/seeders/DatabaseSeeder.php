@@ -14,6 +14,7 @@ class DatabaseSeeder extends Seeder
             AdminUserSeeder::class,
             SectorsSeeder::class,
             StagesSeeder::class,
+            FinancingCatalogSeeder::class,
             MatchingWeightsSeeder::class,
             FaqSeeder::class,
             // No PartnersSeeder / TestimonialsSeeder — spec §65/§69: these

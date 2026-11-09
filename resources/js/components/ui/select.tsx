@@ -36,7 +36,7 @@ export function Select({
             aria-describedby={describedBy}
             aria-invalid={ariaInvalid ?? (showError || undefined)}
             className={cn(
-                'w-full rounded-none border bg-paper text-ink focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-action disabled:cursor-not-allowed disabled:bg-surface-2 disabled:text-ink-muted',
+                'w-full rounded-none border bg-paper text-ink py-1 focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-action disabled:cursor-not-allowed disabled:bg-surface-2 disabled:text-ink-muted',
                 sizeClasses[size],
                 showError
                     ? 'border-danger focus:border-danger focus-visible:outline-danger'

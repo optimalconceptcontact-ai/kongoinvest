@@ -8,6 +8,7 @@ use App\Models\ContractDocument;
 use App\Models\InvestmentContractWorkspace;
 use App\Models\User;
 use App\Services\AuditLogger;
+use App\Services\Compliance\InvestmentComplianceGateService;
 use Illuminate\Validation\ValidationException;
 
 /**
@@ -18,7 +19,10 @@ use Illuminate\Validation\ValidationException;
  */
 class DepositSignedContractDocument
 {
-    public function __construct(private AuditLogger $audit) {}
+    public function __construct(
+        private AuditLogger $audit,
+        private InvestmentComplianceGateService $compliance,
+    ) {}
 
     public function handle(User $user, InvestmentContractWorkspace $workspace, ContractDocument $document): ContractDocument
     {
@@ -39,6 +43,14 @@ class DepositSignedContractDocument
                 'workspace' => 'L\'opération est clôturée ou annulée : plus de dépôt possible.',
             ]);
         }
+
+        $this->compliance->assertAllows(
+            $this->compliance->evaluateWorkspace(
+                $workspace,
+                InvestmentComplianceGateService::STAGE_SIGNATURE,
+            ),
+            'workspace',
+        );
 
         if (! $document->hasBothApprovals()) {
             throw ValidationException::withMessages([

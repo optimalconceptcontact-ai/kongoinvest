@@ -8,8 +8,12 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme {
-    --font-sans: 'Poppins', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
-    --font-mono: 'Anonymous Pro', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+    --font-sans:
+        'Poppins', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji',
+        'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-mono:
+        'Anonymous Pro', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+        'Liberation Mono', 'Courier New', monospace;
     --radius-lg: var(--radius);
     --radius-md: calc(var(--radius) - 2px);
     --radius-sm: calc(var(--radius) - 4px);
@@ -206,7 +210,7 @@
  */
 
 @utility text-eyebrow {
-    @apply font-mono text-sm uppercase tracking-widest text-ink-tertiary;
+    @apply font-mono text-sm tracking-widest text-ink-tertiary uppercase;
 }
 
 @utility text-page-title {
@@ -258,7 +262,7 @@
 }
 
 @utility text-form-label {
-    @apply mb-1 block text-lg font-semibold text-ink-muted;
+    @apply mb-1 block text-base font-semibold text-ink-muted;
 }
 
 @utility text-form-error {
@@ -271,4 +275,115 @@
 
 @utility text-menu-subtitle {
     @apply truncate text-sm text-ink-muted;
+}
+
+/*
+ * Article typography — public guide articles and the admin rich text
+ * editor share these styles, so the editing surface matches the final
+ * reading experience (headings, lists, links, quotes).
+ */
+@layer components {
+    .article-body {
+        @apply text-lg leading-8 text-ink-muted;
+    }
+
+    .article-body > * + * {
+        margin-top: 1.25rem;
+    }
+
+    .article-body h2 {
+        @apply text-2xl font-bold text-ink;
+    }
+
+    .article-body h3 {
+        @apply text-xl font-bold text-ink;
+    }
+
+    .article-body strong {
+        @apply font-semibold text-ink;
+    }
+
+    .article-body a {
+        @apply text-action underline decoration-1 underline-offset-4 hover:decoration-2;
+    }
+
+    .article-body ul {
+        @apply list-disc pl-6;
+    }
+
+    .article-body ol {
+        @apply list-decimal pl-6;
+    }
+
+    .article-body li + li {
+        margin-top: 0.35rem;
+    }
+
+    .article-body blockquote {
+        @apply border-l-2 border-ink pl-4 text-ink italic;
+    }
+
+    .article-body table {
+        @apply w-full border-collapse text-base;
+    }
+
+    .article-body th,
+    .article-body td {
+        @apply border border-rule-strong px-3 py-2 text-left align-top;
+    }
+
+    .article-body th {
+        @apply bg-surface-2 font-semibold text-ink;
+    }
+
+    .article-body th p,
+    .article-body td p {
+        margin-top: 0;
+    }
+
+    .article-editor:empty::before {
+        content: attr(data-placeholder);
+        color: var(--ink-muted);
+        opacity: 0.6;
+    }
+}
+
+/*
+ * Print — statistics reports and any page using the shared dashboard.
+ * The sidebar, mobile header, breadcrumbs and action buttons are hidden
+ * with Tailwind's print variant; these rules make the paper output
+ * readable regardless of the active dark theme and keep table rows from
+ * splitting across pages. Deliberately unlayered so it wins over `.dark`.
+ */
+@media print {
+    :root,
+    .dark {
+        --page: #ffffff;
+        --paper: #ffffff;
+        --surface-2: #f4f6f8;
+        --ink: #0e1726;
+        --ink-muted: #4a5568;
+        --rule: rgba(14, 23, 38, 0.18);
+        --rule-strong: rgba(14, 23, 38, 0.35);
+    }
+
+    body {
+        background: #ffffff;
+    }
+
+    main {
+        max-width: none !important;
+    }
+
+    thead {
+        display: table-header-group;
+    }
+
+    tr {
+        break-inside: avoid;
+    }
+
+    .print-break-inside-avoid {
+        break-inside: avoid;
+    }
 }
